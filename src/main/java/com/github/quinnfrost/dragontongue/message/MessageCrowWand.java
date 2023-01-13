@@ -41,9 +41,9 @@ public class MessageCrowWand {
     }
 
     public boolean handle(Supplier<NetworkEvent.Context> contextSupplier) {
-        if (Config.DEBUG.get().booleanValue()) {
-            DragonTongue.LOGGER.debug("Crow wand message recieved: " + this.action);
-        }
+//        if (Config.DEBUG.get().booleanValue()) {
+//            DragonTongue.LOGGER.debug("Crow wand message recieved: " + this.action);
+//        }
 
         contextSupplier.get().enqueueWork(() -> {
             contextSupplier.get().setPacketHandled(true);

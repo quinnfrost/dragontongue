@@ -29,6 +29,12 @@ public class RegistryMessages {
                 .decoder(MessageCrowWand::new)
                 .consumer(MessageCrowWand::handle)
                 .add();
+
+        CHANNEL.messageBuilder(MessageCommandEntity.class, nextID())
+                .encoder(MessageCommandEntity::toBytes)
+                .decoder(MessageCommandEntity::new)
+                .consumer(MessageCommandEntity::handle)
+                .add();
     }
 
     /**
