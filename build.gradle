@@ -139,7 +139,7 @@ dependencies {
     // The userdev artifact is a special name and will get all sorts of transformations applied to it.
     minecraft 'net.minecraftforge:forge:1.16.5-36.2.34'
     implementation fg.deobf("curse.maven:citadel-331936:3441028")
-    implementation fg.deobf("curse.maven:iceandfire-264231:3441117")
+    implementation fg.deobf("curse.maven:iceandfire-264231:3948661")
 
     // You may put jars on which you depend on in ./libs or you may define them like so..
     // compile "some.group:artifact:version:classifier"

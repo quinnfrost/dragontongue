@@ -9,29 +9,48 @@ import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.client.event.ColorHandlerEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
+import java.util.UUID;
+
 public class ClientEvents {
     @SubscribeEvent
-    public static void onPlayerTickClient(TickEvent.PlayerTickEvent event){
+    public static void onKeyPress(TickEvent.PlayerTickEvent event){
         if (!event.player.world.isRemote) {
             return;
         }
         ClientPlayerEntity player = (ClientPlayerEntity) event.player;
+
         if (KeyBindRegistry.command_tamed.isKeyDown()) {
-            player.getCapability(CapabilityInfoHolder.ENTITY_TEST_CAPABILITY, null).ifPresent(iTestCapability -> {
+            player.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE, null).ifPresent(iCapabilityInfoHolder -> {
 //                    EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(player,
 //                            Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f, null);
 //                    MyNetworking.sendToServer(
 //                            new PacketCommandEntity(EnumCommandType.ATTACK, player, entityRayTraceResult));
                 BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(player, Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f);
                 if (blockRayTraceResult.getType() != RayTraceResult.Type.MISS) {
-                    RegistryMessages.sendToServer(new MessageCommandEntity(EnumCommandEntity.REACH, player.getUniqueID(), iTestCapability.getUUID(), blockRayTraceResult));
+                        RegistryMessages.sendToServer(new MessageCommandEntity(EnumCommandEntity.REACH, player.getUniqueID(), blockRayTraceResult));
                 }
             });
+        }
+        if (KeyBindRegistry.add_tamed.isKeyDown()) {
+            EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(player,
+                    Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f, null);
+            RegistryMessages.sendToServer(new MessageCommandEntity(EnumCommandEntity.ADD, player.getUniqueID(), entityRayTraceResult));
+        }
+        if (KeyBindRegistry.remove_tamed.isKeyDown()) {
+            EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(player,
+                    Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f, null);
+            RegistryMessages.sendToServer(new MessageCommandEntity(EnumCommandEntity.REMOVE, player.getUniqueID(), entityRayTraceResult));
+        }
+        if (KeyBindRegistry.set_tamed.isKeyDown()) {
+            EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(player,
+                    Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f, null);
+            RegistryMessages.sendToServer(new MessageCommandEntity(EnumCommandEntity.SET, player.getUniqueID(), entityRayTraceResult));
         }
     }
 

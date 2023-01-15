@@ -41,10 +41,6 @@ public class MessageCrowWand {
     }
 
     public boolean handle(Supplier<NetworkEvent.Context> contextSupplier) {
-//        if (Config.DEBUG.get().booleanValue()) {
-//            DragonTongue.LOGGER.debug("Crow wand message recieved: " + this.action);
-//        }
-
         contextSupplier.get().enqueueWork(() -> {
             contextSupplier.get().setPacketHandled(true);
 
@@ -67,7 +63,7 @@ public class MessageCrowWand {
                     case PASS:
                         break;
                     case TELEPORT:
-                        player.getCapability(CapabilityInfoHolder.ENTITY_TEST_CAPABILITY).ifPresent(iCapabilityInfoHolder -> {
+                        player.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
                             iCapabilityInfoHolder.setPos(player.getPosition());
 
                             serverWorld.spawnParticle(ParticleTypes.PORTAL, targetX, targetY, targetZ, 800, 2, 1, 2,
@@ -94,7 +90,7 @@ public class MessageCrowWand {
 
                         break;
                     case FALLBACK:
-                        player.getCapability(CapabilityInfoHolder.ENTITY_TEST_CAPABILITY).ifPresent(iCapabilityInfoHolder -> {
+                        player.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
                             if (iCapabilityInfoHolder.getFallbackTimer() != 0) {
                                 player.teleportKeepLoaded(iCapabilityInfoHolder.getPos().getX(),
                                         iCapabilityInfoHolder.getPos().getY(), iCapabilityInfoHolder.getPos().getZ());

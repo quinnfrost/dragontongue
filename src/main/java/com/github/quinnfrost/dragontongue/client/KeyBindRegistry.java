@@ -7,9 +7,11 @@ import java.lang.reflect.Field;
 
 public class KeyBindRegistry {
     public static KeyBinding command_tamed = new KeyBinding("key.command_tamed",-1,"key.categories.gameplay");
+    public static KeyBinding add_tamed = new KeyBinding("key.add_tamed", -1, "key.categories.gameplay");
+    public static KeyBinding remove_tamed = new KeyBinding("key.remove_tamed", -1, "key.categories.gameplay");
+    public static KeyBinding set_tamed = new KeyBinding("key.set_tamed", -1, "key.categories.gameplay");
 
     public static void registerKeyBind(){
-
         for (Field f:KeyBindRegistry.class.getDeclaredFields()
         ) {
             try {
@@ -20,7 +22,6 @@ public class KeyBindRegistry {
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
-
         }
     }
 

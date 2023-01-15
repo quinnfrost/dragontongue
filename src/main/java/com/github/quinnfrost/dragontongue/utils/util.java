@@ -1,6 +1,7 @@
 package com.github.quinnfrost.dragontongue.utils;
 
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityPredicate;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.ProjectileHelper;
@@ -14,6 +15,19 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 public class util {
+    /**
+     * Test if a class is present
+     * @param className The name of the class
+     * @return  True if the class can be loaded
+     */
+    public static boolean isClassPresent(String className) {
+        try {
+            Class.forName(className);
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
 
     /**
      * Find out if the target's owner nbt tag matches the input owner's UUID
@@ -34,9 +48,16 @@ public class util {
             } else {
                 return false;
             }
-        } catch (Exception e) {
+        } catch (Exception ignored) {
             return false;
         }
+    }
+    //! Not usable
+    public static boolean shouldAttack(@Nullable LivingEntity attacker, @Nullable LivingEntity target) {
+        if (attacker == null || target == null) {
+            return false;
+        }
+        return false;
     }
 
     /**
@@ -85,9 +106,8 @@ public class util {
      * @param maxDistance  Only blocks within the distance in block is traced
      * @param partialTicks Time in ticks to smooth the movement(linear interpolation
      *                     or 'lerp'), use 1.0F to disable
-     * @return Result of ray trace, or null if nothing within the distance is found
+     * @return Result of ray trace, or RayTraceResult.Type.MISS if nothing within the distance is found
      */
-    @Nullable
     public static BlockRayTraceResult getTargetBlock(Entity entity, float maxDistance, float partialTicks) {
         Vector3d vector3d = entity.getEyePosition(partialTicks);
         double d0 = maxDistance;

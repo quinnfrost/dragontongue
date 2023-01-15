@@ -20,22 +20,26 @@ public class CapabilityInfoHolderProvider implements ICapabilitySerializable<Com
     @Nonnull
     @Override
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-        return dataOptional.cast();
+        if (cap == CapabilityInfoHolder.ENTITY_DATA_STORAGE) {
+            return dataOptional.cast();
+        } else {
+            return LazyOptional.empty();
+        }
     }
 
     @Override
     public CompoundNBT serializeNBT() {
-        if (CapabilityInfoHolder.ENTITY_TEST_CAPABILITY == null){
+        if (CapabilityInfoHolder.ENTITY_DATA_STORAGE == null){
             return new CompoundNBT();
         }else {
-            return (CompoundNBT) CapabilityInfoHolder.ENTITY_TEST_CAPABILITY.writeNBT(data,null);
+            return (CompoundNBT) CapabilityInfoHolder.ENTITY_DATA_STORAGE.writeNBT(data,null);
         }
     }
 
     @Override
     public void deserializeNBT(CompoundNBT nbt) {
-        if (CapabilityInfoHolder.ENTITY_TEST_CAPABILITY != null){
-            CapabilityInfoHolder.ENTITY_TEST_CAPABILITY.readNBT(data,null,nbt);
+        if (CapabilityInfoHolder.ENTITY_DATA_STORAGE != null){
+            CapabilityInfoHolder.ENTITY_DATA_STORAGE.readNBT(data,null,nbt);
         }
     }
 

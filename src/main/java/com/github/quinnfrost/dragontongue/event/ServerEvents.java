@@ -26,8 +26,14 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class ServerEvents {
+    /**
+     * Add function
+     *      Make trident hit a signal for tamed to attack
+     *      Sneaking when trident lands teleport the player
+     * @param event
+     */
     @SubscribeEvent
-    public static void onProjectileImpact(ProjectileImpactEvent.Arrow event) {
+    public static void onTridentImpact(ProjectileImpactEvent.Arrow event) {
         if (event.getEntity().world.isRemote) {
             return;
         }
@@ -60,22 +66,28 @@ public class ServerEvents {
         }
     }
 
+    /**
+     * Process crow wand fallback and its timer
+     * @param event
+     */
     @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+    public static void updateFallbackTimer(TickEvent.PlayerTickEvent event) {
         if (event.player.world.isRemote) {
             return;
         }
 
         ServerPlayerEntity player = (ServerPlayerEntity) event.player;
         ServerWorld serverWorld = player.getServerWorld();
-        player.getCapability(CapabilityInfoHolder.ENTITY_TEST_CAPABILITY).ifPresent(iCapabilityInfoHolder -> {
+        // Player can fall back before fallback timer tick to 0
+        player.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
             iCapabilityInfoHolder.fallbackTimerTick();
+            // Sneak to fallback, set timer to 0 if not holding wand anymore
             if (iCapabilityInfoHolder.getFallbackTimer() != 0 && player.isSneaking()) {
                 MessageCrowWand.teleportPlayer(EnumCrowWand.FALLBACK, player, serverWorld);
             } else if (iCapabilityInfoHolder.getFallbackTimer() != 0
                     && !(player.getHeldItemMainhand().getItem().equals(RegistryItems.CROW_WAND.get())
                     || player.getHeldItemOffhand().getItem().equals(RegistryItems.CROW_WAND.get()))) {
-                player.getCapability(CapabilityInfoHolder.ENTITY_TEST_CAPABILITY, null).ifPresent(iTestCapability1 -> {
+                player.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE, null).ifPresent(iCapabilityInfoHolder1 -> {
                     iCapabilityInfoHolder.setFallbackTimer(0);
                 });
             }
@@ -83,15 +95,20 @@ public class ServerEvents {
 
     }
 
+    /**
+     * Set entity destination if valid
+     * TODO:不要使用循环
+     * @param event
+     */
     @SubscribeEvent
-    public static void onLivingUpdate(LivingEvent.LivingUpdateEvent event) {
+    public static void updateLivingDestination(LivingEvent.LivingUpdateEvent event) {
         if (event.getEntity().world.isRemote) {
             return;
         }
 
         if (event.getEntity() instanceof AnimalEntity){
             AnimalEntity entity = (AnimalEntity)event.getEntityLiving();
-            entity.getCapability(CapabilityInfoHolder.ENTITY_TEST_CAPABILITY).ifPresent(iCapabilityInfoHolder -> {
+            entity.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
                 BlockPos blockPos = iCapabilityInfoHolder.getPos();
                 double targetX = iCapabilityInfoHolder.getPos().getX();
                 double targetY = iCapabilityInfoHolder.getPos().getY();

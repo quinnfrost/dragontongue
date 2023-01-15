@@ -1,6 +1,7 @@
 package com.github.quinnfrost.dragontongue.capability;
 
 import com.github.quinnfrost.dragontongue.References;
+import com.github.quinnfrost.dragontongue.config.Config;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.nbt.CompoundNBT;
@@ -14,11 +15,15 @@ import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class CapabilityInfoHolder {
     @CapabilityInject(ICapabilityInfoHolder.class)
-    public static Capability<ICapabilityInfoHolder> ENTITY_TEST_CAPABILITY = null;
+    public static Capability<ICapabilityInfoHolder> ENTITY_DATA_STORAGE = null;
 
     public static void register(){
         CapabilityManager.INSTANCE.register(ICapabilityInfoHolder.class,new Storage(),CapabilityInfoHolderImplementation::new);
@@ -38,7 +43,15 @@ public class CapabilityInfoHolder {
         @Override
         public INBT writeNBT(Capability<ICapabilityInfoHolder> capability, ICapabilityInfoHolder instance, Direction side) {
             CompoundNBT nbt = new CompoundNBT();
-            nbt.putUniqueId("LastCommand",instance.getUUID());
+            List<Long> uuidM = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
+            List<Long> uuidL = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
+            for (UUID uuid:instance.getCommandEntities()) {
+                uuidM.add(uuid.getMostSignificantBits());
+                uuidL.add(uuid.getLeastSignificantBits());
+            }
+            nbt.putLongArray("EntitiesUUIDM",uuidM);
+            nbt.putLongArray("EntitiesUUIDL",uuidL);
+//            nbt.putUniqueId("LastCommand",instance.getUUID());
             nbt.putLong("PosL",instance.getPos().toLong());
             nbt.putInt("FallbackTimer",instance.getFallbackTimer());
             nbt.putBoolean("HasDestination",instance.getDestinationSet());
@@ -47,12 +60,26 @@ public class CapabilityInfoHolder {
 
         @Override
         public void readNBT(Capability<ICapabilityInfoHolder> capability, ICapabilityInfoHolder instance, Direction side, INBT nbt) {
-            UUID uuid = ((CompoundNBT)nbt).getUniqueId("LastCommand");
+            try {
+                List<Long> uuidM = Arrays.stream(((CompoundNBT)nbt).getLongArray("EntitiesUUIDM")).boxed().collect(Collectors.toList());
+                List<Long> uuidL = Arrays.stream(((CompoundNBT)nbt).getLongArray("EntitiesUUIDL")).boxed().collect(Collectors.toList());
+                List<UUID> uuids = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
+                for (int i = 0; i < Config.COMMAND_ENTITIES_MAX.get(); i++) {
+                    UUID uuid = new UUID(uuidM.get(i), uuidL.get(i));
+                    uuids.add(uuid);
+                }
+                instance.setCommandEntities(uuids);
+            } catch (Exception ignored)  {
+
+            }
+
+
+//            UUID uuid = ((CompoundNBT)nbt).getUniqueId("LastCommand");
             BlockPos blockPos = BlockPos.fromLong(((CompoundNBT) nbt).getLong("PosL"));
             int fallbackTimer = ((CompoundNBT)nbt).getInt("FallbackTimer");
             boolean destinationSet = ((CompoundNBT)nbt).getBoolean("HasDestination");
 
-            instance.setUUID(uuid);
+//            instance.setUUID(uuid);
             instance.setPos(blockPos);
             instance.setFallbackTimer(fallbackTimer);
             instance.setDestinationSet(destinationSet);

@@ -24,6 +24,7 @@ public class Config {
     public static ForgeConfigSpec CLIENT_CONFIG;
 
     public static ForgeConfigSpec.BooleanValue DEBUG;
+    public static ForgeConfigSpec.IntValue COMMAND_ENTITIES_MAX;
     public static ForgeConfigSpec.DoubleValue CROW_WAND_RANGE_MAX;
     public static ForgeConfigSpec.DoubleValue COMMAND_DISTANCE_MAX;
     public static ForgeConfigSpec.DoubleValue NEARBY_RANGE;
@@ -31,6 +32,10 @@ public class Config {
 
     static {
         COMMON_BUILDER.comment("General settings").push(CATEGORY_GENERAL);
+        COMMAND_ENTITIES_MAX = COMMON_BUILDER.comment("Max entities to command")
+                        .defineInRange("count", 10, 1, 20);
+        COMMON_BUILDER.pop();
+
         COMMON_BUILDER.comment("Debug settings").push(SUBCATEGORY_DEBUG);
         DEBUG = COMMON_BUILDER.comment("Enable verbose output to console")
                         .define("verbose", false);

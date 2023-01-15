@@ -4,6 +4,7 @@ import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.proxy.ClientProxy;
 import com.github.quinnfrost.dragontongue.proxy.CommonProxy;
+import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
@@ -28,6 +29,11 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.stream.Collectors;
 
+// Todo:
+//  capability在重新加载后失效
+//  整理proxy的代码
+//
+
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(References.MOD_ID)
 @Mod.EventBusSubscriber(modid = References.MOD_ID)
@@ -37,7 +43,7 @@ public class DragonTongue
     public static final Logger LOGGER = LogManager.getLogger();
     public static IEventBus eventBus;
     public static CommonProxy PROXY = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> CommonProxy::new);
-
+    public static boolean isIafPresent = false;
     public DragonTongue() {
         // Register the setup method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
@@ -69,6 +75,14 @@ public class DragonTongue
         // some preinit code
         LOGGER.info("HELLO FROM PREINIT");
         LOGGER.info("DIRT BLOCK >> {}", Blocks.DIRT.getRegistryName());
+
+        // Test if Ice-And-Fire is installed
+        if(util.isClassPresent("com.github.alexthe666.iceandfire.IceAndFire")) {
+            LOGGER.info("Ice and fire mod found");
+            isIafPresent = true;
+        } else {
+            LOGGER.info("Ice and fire mod not found");
+        }
 
         // Setup sided proxy
         CommonProxy.commonInit();

@@ -2,6 +2,9 @@ package com.github.quinnfrost.dragontongue.enums;
 
 public enum EnumCommandEntity {
     PASS,
+    ADD,
+    REMOVE,
+    SET,
     ATTACK,
     NEARBY_ATTACK,
     LOOP_STATUS,
@@ -10,5 +13,6 @@ public enum EnumCommandEntity {
     WONDER,
     LAND,
     REACH,
+    CIRCLE,
     GUARD
 }

@@ -45,12 +45,7 @@ public class ItemCrowWand extends Item {
             return super.onItemRightClick(world, player, hand);
         }
 
-//        if (Config.DEBUG.get().booleanValue()) {
-//            DragonTongue.LOGGER.debug("Crow wand used: sneaking " + player.isSneaking() + " hand " + hand);
-//        }
-
         // Send wand use message at client side
-        // player.getCooldownTracker().setCooldown(this,20);
         if (!player.isSneaking() && hand == Hand.MAIN_HAND) {
             RegistryMessages.sendToServer(new MessageCrowWand(EnumCrowWand.TELEPORT));
         } else if (player.isSneaking() && hand == Hand.MAIN_HAND) {
@@ -60,6 +55,8 @@ public class ItemCrowWand extends Item {
         } else if (player.isSneaking() && hand == Hand.OFF_HAND) {
             RegistryMessages.sendToServer(new MessageCrowWand(EnumCrowWand.FANG));
         }
+        // Set usage cooldown
+        // player.getCooldownTracker().setCooldown(this,20);
 
         return super.onItemRightClick(world, player, hand);
 
