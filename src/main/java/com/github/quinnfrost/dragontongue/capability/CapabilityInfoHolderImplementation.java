@@ -9,10 +9,6 @@ import java.util.UUID;
 
 public class CapabilityInfoHolderImplementation implements ICapabilityInfoHolder {
     private List<UUID> commandEntitiesUUID = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
-    private List<UUID> commandEntitiesUUIDM = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
-    private List<UUID> commandEntitiesUUIDL = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
-
-    private UUID lastCommand = UUID.fromString("00000000-0000-0000-0000-000000000000");
     private BlockPos blockPos = new BlockPos(0,128,0);
     private int fallbackTimer = 0;
     private boolean destinationSet = false;
@@ -36,7 +32,9 @@ public class CapabilityInfoHolderImplementation implements ICapabilityInfoHolder
 
     @Override
     public void addCommandEntity(UUID uuid) {
-        commandEntitiesUUID.add(uuid);
+        if (!commandEntitiesUUID.contains(uuid)) {
+            commandEntitiesUUID.add(uuid);
+        }
     }
 
     @Override
