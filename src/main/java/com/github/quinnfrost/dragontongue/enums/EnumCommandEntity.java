@@ -12,6 +12,7 @@ public enum EnumCommandEntity {
     SIT,
     WONDER,
     LAND,
+    HALT,
     REACH,
     CIRCLE,
     GUARD

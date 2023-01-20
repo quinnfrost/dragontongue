@@ -1,5 +1,6 @@
 package com.github.quinnfrost.dragontongue.capability;
 
+import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.List;
@@ -11,13 +12,13 @@ public interface ICapabilityInfoHolder {
     void setCommandEntity(UUID uuid);
     void addCommandEntity(UUID uuid);
     void removeCommandEntity(UUID uuid);
-//    UUID getUUID();
-//    void setUUID(UUID uuid);
-    BlockPos getPos();
-    void setPos(BlockPos blockPos);
-    void fallbackTimerTick();
+    BlockPos getFallbackPosition();
+    void setFallbackPosition(BlockPos blockPos);
+    void tickFallbackTimer();
     int getFallbackTimer();
     void setFallbackTimer(int value);
-    boolean getDestinationSet();
-    void setDestinationSet(boolean set);
+    void setDestination(BlockPos blockPos);
+    BlockPos getDestination();
+    void setCommandStatus(EnumCommandStatus status);
+    EnumCommandStatus getCommandStatus();
 }

@@ -1,13 +1,19 @@
 package com.github.quinnfrost.dragontongue;
 
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.client.KeyBindRegistry;
+import com.github.quinnfrost.dragontongue.client.gui.GUIEvent;
 import com.github.quinnfrost.dragontongue.config.Config;
+import com.github.quinnfrost.dragontongue.event.ClientEvents;
+import com.github.quinnfrost.dragontongue.event.ServerEvents;
 import com.github.quinnfrost.dragontongue.proxy.ClientProxy;
 import com.github.quinnfrost.dragontongue.proxy.CommonProxy;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.MobEntity;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
@@ -30,9 +36,8 @@ import org.apache.logging.log4j.Logger;
 import java.util.stream.Collectors;
 
 // Todo:
-//  capability在重新加载后失效
-//  整理proxy的代码
-//
+//  根据方块光追结果判断最后需不需要悬停
+//  指定远距离陆地作为目标时会过早落地
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(References.MOD_ID)
@@ -44,6 +49,7 @@ public class DragonTongue
     public static IEventBus eventBus;
     public static CommonProxy PROXY = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> CommonProxy::new);
     public static boolean isIafPresent = false;
+    public static MobEntity debugTarget;
     public DragonTongue() {
         // Register the setup method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
@@ -61,6 +67,7 @@ public class DragonTongue
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
         PROXY.init();
+        MinecraftForge.EVENT_BUS.register(ServerEvents.class);
 
         // Load configs
         Config.loadConfig(Config.CLIENT_CONFIG,
@@ -98,6 +105,10 @@ public class DragonTongue
         // Setup client proxy
         ClientProxy.clientInit();
 
+        KeyBindRegistry.registerKeyBind();
+        // 原本在init方法里
+        MinecraftForge.EVENT_BUS.register(ClientEvents.class);
+        MinecraftForge.EVENT_BUS.register(new GUIEvent(Minecraft.getInstance()));
     }
 
     private void enqueueIMC(final InterModEnqueueEvent event)

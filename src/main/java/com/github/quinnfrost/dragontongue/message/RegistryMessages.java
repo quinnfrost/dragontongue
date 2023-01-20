@@ -6,6 +6,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
+import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 public class RegistryMessages {
     public static SimpleChannel CHANNEL;
@@ -35,6 +36,12 @@ public class RegistryMessages {
                 .decoder(MessageCommandEntity::new)
                 .consumer(MessageCommandEntity::handle)
                 .add();
+
+        CHANNEL.messageBuilder(MessageClientDisplay.class, nextID())
+                .encoder(MessageClientDisplay::encoder)
+                .decoder(MessageClientDisplay::new)
+                .consumer(MessageClientDisplay::handler)
+                .add();
     }
 
     /**
@@ -44,6 +51,12 @@ public class RegistryMessages {
      */
     public static void sendToClient(Object packet, ServerPlayerEntity player) {
         CHANNEL.sendTo(packet, player.connection.netManager, NetworkDirection.PLAY_TO_CLIENT);
+    }
+
+    public static void sendToAll(Object packet) {
+        for (ServerPlayerEntity player : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers()) {
+            CHANNEL.sendTo(packet, player.connection.netManager, NetworkDirection.PLAY_TO_CLIENT);
+        }
     }
 
     public static void sendToServer(Object packet) {

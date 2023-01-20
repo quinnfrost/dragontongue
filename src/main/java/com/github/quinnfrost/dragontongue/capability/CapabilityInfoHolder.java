@@ -1,8 +1,8 @@
 package com.github.quinnfrost.dragontongue.capability;
 
-import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.References;
 import com.github.quinnfrost.dragontongue.config.Config;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.nbt.CompoundNBT;
@@ -17,12 +17,9 @@ import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 
 import javax.annotation.Nullable;
-import javax.xml.stream.events.DTD;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class CapabilityInfoHolder {
     @CapabilityInject(ICapabilityInfoHolder.class)
@@ -35,24 +32,23 @@ public class CapabilityInfoHolder {
     public static void onAttachCapabilitiesEvent(AttachCapabilitiesEvent<Entity> event){
         if (event.getObject() instanceof LivingEntity){
             CapabilityInfoHolderProvider provider = new CapabilityInfoHolderProvider();
-            event.addCapability(new ResourceLocation(References.MOD_ID,"dragonstaff"),provider);
+            event.addCapability(new ResourceLocation(References.MOD_ID,"dragontongue"),provider);
             event.addListener(provider::invalidate);
         }
     }
 
-    // TODO: 改用NBTTagList
-    //       数据同步
     public static class Storage implements Capability.IStorage<ICapabilityInfoHolder>{
-
         @Nullable
         @Override
         public INBT writeNBT(Capability<ICapabilityInfoHolder> capability, ICapabilityInfoHolder instance, Direction side) {
             ListNBT listNBT = new ListNBT();
 
             CompoundNBT dataNBT = new CompoundNBT();
-            dataNBT.putLong("PosL",instance.getPos().toLong());
+            dataNBT.putLong("FallbackPosL",instance.getFallbackPosition().toLong());
             dataNBT.putInt("FallbackTimer",instance.getFallbackTimer());
-            dataNBT.putBoolean("HasDestination",instance.getDestinationSet());
+//            dataNBT.putBoolean("HasDestination",instance.hasDestination());
+            dataNBT.putString("CommandStatus",instance.getCommandStatus().toString());
+            dataNBT.putLong("Destination",instance.getDestination().toLong());
             listNBT.add(dataNBT);
 
             List<UUID> uuids = instance.getCommandEntities();
@@ -62,36 +58,30 @@ public class CapabilityInfoHolder {
                 listNBT.add(uuidNBT);
             }
 
-
-
-
             return listNBT;
         }
 
         @Override
         public void readNBT(Capability<ICapabilityInfoHolder> capability, ICapabilityInfoHolder instance, Direction side, INBT nbt) {
-            try {
-                ListNBT listNBT = (ListNBT) nbt;
+            ListNBT listNBT = (ListNBT) nbt;
 
-                CompoundNBT dataNBT = listNBT.getCompound(0);
-                BlockPos blockPos = BlockPos.fromLong(dataNBT.getLong("PosL"));
-                int fallbackTimer = dataNBT.getInt("FallbackTimer");
-                boolean destinationSet = dataNBT.getBoolean("HasDestination");
+            CompoundNBT dataNBT = listNBT.getCompound(0);
+            BlockPos blockPos = BlockPos.fromLong(dataNBT.getLong("FallbackPosL"));
+            int fallbackTimer = dataNBT.getInt("FallbackTimer");
+            EnumCommandStatus commandStatus = EnumCommandStatus.valueOf(dataNBT.getString("CommandStatus"));
+            BlockPos destination = BlockPos.fromLong(dataNBT.getLong("Destination"));
 
-                instance.setPos(blockPos);
-                instance.setFallbackTimer(fallbackTimer);
-                instance.setDestinationSet(destinationSet);
+            instance.setFallbackPosition(blockPos);
+            instance.setFallbackTimer(fallbackTimer);
+            instance.setCommandStatus(commandStatus);
+            instance.setDestination(destination);
 
-                List<UUID> uuids = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
-                for (int i = 1; i < listNBT.size(); i++) {
-                    CompoundNBT uuidNBT = listNBT.getCompound(i);
-                    uuids.add(uuidNBT.getUniqueId(String.valueOf(i - 1)));
-                }
-                instance.setCommandEntities(uuids);
-            } catch (Exception e){
-                e.printStackTrace();
-                DragonTongue.LOGGER.warn("Cannot case NBT to ListNBT");
+            List<UUID> uuids = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
+            for (int i = 1; i < listNBT.size(); i++) {
+                CompoundNBT uuidNBT = listNBT.getCompound(i);
+                uuids.add(uuidNBT.getUniqueId(String.valueOf(i - 1)));
             }
+            instance.setCommandEntities(uuids);
 
         }
     }

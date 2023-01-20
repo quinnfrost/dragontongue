@@ -12,11 +12,10 @@ import net.minecraftforge.fml.client.registry.RenderingRegistry;
 public class ClientProxy extends CommonProxy {
     public void init(){
         super.init();
-        MinecraftForge.EVENT_BUS.register(ClientEvents.class);
     }
 
     public static void clientInit() {
-        KeyBindRegistry.registerKeyBind();
+
     }
 
     public World getClientWorld() {

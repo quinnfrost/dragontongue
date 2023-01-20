@@ -1,5 +1,6 @@
 package com.github.quinnfrost.dragontongue.event;
 
+import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.client.KeyBindRegistry;
 import com.github.quinnfrost.dragontongue.config.Config;
@@ -8,14 +9,13 @@ import com.github.quinnfrost.dragontongue.message.MessageCommandEntity;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraft.entity.MobEntity;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.client.event.ColorHandlerEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-
-import java.util.UUID;
 
 public class ClientEvents {
     @SubscribeEvent
@@ -32,9 +32,11 @@ public class ClientEvents {
 //                    MyNetworking.sendToServer(
 //                            new PacketCommandEntity(EnumCommandType.ATTACK, player, entityRayTraceResult));
                 BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(player, Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f);
-                if (blockRayTraceResult.getType() != RayTraceResult.Type.MISS) {
-                        RegistryMessages.sendToServer(new MessageCommandEntity(EnumCommandEntity.REACH, player.getUniqueID(), blockRayTraceResult));
-                }
+
+                //                if (blockRayTraceResult.getType() != RayTraceResult.Type.MISS) {
+//                        RegistryMessages.sendToServer(new MessageCommandEntity(EnumCommandEntity.REACH, player.getUniqueID(), blockRayTraceResult));
+//                }
+                RegistryMessages.sendToServer(new MessageCommandEntity(EnumCommandEntity.REACH, player.getUniqueID(), blockRayTraceResult));
             });
         }
         if (KeyBindRegistry.add_tamed.isKeyDown()) {
@@ -58,5 +60,13 @@ public class ClientEvents {
     public static void onItemColor(ColorHandlerEvent.Item event) {
 //        event.getItemColors().register((stack, i) -> 0xff0000, ItemRegistry.FIRSTENTITYSPAWNEGG.get());
     }
+
+//    @SubscribeEvent
+//    public static void onPlayerTick(TickEvent.ClientTickEvent event) {
+//        if (DragonTongue.aiDebugger.target != null) {
+//            DragonTongue.aiDebugger.currentGoal = DragonTongue.aiDebugger.target.goalSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString();
+//            DragonTongue.aiDebugger.currentTarget = DragonTongue.aiDebugger.target.targetSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString();
+//        }
+//    }
 
 }

@@ -3,6 +3,8 @@ package com.github.quinnfrost.dragontongue.utils;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityPredicate;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.ProjectileHelper;
 import net.minecraft.nbt.CompoundNBT;
@@ -170,8 +172,8 @@ public class util {
     }
 
     /**
-     * TODO: What does it for?
-     * @param clickedBlock
+     * Get block facing relative to the entity
+     * @param clickedBlock  Block in question
      * @param entity
      * @return
      */
@@ -179,4 +181,33 @@ public class util {
         return Direction.getFacingFromVector((float) (entity.getPosX() - clickedBlock.getX()),
                 (float) (entity.getPosY() - clickedBlock.getY()), (float) (entity.getPosZ() - clickedBlock.getZ()));
     }
+
+    /**
+     * Determine if an entity's bounding box contains the target position
+     * @param entity
+     * @param pos
+     * @return
+     */
+    public static boolean hasArrived(LivingEntity entity, BlockPos pos) {
+        double targetX = pos.getX();
+        double targetY = pos.getY();
+        double targetZ = pos.getZ();
+        AxisAlignedBB axisAlignedBB = new AxisAlignedBB(targetX,targetY,targetZ,targetX,targetY,targetZ).grow(entity.getBoundingBox().getAverageEdgeLength());
+        if (axisAlignedBB.intersects(entity.getBoundingBox())) {
+            return true;
+        } else {
+            return false;
+        }
+
+//        return getDistance(entity.getPosition(), pos) <= Math.sqrt(8f);
+    }
+
+    public static double getDistance(BlockPos start, BlockPos end) {
+        return Math.sqrt(start.distanceSq(end));
+    }
+
+    public static double getSpeed(MobEntity entity) {
+        return 43.178 * entity.getBaseAttributeValue(Attributes.MOVEMENT_SPEED) - 0.02141;
+    }
+
 }

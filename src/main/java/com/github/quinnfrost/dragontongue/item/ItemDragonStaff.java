@@ -83,11 +83,11 @@ public class ItemDragonStaff extends Item {
                 return super.onItemRightClick(worldIn, playerIn, handIn);
             }
             RegistryMessages.sendToServer(
-                    new MessageCommandEntity(EnumCommandEntity.SIT, playerIn.getUniqueID(),
+                    new MessageCommandEntity(EnumCommandEntity.HALT, playerIn.getUniqueID(),
                             entityRayTraceResult.getEntity().getUniqueID()));
-            RegistryMessages.sendToServer(
-                    new MessageCommandEntity(EnumCommandEntity.LAND, playerIn.getUniqueID(),
-                            entityRayTraceResult.getEntity().getUniqueID()));
+//            RegistryMessages.sendToServer(
+//                    new MessageCommandEntity(EnumCommandEntity.LAND, playerIn.getUniqueID(),
+//                            entityRayTraceResult.getEntity().getUniqueID()));
         }
 
         return super.onItemRightClick(worldIn, playerIn, handIn);

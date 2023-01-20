@@ -64,7 +64,7 @@ public class MessageCrowWand {
                         break;
                     case TELEPORT:
                         player.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
-                            iCapabilityInfoHolder.setPos(player.getPosition());
+                            iCapabilityInfoHolder.setFallbackPosition(player.getPosition());
 
                             serverWorld.spawnParticle(ParticleTypes.PORTAL, targetX, targetY, targetZ, 800, 2, 1, 2,
                                     0.1);
@@ -92,8 +92,8 @@ public class MessageCrowWand {
                     case FALLBACK:
                         player.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
                             if (iCapabilityInfoHolder.getFallbackTimer() != 0) {
-                                player.teleportKeepLoaded(iCapabilityInfoHolder.getPos().getX(),
-                                        iCapabilityInfoHolder.getPos().getY(), iCapabilityInfoHolder.getPos().getZ());
+                                player.teleportKeepLoaded(iCapabilityInfoHolder.getFallbackPosition().getX(),
+                                        iCapabilityInfoHolder.getFallbackPosition().getY(), iCapabilityInfoHolder.getFallbackPosition().getZ());
                                 iCapabilityInfoHolder.setFallbackTimer(0);
                             }
                         });

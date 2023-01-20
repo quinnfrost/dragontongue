@@ -1,6 +1,7 @@
 package com.github.quinnfrost.dragontongue.capability;
 
 import com.github.quinnfrost.dragontongue.config.Config;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
@@ -9,9 +10,10 @@ import java.util.UUID;
 
 public class CapabilityInfoHolderImplementation implements ICapabilityInfoHolder {
     private List<UUID> commandEntitiesUUID = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
-    private BlockPos blockPos = new BlockPos(0,128,0);
+    private BlockPos commandDestination = new BlockPos(0,128,0);
+    private EnumCommandStatus status = EnumCommandStatus.NONE;
+    private BlockPos fallbackPosition = new BlockPos(0,128,0);
     private int fallbackTimer = 0;
-    private boolean destinationSet = false;
 
     @Override
     public List<UUID> getCommandEntities() {
@@ -42,29 +44,18 @@ public class CapabilityInfoHolderImplementation implements ICapabilityInfoHolder
         commandEntitiesUUID.remove(uuid);
     }
 
-//    @Override
-//    public UUID getUUID() {
-//        return this.lastCommand;
-//    }
-
-
-//    @Override
-//    public void setUUID(UUID uuid) {
-//        this.lastCommand = uuid;
-//    }
-
     @Override
-    public BlockPos getPos() {
-        return blockPos;
+    public BlockPos getFallbackPosition() {
+        return fallbackPosition;
     }
 
     @Override
-    public void setPos(BlockPos blockPos) {
-        this.blockPos = blockPos;
+    public void setFallbackPosition(BlockPos blockPos) {
+        this.fallbackPosition = blockPos;
     }
 
     @Override
-    public void fallbackTimerTick() {
+    public void tickFallbackTimer() {
         if (fallbackTimer > 0){
             --fallbackTimer;
         }else if (fallbackTimer < 0){
@@ -85,13 +76,23 @@ public class CapabilityInfoHolderImplementation implements ICapabilityInfoHolder
     }
 
     @Override
-    public boolean getDestinationSet() {
-        return destinationSet;
+    public void setDestination(BlockPos blockPos) {
+        this.commandDestination = blockPos;
     }
 
     @Override
-    public void setDestinationSet(boolean set) {
-        this.destinationSet = set;
+    public BlockPos getDestination() {
+        return commandDestination;
+    }
+
+    @Override
+    public void setCommandStatus(EnumCommandStatus status) {
+        this.status = status;
+    }
+
+    @Override
+    public EnumCommandStatus getCommandStatus() {
+        return status;
     }
 
 }
