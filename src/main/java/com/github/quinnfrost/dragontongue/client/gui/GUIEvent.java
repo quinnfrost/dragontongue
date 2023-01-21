@@ -4,6 +4,7 @@ import com.github.quinnfrost.dragontongue.client.KeyBindRegistry;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.MainWindow;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.IngameGui;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -29,25 +30,26 @@ public class GUIEvent extends IngameGui {
 
     private static Minecraft minecraft;
     public static List<String> buffer = new ArrayList<>(3);
+    public static String bufferCrosshair = "";
 
     public GUIEvent(Minecraft minecraft) {
         super(minecraft);
         GUIEvent.minecraft = minecraft;
     }
 
-    @SubscribeEvent
-    public void loadResource(GuiScreenEvent.InitGuiEvent event) {
-        if (loadTexture) {
-            Minecraft m = Minecraft.getInstance();
-            m.textureManager.bindTexture(markTexture);
-            loadTexture = false;
-        }
-    }
+//    @SubscribeEvent
+//    public void loadResource(GuiScreenEvent.InitGuiEvent event) {
+//        if (loadTexture) {
+//            Minecraft m = Minecraft.getInstance();
+//            m.textureManager.bindTexture(markTexture);
+//            loadTexture = false;
+//        }
+//    }
 
     @SubscribeEvent(
             priority = EventPriority.NORMAL
     )
-    public void renderOverlay(RenderGameOverlayEvent.Pre event) {
+    public void renderOverlay(RenderGameOverlayEvent.Post event) {
         int s = 16;
         PlayerEntity player = minecraft.player;
         int width = event.getWindow().getScaledWidth();
@@ -78,12 +80,17 @@ public class GUIEvent extends IngameGui {
                 }
             }
 
-            fontRender.drawString(ms, KeyBindRegistry.getScrollStatus().name(), width / 2.0f - 2, height / 2.0f - 3 * s + 8, colour.getRGB());
+            fontRender.drawString(ms,KeyBindRegistry.getScrollStatus().name(), width / 2.0f - 2, height / 2.0f - 3 * s + 8, colour.getRGB());
             GL11.glPopMatrix();
         }
 
-        draw(minecraft, true, width, height);
-
+//        draw(minecraft, true, width, height);
+        if (type == RenderGameOverlayEvent.ElementType.ALL) {
+            MatrixStack ms = new MatrixStack();
+            Minecraft.getInstance().getTextureManager().bindTexture(markTexture);
+//            AbstractGui.blit(event.getMatrixStack(), width / 2 - s / 2, height / 2 - s / 2, 0, 0,s,s,s,s);
+            GuiUtils.drawTexturedModalRect(ms, width / 2 - s / 2, height / 2 - s / 2, 0, 0, s, s,0);
+        }
 
     }
 
@@ -95,7 +102,7 @@ public class GUIEvent extends IngameGui {
         m.textureManager.bindTexture(markTexture);
 
         GuiUtils.drawTexturedModalRect(ms, width / 2 - s / 2, height / 2 - s / 2, 0, 0, s, s,0);
-
+        GL11.glDisable(3042);
     }
 
     public void drawTexturedModalRect(MatrixStack ms, int x, int y, int textureX, int textureY, int width, int height) {

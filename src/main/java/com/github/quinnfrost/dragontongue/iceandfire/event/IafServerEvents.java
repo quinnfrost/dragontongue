@@ -38,30 +38,7 @@ import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber(modid = References.MOD_ID)
 public class IafServerEvents {
-    @SubscribeEvent
-    public static void onEntityJoinWorld(EntityJoinWorldEvent event) {
-        if (DragonTongue.isIafPresent && event.getEntity() instanceof EntityDragonBase) {
-            EntityDragonBase dragon = (EntityDragonBase) event.getEntity();
-            DragonTongue.LOGGER.info("Entity in context:" + dragon.getEntityString());
 
-            dragon.goalSelector.addGoal(0, new DragonAIAsYouWish(dragon));
-            dragon.goalSelector.addGoal(0, new DragonAICalmLook(dragon));
-        }
-
-    }
-
-    public static boolean registerDragonGoals(MobEntity mobEntity) {
-        if (DragonTongue.isIafPresent && mobEntity instanceof EntityDragonBase) {
-            EntityDragonBase dragon = (EntityDragonBase) mobEntity;
-            DragonTongue.LOGGER.info("Entity in context:" + dragon.getEntityString());
-
-            dragon.goalSelector.addGoal(0, new DragonAIAsYouWish(dragon));
-            dragon.goalSelector.addGoal(0, new DragonAICalmLook(dragon));
-            return true;
-        }
-        return false;
-
-    }
     @SubscribeEvent
     public static void updateClientMessage(LivingEvent.LivingUpdateEvent event) {
         if (event.getEntity().world.isRemote || !DragonTongue.isIafPresent) {

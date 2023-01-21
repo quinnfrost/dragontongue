@@ -6,6 +6,8 @@ import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
+import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAIAsYouWish;
+import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAICalmLook;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
@@ -17,6 +19,17 @@ import javax.annotation.Nullable;
 public class IafTestClass {
     public static boolean isDragon(@Nullable Entity dragonIn) {
         return DragonTongue.isIafPresent && dragonIn instanceof EntityDragonBase;
+    }
+
+    public static boolean registerDragonAI(MobEntity mobEntity) {
+        if (isDragon(mobEntity)) {
+            EntityDragonBase dragon = (EntityDragonBase) mobEntity;
+
+            dragon.goalSelector.addGoal(0, new DragonAIAsYouWish(dragon));
+            dragon.goalSelector.addGoal(0, new DragonAICalmLook(dragon));
+            return true;
+        }
+        return false;
     }
 
     /**

@@ -36,9 +36,8 @@ import org.apache.logging.log4j.Logger;
 import java.util.stream.Collectors;
 
 // Todo:
-//  把event整理到单独的方法
-//  根据方块光追结果判断最后需不需要悬停
-//  指定远距离陆地作为目标时会过早落地
+//  随机出现ConcurrentModificationException： 把所有fori换成foreach或者用iterator
+//  肩上的小龙在放下后不会更新位置
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(References.MOD_ID)

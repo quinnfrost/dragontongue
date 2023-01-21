@@ -2,6 +2,7 @@ package com.github.quinnfrost.dragontongue.event;
 
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.entity.ai.FollowCommandGoal;
+import com.github.quinnfrost.dragontongue.entity.ai.RegistryAI;
 import com.github.quinnfrost.dragontongue.enums.EnumCrowWand;
 import com.github.quinnfrost.dragontongue.iceandfire.IafTestClass;
 import com.github.quinnfrost.dragontongue.item.RegistryItems;
@@ -135,8 +136,7 @@ public class ServerEvents {
     public static void onEntityJoinWorld(EntityJoinWorldEvent event) {
         if (event.getEntity() instanceof MobEntity) {
             MobEntity mobEntity = (MobEntity) event.getEntity();
-            if (IafTestClass.isDragon(mobEntity)) {return;}
-            mobEntity.goalSelector.addGoal(0,new FollowCommandGoal(mobEntity));
+            RegistryAI.registerAI(mobEntity);
         }
     }
 
