@@ -61,27 +61,30 @@ public class IafTestClass {
         return true;
     }
 
-    public static boolean setDragonHover(@Nullable MobEntity dragonIn, boolean state) {
+    public static boolean setDragonHover(MobEntity dragonIn) {
         if (!isDragon(dragonIn)){return false;}
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
         ICapabilityInfoHolder iCapabilityInfoHolder = dragon.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(null);
-        BlockPos pos = iCapabilityInfoHolder.getDestination();
-        AdvancedPathNavigate navigate = (AdvancedPathNavigate) dragon.getNavigator();
 
-        if (state) {
-            dragon.setHovering(true);
-            dragon.setFlying(false);
-            dragon.hoverTicks = 10;
-            dragon.ticksStill = 10;
-//        dragon.setCommand(3);
-            dragon.flightManager.setFlightTarget(Vector3d.copyCentered(iCapabilityInfoHolder.getDestination()));
-//        dragon.setMotion(0,0,0);
-            dragon.getNavigator().clearPath();
-        } else {
-            dragon.setHovering(false);
-            dragon.setFlying(false);
-            dragon.getNavigator().clearPath();
-        }
+        dragon.setHovering(true);
+        dragon.setFlying(false);
+        dragon.hoverTicks = 10;
+        dragon.ticksStill = 10;
+        dragon.flightManager.setFlightTarget(Vector3d.copyCentered(iCapabilityInfoHolder.getDestination()));
+        dragon.getNavigator().clearPath();
+
+        return true;
+    }
+
+    public static boolean setDragonStay(MobEntity dragonIn) {
+        if (!isDragon(dragonIn)){return false;}
+        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+        ICapabilityInfoHolder iCapabilityInfoHolder = dragon.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(null);
+
+        dragon.setHovering(false);
+        dragon.setFlying(false);
+//        dragon.ticksStill = 10;
+        dragon.getNavigator().clearPath();
 
         return true;
     }

@@ -17,14 +17,13 @@ import java.util.Optional;
 public class DragonAIAsYouWish extends Goal {
     private final EntityDragonBase dragon;
     private final ICapabilityInfoHolder capabilityInfoHolder;
-    private Optional<Boolean> isOnGround;
+    private boolean isTargetAir;
 
     public DragonAIAsYouWish(EntityDragonBase dragonIn) {
         this.dragon = dragonIn;
         this.capabilityInfoHolder = dragonIn.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(new CapabilityInfoHolderImplementation());
+        this.isTargetAir = shouldHover(dragonIn);
         this.setMutexFlags(EnumSet.of(Flag.MOVE));
-
-        this.isOnGround = Optional.empty();
     }
     @Override
     public boolean shouldExecute() {
@@ -36,27 +35,44 @@ public class DragonAIAsYouWish extends Goal {
     }
     @Override
     public void startExecuting() {
+        BlockPos pos = capabilityInfoHolder.getDestination();
 
     }
 
     @Override
     public void tick() {
-        if (util.hasArrived(dragon, capabilityInfoHolder.getDestination())) {
+        BlockPos targetPos = dragon.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(null).getDestination();
+
+        if (util.hasArrived(dragon, capabilityInfoHolder.getDestination())
+                && capabilityInfoHolder.getCommandStatus() != EnumCommandStatus.HOVER) {
             dragon.getNavigator().clearPath();
             capabilityInfoHolder.setCommandStatus(EnumCommandStatus.HOVER);
+            dragon.setMotion(0,0,0);
+            // TODO: 指令的目标应该是准星指着的那一格还是上一格
+            isTargetAir = shouldHover(dragon);
         }
-        BlockPos targetPos = dragon.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(null).getDestination();
-        switch (dragon.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(null).getCommandStatus()) {
+        switch (capabilityInfoHolder.getCommandStatus()) {
             case REACH:
                 dragon.flightManager.setFlightTarget(Vector3d.copyCentered(targetPos));
                 dragon.getNavigator().tryMoveToXYZ(targetPos.getX(), targetPos.getY(), targetPos.getZ(), 1.1D);
-                isOnGround = Optional.of(dragon.isHovering() || dragon.isFlying());
+
                 break;
             case HOVER:
-                IafTestClass.setDragonHover(dragon, isOnGround.orElse(dragon.isFlying() || dragon.isHovering()));
+                if (isTargetAir) {
+                    IafTestClass.setDragonHover(dragon);
+                } else {
+                    IafTestClass.setDragonStay(dragon);
+                }
                 break;
             case CIRCLE:
                 break;
         }
+    }
+
+    public boolean shouldHover(EntityDragonBase dragon) {
+        BlockPos targetPos = capabilityInfoHolder.getDestination();
+
+        return (dragon.world.getBlockState(targetPos).isAir()
+                && dragon.world.getBlockState(targetPos.add(0,-1,0)).isAir());
     }
 }

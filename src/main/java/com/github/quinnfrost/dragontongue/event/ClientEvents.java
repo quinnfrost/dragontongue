@@ -1,6 +1,5 @@
 package com.github.quinnfrost.dragontongue.event;
 
-import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.client.KeyBindRegistry;
 import com.github.quinnfrost.dragontongue.config.Config;
@@ -9,15 +8,15 @@ import com.github.quinnfrost.dragontongue.message.MessageCommandEntity;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.entity.MobEntity;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
-import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.client.event.ColorHandlerEvent;
+import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class ClientEvents {
+    // TODO:组合快捷键
     @SubscribeEvent
     public static void onKeyPress(TickEvent.PlayerTickEvent event){
         if (!event.player.world.isRemote) {
@@ -68,5 +67,18 @@ public class ClientEvents {
 //            DragonTongue.aiDebugger.currentTarget = DragonTongue.aiDebugger.target.targetSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString();
 //        }
 //    }
+
+    @SubscribeEvent
+    public static void detectScroll(InputEvent.MouseScrollEvent event) {
+        final double inaccuracy = 0.0001;
+        double scrollDelta = event.getScrollDelta();
+        if (scrollDelta > inaccuracy) {
+            KeyBindRegistry.scroll_status = KeyBindRegistry.EnumMouseScroll.UP;
+        } else if (scrollDelta < -inaccuracy) {
+            KeyBindRegistry.scroll_status = KeyBindRegistry.EnumMouseScroll.DOWN;
+        } else {
+            KeyBindRegistry.scroll_status = KeyBindRegistry.EnumMouseScroll.NONE;
+        }
+    }
 
 }
