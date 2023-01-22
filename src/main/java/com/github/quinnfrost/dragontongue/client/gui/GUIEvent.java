@@ -1,5 +1,6 @@
 package com.github.quinnfrost.dragontongue.client.gui;
 
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.client.KeyBindRegistry;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.MainWindow;
@@ -80,7 +81,12 @@ public class GUIEvent extends IngameGui {
                 }
             }
 
-            fontRender.drawString(ms,KeyBindRegistry.getScrollStatus().name(), width / 2.0f - 2, height / 2.0f - 3 * s + 8, colour.getRGB());
+            player.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
+                bufferCrosshair = String.valueOf(iCapabilityInfoHolder.getCommandDistance());
+                fontRender.drawString(ms,
+                        bufferCrosshair,
+                        width / 2.0f - 2, height / 2.0f - 3 * s + 8, colour.getRGB());
+            });
             GL11.glPopMatrix();
         }
 

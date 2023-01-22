@@ -1,6 +1,9 @@
 package com.github.quinnfrost.dragontongue.item;
 
 import com.github.quinnfrost.dragontongue.Registration;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImplementation;
+import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandEntity;
 import com.github.quinnfrost.dragontongue.iceandfire.IafTestClass;
@@ -47,11 +50,13 @@ public class ItemDragonStaff extends Item {
         if (!worldIn.isRemote){
             return super.onItemRightClick(worldIn, playerIn, handIn);
         }
+        ICapabilityInfoHolder capabilityInfoHolder = playerIn.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(new CapabilityInfoHolderImplementation());
+
         // Get target entity
         EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(playerIn,
                 Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f,
                 null);
-        BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(playerIn, Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f);
+        BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(playerIn, (float) capabilityInfoHolder.getCommandDistance(), 1.0f);
 
 
         // Different function based on holding hands and sneaking

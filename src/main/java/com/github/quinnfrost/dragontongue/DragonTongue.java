@@ -36,8 +36,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.stream.Collectors;
 
 // Todo:
-//  随机出现ConcurrentModificationException： 把所有fori换成foreach或者用iterator
-//  肩上的小龙在放下后不会更新位置
+//  在实体上使用DataWatcher代替Caps
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(References.MOD_ID)

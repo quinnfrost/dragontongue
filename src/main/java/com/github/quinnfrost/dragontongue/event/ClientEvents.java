@@ -41,7 +41,7 @@ public class ClientEvents {
         }
         ClientPlayerEntity clientPlayer = (ClientPlayerEntity) event.player;
         KeyBindRegistry.scanKeyPress(clientPlayer);
-
+        KeyBindRegistry.scanScrollAction(clientPlayer);
     }
 
     @SubscribeEvent

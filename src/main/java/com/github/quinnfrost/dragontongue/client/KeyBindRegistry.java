@@ -1,9 +1,9 @@
 package com.github.quinnfrost.dragontongue.client;
 
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
-import com.github.quinnfrost.dragontongue.client.gui.GUIEvent;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandEntity;
+import com.github.quinnfrost.dragontongue.message.MessageClientCommandDistance;
 import com.github.quinnfrost.dragontongue.message.MessageCommandEntity;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
@@ -31,6 +31,27 @@ public class KeyBindRegistry {
         return status;
     }
 
+    public static void scanScrollAction(ClientPlayerEntity clientPlayerEntity) {
+        switch (getScrollStatus()) {
+            case NONE:
+                break;
+            case UP:
+                clientPlayerEntity.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
+                    RegistryMessages.sendToServer(
+                            new MessageClientCommandDistance(iCapabilityInfoHolder.modifyCommandDistance(1))
+                    );
+                });
+                break;
+            case DOWN:
+                clientPlayerEntity.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
+                    RegistryMessages.sendToServer(
+                            new MessageClientCommandDistance(iCapabilityInfoHolder.modifyCommandDistance(-1))
+                    );
+                });
+                break;
+        }
+    }
+
     public static void scanKeyPress(ClientPlayerEntity clientPlayerEntity) {
         if (KeyBindRegistry.command_tamed.isKeyDown()) {
             clientPlayerEntity.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE, null).ifPresent(iCapabilityInfoHolder -> {
@@ -38,7 +59,7 @@ public class KeyBindRegistry {
 //                            Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f, null);
 //                    MyNetworking.sendToServer(
 //                            new PacketCommandEntity(EnumCommandType.ATTACK, player, entityRayTraceResult));
-                BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(clientPlayerEntity, Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f);
+                BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(clientPlayerEntity, (float) iCapabilityInfoHolder.getCommandDistance(), 1.0f);
 
                 //                if (blockRayTraceResult.getType() != RayTraceResult.Type.MISS) {
 //                        RegistryMessages.sendToServer(new MessageCommandEntity(EnumCommandEntity.REACH, player.getUniqueID(), blockRayTraceResult));

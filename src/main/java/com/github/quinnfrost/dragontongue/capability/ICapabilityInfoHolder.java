@@ -21,4 +21,7 @@ public interface ICapabilityInfoHolder {
     BlockPos getDestination();
     void setCommandStatus(EnumCommandStatus status);
     EnumCommandStatus getCommandStatus();
+    void setCommandDistance(double distance);
+    double getCommandDistance();
+    double modifyCommandDistance(double offset);
 }

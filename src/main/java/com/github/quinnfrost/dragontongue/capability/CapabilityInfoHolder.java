@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+// TODO: 检查实体身上错误的caps并且重置（解决ConcurrentModificationException问题）
 public class CapabilityInfoHolder {
     @CapabilityInject(ICapabilityInfoHolder.class)
     public static Capability<ICapabilityInfoHolder> ENTITY_DATA_STORAGE = null;
@@ -46,9 +47,9 @@ public class CapabilityInfoHolder {
             CompoundNBT dataNBT = new CompoundNBT();
             dataNBT.putLong("FallbackPosL",instance.getFallbackPosition().toLong());
             dataNBT.putInt("FallbackTimer",instance.getFallbackTimer());
-//            dataNBT.putBoolean("HasDestination",instance.hasDestination());
             dataNBT.putString("CommandStatus",instance.getCommandStatus().toString());
             dataNBT.putLong("Destination",instance.getDestination().toLong());
+            dataNBT.putDouble("CommandDistance",instance.getCommandDistance());
             listNBT.add(dataNBT);
 
             List<UUID> uuids = instance.getCommandEntities();
@@ -70,11 +71,13 @@ public class CapabilityInfoHolder {
             int fallbackTimer = dataNBT.getInt("FallbackTimer");
             EnumCommandStatus commandStatus = EnumCommandStatus.valueOf(dataNBT.getString("CommandStatus"));
             BlockPos destination = BlockPos.fromLong(dataNBT.getLong("Destination"));
+            double commandDistance = dataNBT.getDouble("CommandDistance");
 
             instance.setFallbackPosition(blockPos);
             instance.setFallbackTimer(fallbackTimer);
             instance.setCommandStatus(commandStatus);
             instance.setDestination(destination);
+            instance.setCommandDistance(commandDistance);
 
             List<UUID> uuids = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
             for (int i = 1; i < listNBT.size(); i++) {

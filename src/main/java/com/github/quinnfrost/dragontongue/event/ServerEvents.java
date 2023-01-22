@@ -1,12 +1,15 @@
 package com.github.quinnfrost.dragontongue.event;
 
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.entity.ai.FollowCommandGoal;
 import com.github.quinnfrost.dragontongue.entity.ai.RegistryAI;
 import com.github.quinnfrost.dragontongue.enums.EnumCrowWand;
 import com.github.quinnfrost.dragontongue.iceandfire.IafTestClass;
 import com.github.quinnfrost.dragontongue.item.RegistryItems;
+import com.github.quinnfrost.dragontongue.message.MessageClientCommandDistance;
 import com.github.quinnfrost.dragontongue.message.MessageCrowWand;
+import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -134,9 +137,21 @@ public class ServerEvents {
 
     @SubscribeEvent
     public static void onEntityJoinWorld(EntityJoinWorldEvent event) {
-        if (event.getEntity() instanceof MobEntity) {
+        if (event.getEntity().world.isRemote) {
+            return;
+        }
+
+        Entity entity = event.getEntity();
+        if (entity instanceof MobEntity) {
             MobEntity mobEntity = (MobEntity) event.getEntity();
             RegistryAI.registerAI(mobEntity);
+
+        }
+        if (entity instanceof PlayerEntity) {
+            PlayerEntity playerEntity = (PlayerEntity) entity;
+            playerEntity.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
+                RegistryMessages.sendToClient(new MessageClientCommandDistance(iCapabilityInfoHolder.getCommandDistance()), (ServerPlayerEntity) playerEntity);
+            });
         }
     }
 

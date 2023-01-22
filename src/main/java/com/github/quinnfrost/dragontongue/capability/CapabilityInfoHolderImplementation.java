@@ -12,6 +12,7 @@ public class CapabilityInfoHolderImplementation implements ICapabilityInfoHolder
     private List<UUID> commandEntitiesUUID = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
     private BlockPos commandDestination = new BlockPos(0,128,0);
     private EnumCommandStatus status = EnumCommandStatus.NONE;
+    private double commandDistance = 128;
     private BlockPos fallbackPosition = new BlockPos(0,128,0);
     private int fallbackTimer = 0;
 
@@ -93,6 +94,31 @@ public class CapabilityInfoHolderImplementation implements ICapabilityInfoHolder
     @Override
     public EnumCommandStatus getCommandStatus() {
         return status;
+    }
+
+    @Override
+    public void setCommandDistance(double distance) {
+        if (distance > 0 && distance <= Config.COMMAND_DISTANCE_MAX.get()) {
+            this.commandDistance = distance;
+        }
+    }
+
+    @Override
+    public double getCommandDistance() {
+        return commandDistance;
+    }
+
+    @Override
+    public double modifyCommandDistance(double offset) {
+        if (commandDistance + offset < 0 ) {
+            this.commandDistance = 0;
+
+        } else if (commandDistance + offset > Config.COMMAND_DISTANCE_MAX.get()) {
+            this.commandDistance = Config.COMMAND_DISTANCE_MAX.get();
+        } else {
+            this.commandDistance = commandDistance + offset;
+        }
+        return this.commandDistance;
     }
 
 }

@@ -22,7 +22,8 @@ public class DragonAIAsYouWish extends Goal {
     public DragonAIAsYouWish(EntityDragonBase dragonIn) {
         this.dragon = dragonIn;
         this.capabilityInfoHolder = dragonIn.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(new CapabilityInfoHolderImplementation());
-        this.isTargetAir = shouldHover(dragonIn);
+        // 不能直接用shouldHover,因为在onEntityJoinWorld的时候区块似乎还没有加载，isAir会导致读取存档时永远等下去
+        this.isTargetAir = (dragon.isFlying() || dragon.isHovering());
         this.setMutexFlags(EnumSet.of(Flag.MOVE));
     }
     @Override

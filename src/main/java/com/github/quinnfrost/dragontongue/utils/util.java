@@ -1,5 +1,6 @@
 package com.github.quinnfrost.dragontongue.utils;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityPredicate;
 import net.minecraft.entity.LivingEntity;
@@ -11,6 +12,8 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
@@ -209,5 +212,11 @@ public class util {
     public static double getSpeed(MobEntity entity) {
         return 43.178 * entity.getBaseAttributeValue(Attributes.MOVEMENT_SPEED) - 0.02141;
     }
+
+    @OnlyIn(Dist.CLIENT)
+    public static PlayerEntity getClientSidePlayer() {
+        return Minecraft.getInstance().player;
+    }
+
 
 }

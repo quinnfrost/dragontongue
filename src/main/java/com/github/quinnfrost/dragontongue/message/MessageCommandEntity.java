@@ -99,23 +99,6 @@ public class MessageCommandEntity {
         if (excludeEntity == null) {
             excludeEntity = (Predicate<Entity>) entity -> true;
         }
-//        if (Config.DEBUG.get() && target instanceof MobEntity) {
-//            MobEntity entity = (MobEntity) target;
-//            if (entity.goalSelector != null) {
-//                List<String> goals = entity.goalSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList());
-//                if (!goals.isEmpty()) {
-////                    DragonTongue.LOGGER.debug("{} - GOALS: {}", entity, goals);
-//                    commander.sendMessage(new StringTextComponent("" + entity.getName().getString() + "- GOALS:" + goals), commander.getUniqueID());
-//                }
-//            }
-//            if (entity.targetSelector != null) {
-//                List<String> targets = entity.targetSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList());
-//                if (!targets.isEmpty()) {
-////                    DragonTongue.LOGGER.debug("{} - TARGET: {}", entity, targets);
-//                    commander.sendMessage(new StringTextComponent("" + entity.getName().getString() + "- TARGET:" + targets), commander.getUniqueID());
-//                }
-//            }
-//        }
 
         switch (action) {
             case ADD:
