@@ -1,8 +1,8 @@
 package com.github.quinnfrost.dragontongue.message;
 
 import com.github.quinnfrost.dragontongue.DragonTongue;
-import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
-import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImplementation;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandEntity;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
@@ -113,13 +113,15 @@ public class MessageCommandEntity {
 
         switch (action) {
             case DEBUG:
-                DragonTongue.debugTarget = (MobEntity) target;
+                if (target instanceof MobEntity) {
+                    DragonTongue.debugTarget = (MobEntity) target;
+                }
                 break;
             case ADD:
                 if (target != null) {
                     if (util.isOwner(target, commander)) {
-                        commander.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
-                            iCapabilityInfoHolder.addCommandEntity(target.getUniqueID());
+                        commander.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                            iCapTargetHolder.addCommandEntity(target.getUniqueID());
                         });
                     }
                 }
@@ -127,8 +129,8 @@ public class MessageCommandEntity {
             case SET:
                 if (target != null) {
                     if (util.isOwner(target, commander)) {
-                        commander.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
-                            iCapabilityInfoHolder.setCommandEntity(target.getUniqueID());
+                        commander.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                            iCapTargetHolder.setCommandEntity(target.getUniqueID());
                         });
                     }
                 }
@@ -136,18 +138,18 @@ public class MessageCommandEntity {
             case REMOVE:
                 if (target != null) {
                     if (util.isOwner(target, commander)) {
-                        commander.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
-                            iCapabilityInfoHolder.removeCommandEntity(target.getUniqueID());
+                        commander.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                            iCapTargetHolder.removeCommandEntity(target.getUniqueID());
                         });
-                        target.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
-                            iCapabilityInfoHolder.setCommandStatus(EnumCommandStatus.NONE);
+                        target.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                            iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
                         });
 
                     }
                 }
                 break;
             case ATTACK:
-                List<UUID> uuids = commander.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(new CapabilityInfoHolderImplementation()).getCommandEntities();
+                List<UUID> uuids = commander.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(commander)).getCommandEntities();
                 if (!uuids.isEmpty()) {
                     for (UUID entityUUID :
                             uuids) {
@@ -180,18 +182,17 @@ public class MessageCommandEntity {
                 commandHalt(commander, target);
                 break;
             case REACH:
-                commander.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
+                commander.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                     for (UUID entityUUID :
-                            iCapabilityInfoHolder.getCommandEntities()) {
+                            iCapTargetHolder.getCommandEntities()) {
                         commandReach(commander, (LivingEntity) serverWorld.getEntityByUuid(entityUUID), pos);
                     }
                 });
                 break;
             case CIRCLE:
-                commander.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE)
-                        .ifPresent(iCapabilityInfoHolder -> {
+                commander.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                             for (UUID entityUUID :
-                                    iCapabilityInfoHolder.getCommandEntities()) {
+                                    iCapTargetHolder.getCommandEntities()) {
                                 commandCircle(commander,
                                         (LivingEntity) serverWorld.getEntityByUuid(entityUUID), pos);
                             }
@@ -305,8 +306,8 @@ public class MessageCommandEntity {
                 util.setByteTag(target, "Command", (byte) 0);
             } else {
             }
-            target.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
-                iCapabilityInfoHolder.setCommandStatus(EnumCommandStatus.NONE);
+            target.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
             });
         }
     }
@@ -323,7 +324,7 @@ public class MessageCommandEntity {
     public static void commandHalt(LivingEntity commander, @Nullable LivingEntity target) {
         if (target instanceof TameableEntity && util.isOwner(target, commander)) {
             TameableEntity tameableEntity = (TameableEntity) target;
-//            commander.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
+//            commander.getCapability(CapTargetHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
 //                switch (iCapabilityInfoHolder.getCommandStatus()) {
 //                    case NONE:
 //                        break;

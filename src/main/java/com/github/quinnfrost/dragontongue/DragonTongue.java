@@ -1,8 +1,8 @@
 package com.github.quinnfrost.dragontongue;
 
-import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.client.KeyBindRegistry;
-import com.github.quinnfrost.dragontongue.client.gui.GUIEvent;
+import com.github.quinnfrost.dragontongue.client.overlay.OverlayRenderEvent;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.event.ClientEvents;
 import com.github.quinnfrost.dragontongue.event.ServerEvents;
@@ -94,7 +94,7 @@ public class DragonTongue
         CommonProxy.commonInit();
 
         // Register the custom capability
-        CapabilityInfoHolder.register();
+        CapTargetHolder.register();
     }
 
     private void doClientStuff(final FMLClientSetupEvent event) {
@@ -107,7 +107,7 @@ public class DragonTongue
         KeyBindRegistry.registerKeyBind();
         // 原本在init方法里
         MinecraftForge.EVENT_BUS.register(ClientEvents.class);
-        MinecraftForge.EVENT_BUS.register(new GUIEvent(Minecraft.getInstance()));
+        MinecraftForge.EVENT_BUS.register(new OverlayRenderEvent(Minecraft.getInstance()));
     }
 
     private void enqueueIMC(final InterModEnqueueEvent event)
@@ -140,7 +140,7 @@ public class DragonTongue
 
     @SubscribeEvent
     public static void onAttachCapabilitiesEvent(AttachCapabilitiesEvent<Entity> event) {
-        CapabilityInfoHolder.onAttachCapabilitiesEvent(event);
+        CapTargetHolder.onAttachCapabilitiesEvent(event);
     }
 
     // You can use EventBusSubscriber to automatically subscribe events on the contained class (this is subscribing to the MOD

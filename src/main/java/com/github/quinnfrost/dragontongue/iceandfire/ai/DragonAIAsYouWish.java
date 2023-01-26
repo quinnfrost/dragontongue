@@ -1,27 +1,26 @@
 package com.github.quinnfrost.dragontongue.iceandfire.ai;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
-import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
-import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImplementation;
-import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
+import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
 
 import java.util.EnumSet;
 
 public class DragonAIAsYouWish extends Goal {
     private final EntityDragonBase dragon;
-    private final ICapabilityInfoHolder capabilityInfoHolder;
+    private final ICapTargetHolder capabilityInfoHolder;
     private boolean isTargetAir;
     private BlockPos shouldStay;
 
     public DragonAIAsYouWish(EntityDragonBase dragonIn) {
         this.dragon = dragonIn;
-        this.capabilityInfoHolder = dragonIn.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(new CapabilityInfoHolderImplementation());
+        this.capabilityInfoHolder = dragonIn.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragonIn));
         // 不能直接用shouldHover,因为在onEntityJoinWorld的时候区块似乎还没有加载，isAir会导致读取存档时永远等下去
         this.isTargetAir = (dragon.isFlying() || dragon.isHovering());
         this.setMutexFlags(EnumSet.of(Flag.MOVE));
@@ -46,7 +45,7 @@ public class DragonAIAsYouWish extends Goal {
 
     @Override
     public void tick() {
-        BlockPos targetPos = dragon.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(null).getDestination();
+        BlockPos targetPos = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(null).getDestination();
 
         switch (capabilityInfoHolder.getCommandStatus()) {
             case REACH:

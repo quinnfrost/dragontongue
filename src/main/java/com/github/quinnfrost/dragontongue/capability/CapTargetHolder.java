@@ -22,26 +22,26 @@ import java.util.List;
 import java.util.UUID;
 
 // TODO: 检查实体身上错误的caps并且重置（解决ConcurrentModificationException问题）
-public class CapabilityInfoHolder {
-    @CapabilityInject(ICapabilityInfoHolder.class)
-    public static Capability<ICapabilityInfoHolder> ENTITY_DATA_STORAGE = null;
+public class CapTargetHolder {
+    @CapabilityInject(ICapTargetHolder.class)
+    public static Capability<ICapTargetHolder> TARGET_HOLDER = null;
 
-    public static void register(){
-        CapabilityManager.INSTANCE.register(ICapabilityInfoHolder.class,new Storage(),CapabilityInfoHolderImplementation::new);
+    public static void register() {
+        CapabilityManager.INSTANCE.register(ICapTargetHolder.class,new Storage(), CapTargetHolderImpl::new);
     }
 
-    public static void onAttachCapabilitiesEvent(AttachCapabilitiesEvent<Entity> event){
+    public static void onAttachCapabilitiesEvent(AttachCapabilitiesEvent<Entity> event) {
         if (event.getObject() instanceof LivingEntity){
-            CapabilityInfoHolderProvider provider = new CapabilityInfoHolderProvider();
-            event.addCapability(new ResourceLocation(References.MOD_ID,"dragontongue"),provider);
+            CapabilityProvider provider = new CapabilityProvider(event.getObject());
+            event.addCapability(new ResourceLocation(References.MOD_ID,"dragontongue"), provider);
             event.addListener(provider::invalidate);
         }
     }
 
-    public static class Storage implements Capability.IStorage<ICapabilityInfoHolder>{
+    public static class Storage implements Capability.IStorage<ICapTargetHolder> {
         @Nullable
         @Override
-        public INBT writeNBT(Capability<ICapabilityInfoHolder> capability, ICapabilityInfoHolder instance, Direction side) {
+        public INBT writeNBT(Capability<ICapTargetHolder> capability, ICapTargetHolder instance, Direction side) {
             ListNBT listNBT = new ListNBT();
 
             CompoundNBT dataNBT = new CompoundNBT();
@@ -63,7 +63,7 @@ public class CapabilityInfoHolder {
         }
 
         @Override
-        public void readNBT(Capability<ICapabilityInfoHolder> capability, ICapabilityInfoHolder instance, Direction side, INBT nbt) {
+        public void readNBT(Capability<ICapTargetHolder> capability, ICapTargetHolder instance, Direction side, INBT nbt) {
             ListNBT listNBT = (ListNBT) nbt;
 
             CompoundNBT dataNBT = listNBT.getCompound(0);

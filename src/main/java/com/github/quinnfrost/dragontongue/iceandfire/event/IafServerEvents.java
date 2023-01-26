@@ -3,8 +3,8 @@ package com.github.quinnfrost.dragontongue.iceandfire.event;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.References;
-import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
-import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import com.github.quinnfrost.dragontongue.message.MessageClientDisplay;
@@ -37,11 +37,11 @@ public class IafServerEvents {
             if (IafHelperClass.isDragon(target))
             {
                 EntityDragonBase dragon = (EntityDragonBase) target;
-                ICapabilityInfoHolder capabilityInfoHolder = dragon.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(null);
+                ICapTargetHolder capabilityInfoHolder = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(null);
 
                 RegistryMessages.sendToAll(
                         new MessageClientDisplay(
-                                EnumClientDisplay.ENTITY_DEBUG, new ArrayList<>(
+                                EnumClientDisplay.ENTITY_DEBUG, 1,new ArrayList<>(
                                 Arrays.asList(
                                         dragon.getEntityString(),
                                         "Pos:" + dragon.getPosition().getCoordinatesAsString(),
@@ -64,11 +64,11 @@ public class IafServerEvents {
                         )
                 );
             } else {
-                ICapabilityInfoHolder capabilityInfoHolder = target.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(null);
+                ICapTargetHolder capabilityInfoHolder = target.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(null);
 
                 RegistryMessages.sendToAll(
                         new MessageClientDisplay(
-                                EnumClientDisplay.ENTITY_DEBUG, new ArrayList<>(
+                                EnumClientDisplay.ENTITY_DEBUG, 1,new ArrayList<>(
                                 Arrays.asList(
                                         target.getEntityString(),
                                         "Pos:" + target.getPosition().getCoordinatesAsString(),

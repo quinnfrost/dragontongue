@@ -41,7 +41,6 @@ public class ClientEvents {
         ClientPlayerEntity clientPlayerEntity = Minecraft.getInstance().player;
     }
 
-    // TODO:组合快捷键
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event){
         ClientPlayerEntity clientPlayerEntity = Minecraft.getInstance().player;

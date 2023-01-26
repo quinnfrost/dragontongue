@@ -1,13 +1,16 @@
 package com.github.quinnfrost.dragontongue.event;
 
-import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.entity.ai.RegistryAI;
+import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
 import com.github.quinnfrost.dragontongue.enums.EnumCrowWand;
 import com.github.quinnfrost.dragontongue.item.RegistryItems;
 import com.github.quinnfrost.dragontongue.message.MessageClientCommandDistance;
+import com.github.quinnfrost.dragontongue.message.MessageClientDisplay;
 import com.github.quinnfrost.dragontongue.message.MessageCrowWand;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -23,8 +26,12 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+
+import java.util.Collections;
 
 public class ServerEvents {
     /**
@@ -48,7 +55,7 @@ public class ServerEvents {
             if (shooter.isSneaking() && event.getRayTraceResult().getType() != RayTraceResult.Type.MISS) {
                 Vector3d targetBlock = event.getRayTraceResult().getHitVec();
                 shooter.teleportKeepLoaded(targetBlock.getX(), targetBlock.getY(), targetBlock.getZ());
-                // shooter.getCapability(CapabilityInfoHolder.ENTITY_TEST_CAPABILITY).ifPresent(iCapabilityInfoHolder
+                // shooter.getCapability(CapTargetHolder.ENTITY_TEST_CAPABILITY).ifPresent(iCapabilityInfoHolder
                 // -> {
                 // iCapabilityInfoHolder.setFallbackTimer(80);
                 // });
@@ -80,17 +87,20 @@ public class ServerEvents {
         ServerPlayerEntity player = (ServerPlayerEntity) event.player;
         ServerWorld serverWorld = player.getServerWorld();
         // Player can fall back before fallback timer tick to 0
-        player.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
-            iCapabilityInfoHolder.tickFallbackTimer();
+        player.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+            iCapTargetHolder.tickFallbackTimer();
             // Sneak to fallback, set timer to 0 if not holding wand anymore
-            if (iCapabilityInfoHolder.getFallbackTimer() != 0 && player.isSneaking()) {
+            if (iCapTargetHolder.getFallbackTimer() != 0 && player.isSneaking()) {
                 MessageCrowWand.teleportPlayer(EnumCrowWand.FALLBACK, player, serverWorld);
-            } else if (iCapabilityInfoHolder.getFallbackTimer() != 0
+            } else if (
+                    iCapTargetHolder.getFallbackTimer() != 0
                     && !(player.getHeldItemMainhand().getItem().equals(RegistryItems.CROW_WAND.get())
-                    || player.getHeldItemOffhand().getItem().equals(RegistryItems.CROW_WAND.get()))) {
-                player.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE, null).ifPresent(iCapabilityInfoHolder1 -> {
-                    iCapabilityInfoHolder.setFallbackTimer(0);
-                });
+                                    || player.getHeldItemOffhand().getItem().equals(RegistryItems.CROW_WAND.get()))
+            ) {
+                iCapTargetHolder.setFallbackTimer(0);
+//                player.getCapability(CapTargetHolder.TARGET_HOLDER, null).ifPresent(iCapTargetHolder1 -> {
+//                    iCapTargetHolder.setFallbackTimer(0);
+//                });
             }
         });
 
@@ -109,7 +119,7 @@ public class ServerEvents {
 
 //        if (event.getEntity() instanceof AnimalEntity){
 //            AnimalEntity entity = (AnimalEntity)event.getEntityLiving();
-//            entity.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
+//            entity.getCapability(CapTargetHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
 //                BlockPos blockPos = iCapabilityInfoHolder.getPos();
 //                double targetX = iCapabilityInfoHolder.getPos().getX();
 //                double targetY = iCapabilityInfoHolder.getPos().getY();
@@ -145,9 +155,37 @@ public class ServerEvents {
         }
         if (entity instanceof PlayerEntity) {
             PlayerEntity playerEntity = (PlayerEntity) entity;
-            playerEntity.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
-                RegistryMessages.sendToClient(new MessageClientCommandDistance(iCapabilityInfoHolder.getCommandDistance()), (ServerPlayerEntity) playerEntity);
+            playerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                RegistryMessages.sendToClient(new MessageClientCommandDistance(iCapTargetHolder.getCommandDistance()), (ServerPlayerEntity) playerEntity);
             });
+        }
+    }
+
+    @SubscribeEvent
+    public static void onEntityHurt(LivingHurtEvent event) {
+        Entity source = event.getSource().getTrueSource();
+        LivingEntity hurtEntity = event.getEntityLiving();
+        if (source instanceof ServerPlayerEntity) {
+            ServerPlayerEntity playerEntity = (ServerPlayerEntity) source;
+            float damageAmount = event.getAmount();
+            if (hurtEntity.isAlive()) {
+                RegistryMessages.sendToClient(new MessageClientDisplay(
+                        EnumClientDisplay.DAMAGE, 1,Collections.singletonList(String.valueOf(damageAmount))),
+                        playerEntity
+                );
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onEntityDeath(LivingDeathEvent event) {
+        Entity source = event.getSource().getTrueSource();
+        if (source instanceof ServerPlayerEntity) {
+            ServerPlayerEntity attacker = (ServerPlayerEntity) source;
+            RegistryMessages.sendToClient(new MessageClientDisplay(
+                            EnumClientDisplay.CRITICAL, 1,Collections.singletonList("")),
+                    attacker
+            );
         }
     }
 

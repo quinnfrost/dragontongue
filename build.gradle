@@ -158,9 +158,11 @@ dependencies {
     implementation fg.deobf("curse.maven:iceandfire-264231:3948661")
 //    implementation fg.deobf(project(":Ice_and_Fire-1.16.3"))
 
-
 //    implementation fg.deobf("curse.maven:guifollowers_1.16.5-1.9-410911:3693575")
 //    implementation fg.deobf("curse.maven:collective-1.16.5-5.49-342584:4312565")
+
+//    compileOnly fg.deobf("curse.maven:Ping-1.16.4-1.6.9-222967:3172028")
+//    implementation fg.deobf("curse.maven:Ping-1.16.4-1.6.9-222967:3172028")
 
     // You may put jars on which you depend on in ./libs or you may define them like so..
     // compile "some.group:artifact:version:classifier"

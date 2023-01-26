@@ -1,7 +1,9 @@
 package com.github.quinnfrost.dragontongue.capability;
 
+import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
@@ -9,13 +11,22 @@ import java.util.List;
 import java.util.UUID;
 
 // TODO: 增加字段commandAttackDestination?
-public class CapabilityInfoHolderImplementation implements ICapabilityInfoHolder {
+public class CapTargetHolderImpl implements ICapTargetHolder {
     private List<UUID> commandEntitiesUUID = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
-    private BlockPos commandDestination = new BlockPos(0,128,0);
+    private BlockPos commandDestination = null;
     private EnumCommandStatus status = EnumCommandStatus.NONE;
     private double commandDistance = 128;
-    private BlockPos fallbackPosition = new BlockPos(0,128,0);
+    private BlockPos fallbackPosition = null;
     private int fallbackTimer = 0;
+
+    public CapTargetHolderImpl() {
+
+    }
+
+    public CapTargetHolderImpl(Entity entity) {
+        this.commandDestination = entity.getPosition();
+        this.fallbackPosition = entity.getPosition();
+    }
 
     @Override
     public List<UUID> getCommandEntities() {

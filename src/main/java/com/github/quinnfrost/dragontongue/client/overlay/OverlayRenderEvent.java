@@ -1,4 +1,4 @@
-package com.github.quinnfrost.dragontongue.client.gui;
+package com.github.quinnfrost.dragontongue.client.overlay;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
@@ -14,15 +14,20 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 @OnlyIn(Dist.CLIENT)
-public class GUIEvent extends IngameGui {
-    public GUIEvent(Minecraft minecraft) {
+public class OverlayRenderEvent extends IngameGui {
+    public OverlayRenderEvent(Minecraft minecraft) {
         super(minecraft);
     }
 
     @SubscribeEvent(priority = EventPriority.NORMAL)
     public void renderOverlay(RenderGameOverlayEvent.Post event) {
-        GUICrossHair.renderString(event);
-        GUICrossHair.renderCrossHairIcon(event);
+        if (event.getType() == RenderGameOverlayEvent.ElementType.TEXT) {
+            OverlayCrossHair.renderStringLeftPanel(event);
+            OverlayCrossHair.renderStringCrossHair(event);
+        }
+        if (event.getType() == RenderGameOverlayEvent.ElementType.ALL) {
+            OverlayCrossHair.renderIconCrossHair(event);
+        }
     }
 
 //    public void draw(Minecraft m, boolean isAlive, int width, int height) {

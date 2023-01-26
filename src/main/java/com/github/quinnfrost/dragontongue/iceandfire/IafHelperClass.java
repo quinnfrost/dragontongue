@@ -3,8 +3,8 @@ package com.github.quinnfrost.dragontongue.iceandfire;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.DragonTongue;
-import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
-import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAIAsYouWish;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAICalmLook;
@@ -90,7 +90,7 @@ public class IafHelperClass {
     public static boolean setDragonStay(MobEntity dragonIn) {
         if (!isDragon(dragonIn)){return false;}
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-        ICapabilityInfoHolder iCapabilityInfoHolder = dragon.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(null);
+        ICapTargetHolder iCapTargetHolder = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(null);
 
         dragon.setHovering(false);
         dragon.setFlying(false);
@@ -104,9 +104,9 @@ public class IafHelperClass {
         if (!isDragon(dragonIn)){return false;}
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
         if (target == null && breathPos != null) {
-            dragon.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
-                iCapabilityInfoHolder.setDestination(breathPos);
-                iCapabilityInfoHolder.setCommandStatus(EnumCommandStatus.ATTACK);
+            dragon.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                iCapTargetHolder.setDestination(breathPos);
+                iCapTargetHolder.setCommandStatus(EnumCommandStatus.ATTACK);
             });
         } else {
             dragon.setAttackTarget(target);
@@ -117,17 +117,20 @@ public class IafHelperClass {
     public static boolean setDragonBreathTarget(LivingEntity dragonIn, @Nullable BlockPos breathPos) {
         if (!isDragon(dragonIn)){return false;}
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-        if (breathPos == null) {
-            dragon.burningTarget = null;
-            return true;
-        }
+
 //        dragon.groundAttack = IafDragonAttacks.Ground.FIRE;
 //        dragon.usingGroundAttack = true;
-        dragon.burningTarget = breathPos;
-        dragon.getLookController().setLookPosition(breathPos.getX() + 0.5D, breathPos.getY() + 0.5D, breathPos.getZ() + 0.5D, 180F, 180F);
-        dragon.rotationYaw = dragon.renderYawOffset;
-        dragon.stimulateFire(breathPos.getX() + 0.5F, breathPos.getY() + 0.5F, breathPos.getZ() + 0.5F, 1);
-        dragon.setBreathingFire(true);
+
+        if (breathPos != null) {
+            dragon.burningTarget = breathPos;
+            dragon.getLookController().setLookPosition(breathPos.getX() + 0.5D, breathPos.getY() + 0.5D, breathPos.getZ() + 0.5D, 180F, 180F);
+            dragon.rotationYaw = dragon.renderYawOffset;
+            // SyncType=1 : no charge, SyncType=5 : with charge
+            dragon.stimulateFire(breathPos.getX() + 0.5F, breathPos.getY() + 0.5F, breathPos.getZ() + 0.5F, 5);
+            dragon.setBreathingFire(true);
+        } else {
+            dragon.setBreathingFire(false);
+        }
         return true;
     }
 
@@ -149,8 +152,13 @@ public class IafHelperClass {
             EntityDragonBase dragon = (EntityDragonBase) mobEntity;
             setDragonBreathTarget(dragon,null);
         }
-        mobEntity.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
-            iCapabilityInfoHolder.setDestination(mobEntity.getPosition());
+        mobEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+            iCapTargetHolder.setDestination(mobEntity.getPosition());
+            if (
+                    iCapTargetHolder.getCommandStatus() == EnumCommandStatus.ATTACK
+            ) {
+                iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
+            }
         });
         mobEntity.getNavigator().clearPath();
         mobEntity.setAttackTarget(null);
@@ -158,9 +166,9 @@ public class IafHelperClass {
 
     public static void setPetReach(MobEntity mobEntity, @Nullable BlockPos blockPos) {
         BlockPos pos = (blockPos != null ? blockPos : mobEntity.getPosition());
-        mobEntity.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
-            iCapabilityInfoHolder.setDestination(pos);
-            iCapabilityInfoHolder.setCommandStatus(EnumCommandStatus.REACH);
+        mobEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+            iCapTargetHolder.setDestination(pos);
+            iCapTargetHolder.setCommandStatus(EnumCommandStatus.REACH);
         });
         if (isDragon(mobEntity)) {
             EntityDragonBase dragon = (EntityDragonBase) mobEntity;

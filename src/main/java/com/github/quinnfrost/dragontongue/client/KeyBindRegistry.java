@@ -1,8 +1,10 @@
 package com.github.quinnfrost.dragontongue.client;
 
 import com.github.quinnfrost.dragontongue.DragonTongue;
-import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
-import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImplementation;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
+import com.github.quinnfrost.dragontongue.client.gui.GUITest;
+import com.github.quinnfrost.dragontongue.client.overlay.OverlayCrossHair;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandEntity;
 import com.github.quinnfrost.dragontongue.message.MessageClientCommandDistance;
@@ -26,12 +28,9 @@ import java.lang.reflect.Field;
 public class KeyBindRegistry {
     public static EnumMouseScroll scroll_status = EnumMouseScroll.NONE;
     public static boolean scan_scroll = false;
-    public static boolean mkey_left_down = false;
-    public static boolean mkey_right_down = false;
     public static KeyBinding command_tamed = new KeyBinding("key.command_tamed", -1, "key.categories.gameplay");
     public static KeyBinding select_tamed = new KeyBinding("key.select_tamed", -1, "key.categories.gameplay");
     public static KeyBinding debug_tamed = new KeyBinding("key.debug_tamed", -1, "key.categories.gameplay");
-    public static KeyBinding set_tamed = new KeyBinding("key.set_tamed", -1, "key.categories.gameplay");
 
     public static EnumMouseScroll getScrollStatus() {
         EnumMouseScroll status = scroll_status;
@@ -47,17 +46,19 @@ public class KeyBindRegistry {
                 case NONE:
                     break;
                 case UP:
-                    clientPlayerEntity.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
+                    clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                         RegistryMessages.sendToServer(
-                                new MessageClientCommandDistance(iCapabilityInfoHolder.modifyCommandDistance(1))
+                                new MessageClientCommandDistance(iCapTargetHolder.modifyCommandDistance(1))
                         );
+                        OverlayCrossHair.setCrossHairString(String.valueOf(iCapTargetHolder.getCommandDistance()),3,0);
                     });
                     break;
                 case DOWN:
-                    clientPlayerEntity.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
+                    clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                         RegistryMessages.sendToServer(
-                                new MessageClientCommandDistance(iCapabilityInfoHolder.modifyCommandDistance(-1))
+                                new MessageClientCommandDistance(iCapTargetHolder.modifyCommandDistance(-1))
                         );
+                        OverlayCrossHair.setCrossHairString(String.valueOf(iCapTargetHolder.getCommandDistance()),3,0);
                     });
                     break;
             }
@@ -91,9 +92,22 @@ public class KeyBindRegistry {
                 DragonTongue.debugTarget = (MobEntity) entityRayTraceResult.getEntity();
             }
         }
+        if (
+                KeyBindRegistry.command_tamed.isKeyDown()
+                || KeyBindRegistry.select_tamed.isKeyDown()
+        ) {
+            // Scan mouse scroll
+            if (!KeyBindRegistry.scan_scroll) {
+                KeyBindRegistry.scan_scroll = true;
+            }
+        } else {
+            if (KeyBindRegistry.scan_scroll) {
+                KeyBindRegistry.scan_scroll = false;
+            }
+        }
         if (KeyBindRegistry.command_tamed.isKeyDown()) {
             GameSettings gameSettings = Minecraft.getInstance().gameSettings;
-            double commandDistance = clientPlayerEntity.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(new CapabilityInfoHolderImplementation()).getCommandDistance();
+            double commandDistance = clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(clientPlayerEntity)).getCommandDistance();
             EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(clientPlayerEntity,
                     Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f, null);
             BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(clientPlayerEntity, (float) commandDistance, 1.0f);
@@ -114,20 +128,11 @@ public class KeyBindRegistry {
                 ));
             }
 
-            // Scan mouse scroll
-            if (!KeyBindRegistry.scan_scroll) {
-                KeyBindRegistry.scan_scroll = true;
-            }
             scanScrollAction(clientPlayerEntity);
-        } else {
-            if (KeyBindRegistry.scan_scroll) {
-                KeyBindRegistry.scan_scroll = false;
-            }
         }
-
         if (KeyBindRegistry.select_tamed.isKeyDown()) {
             GameSettings gameSettings = Minecraft.getInstance().gameSettings;
-            double commandDistance = clientPlayerEntity.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(new CapabilityInfoHolderImplementation()).getCommandDistance();
+            double commandDistance = clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(clientPlayerEntity)).getCommandDistance();
             EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(clientPlayerEntity,
                     Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f, null);
 
@@ -151,15 +156,7 @@ public class KeyBindRegistry {
                 ));
             }
 
-            // Scan mouse scroll
-            if (!KeyBindRegistry.scan_scroll) {
-                KeyBindRegistry.scan_scroll = true;
-            }
             scanScrollAction(clientPlayerEntity);
-        } else {
-            if (KeyBindRegistry.scan_scroll) {
-                KeyBindRegistry.scan_scroll = false;
-            }
         }
 
     }

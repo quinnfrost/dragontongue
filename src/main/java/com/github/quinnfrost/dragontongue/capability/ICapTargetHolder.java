@@ -6,7 +6,7 @@ import net.minecraft.util.math.BlockPos;
 import java.util.List;
 import java.util.UUID;
 
-public interface ICapabilityInfoHolder {
+public interface ICapTargetHolder {
     List<UUID> getCommandEntities();
     void setCommandEntities(List<UUID> uuids);
     void setCommandEntity(UUID uuid);

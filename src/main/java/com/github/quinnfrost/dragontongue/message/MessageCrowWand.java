@@ -1,7 +1,7 @@
 package com.github.quinnfrost.dragontongue.message;
 
 import com.github.quinnfrost.dragontongue.DragonTongue;
-import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCrowWand;
 import com.github.quinnfrost.dragontongue.utils.util;
@@ -63,8 +63,8 @@ public class MessageCrowWand {
                     case PASS:
                         break;
                     case TELEPORT:
-                        player.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
-                            iCapabilityInfoHolder.setFallbackPosition(player.getPosition());
+                        player.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                            iCapTargetHolder.setFallbackPosition(player.getPosition());
 
                             serverWorld.spawnParticle(ParticleTypes.PORTAL, targetX, targetY, targetZ, 800, 2, 1, 2,
                                     0.1);
@@ -85,16 +85,16 @@ public class MessageCrowWand {
                                     break;
                             }
                             player.teleportKeepLoaded(targetX, targetY, targetZ);
-                            iCapabilityInfoHolder.setFallbackTimer(80);
+                            iCapTargetHolder.setFallbackTimer(80);
                         });
 
                         break;
                     case FALLBACK:
-                        player.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
-                            if (iCapabilityInfoHolder.getFallbackTimer() != 0) {
-                                player.teleportKeepLoaded(iCapabilityInfoHolder.getFallbackPosition().getX(),
-                                        iCapabilityInfoHolder.getFallbackPosition().getY(), iCapabilityInfoHolder.getFallbackPosition().getZ());
-                                iCapabilityInfoHolder.setFallbackTimer(0);
+                        player.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                            if (iCapTargetHolder.getFallbackTimer() != 0) {
+                                player.teleportKeepLoaded(iCapTargetHolder.getFallbackPosition().getX(),
+                                        iCapTargetHolder.getFallbackPosition().getY(), iCapTargetHolder.getFallbackPosition().getZ());
+                                iCapTargetHolder.setFallbackTimer(0);
                             }
                         });
                         break;
