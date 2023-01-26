@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+// TODO: 增加字段commandAttackDestination?
 public class CapabilityInfoHolderImplementation implements ICapabilityInfoHolder {
     private List<UUID> commandEntitiesUUID = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
     private BlockPos commandDestination = new BlockPos(0,128,0);

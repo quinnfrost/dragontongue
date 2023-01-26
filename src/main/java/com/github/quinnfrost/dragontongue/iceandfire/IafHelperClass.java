@@ -16,13 +16,13 @@ import net.minecraft.util.math.vector.Vector3d;
 
 import javax.annotation.Nullable;
 
-public class IafTestClass {
-    public static boolean isDragon(@Nullable Entity dragonIn) {
+public class IafHelperClass {
+    public static boolean isDragon(Entity dragonIn) {
         return DragonTongue.isIafPresent && dragonIn instanceof EntityDragonBase;
     }
 
     public static boolean registerDragonAI(MobEntity mobEntity) {
-        if (isDragon(mobEntity)) {
+        if (DragonTongue.isIafPresent && mobEntity instanceof EntityDragonBase) {
             EntityDragonBase dragon = (EntityDragonBase) mobEntity;
 
             dragon.goalSelector.addGoal(0, new DragonAIAsYouWish(dragon));
@@ -54,15 +54,13 @@ public class IafTestClass {
             } catch (Exception ignored) {
 
             }
-
-            return new BlockPos(-1, -1, -1);
         } else if (entity.getNavigator().getTargetPos() != null) {
             return entity.getNavigator().getTargetPos();
         }
-        return new BlockPos(-1, -1, -1);
+        return null;
     }
 
-    public static boolean setDragonTakeOff(@Nullable LivingEntity dragonIn) {
+    public static boolean setDragonTakeOff(LivingEntity dragonIn) {
         if (!isDragon(dragonIn)){return false;}
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
 
@@ -74,16 +72,16 @@ public class IafTestClass {
         return true;
     }
 
-    public static boolean setDragonHover(MobEntity dragonIn) {
+    public static boolean setDragonHover(MobEntity dragonIn, BlockPos hoverPos) {
         if (!isDragon(dragonIn)){return false;}
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-        ICapabilityInfoHolder iCapabilityInfoHolder = dragon.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(null);
 
         dragon.setHovering(true);
         dragon.setFlying(false);
+        // Force set hover ticks to prevent dragon from flying triggered by dragon logic
         dragon.hoverTicks = 10;
         dragon.ticksStill = 10;
-        dragon.flightManager.setFlightTarget(Vector3d.copyCentered(iCapabilityInfoHolder.getDestination()));
+        dragon.flightManager.setFlightTarget(Vector3d.copyCentered(hoverPos));
         dragon.getNavigator().clearPath();
 
         return true;
@@ -102,32 +100,74 @@ public class IafTestClass {
         return true;
     }
 
-    public static boolean setDragonAttackTarget(LivingEntity dragonIn, @Nullable LivingEntity target) {
+    public static boolean setDragonAttackTarget(LivingEntity dragonIn, @Nullable LivingEntity target,@Nullable BlockPos breathPos) {
         if (!isDragon(dragonIn)){return false;}
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-        dragon.setAttackTarget(target);
+        if (target == null && breathPos != null) {
+            dragon.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
+                iCapabilityInfoHolder.setDestination(breathPos);
+                iCapabilityInfoHolder.setCommandStatus(EnumCommandStatus.ATTACK);
+            });
+        } else {
+            dragon.setAttackTarget(target);
+        }
+        return true;
+    }
+
+    public static boolean setDragonBreathTarget(LivingEntity dragonIn, @Nullable BlockPos breathPos) {
+        if (!isDragon(dragonIn)){return false;}
+        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+        if (breathPos == null) {
+            dragon.burningTarget = null;
+            return true;
+        }
+//        dragon.groundAttack = IafDragonAttacks.Ground.FIRE;
+//        dragon.usingGroundAttack = true;
+        dragon.burningTarget = breathPos;
+        dragon.getLookController().setLookPosition(breathPos.getX() + 0.5D, breathPos.getY() + 0.5D, breathPos.getZ() + 0.5D, 180F, 180F);
+        dragon.rotationYaw = dragon.renderYawOffset;
+        dragon.stimulateFire(breathPos.getX() + 0.5F, breathPos.getY() + 0.5F, breathPos.getZ() + 0.5F, 1);
+        dragon.setBreathingFire(true);
         return true;
     }
 
     public static boolean setDragonFlightTarget(LivingEntity dragonIn, BlockPos blockPos) {
         if (!isDragon(dragonIn)){return false;}
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+        double x = blockPos.getX();
+        double y = blockPos.getY();
+        double z = blockPos.getZ();
+
+        dragon.flightManager.setFlightTarget(new Vector3d(x,y,z));
+        dragon.getNavigator().tryMoveToXYZ(x,y,z, 1.1D);
 
         return true;
     }
 
-    public static void setPetReach(MobEntity entity, @Nullable BlockPos blockPos) {
-        BlockPos pos = (blockPos != null ? blockPos : entity.getPosition());
-        entity.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
+    public static void setPetHalt(MobEntity mobEntity) {
+        if (isDragon(mobEntity)) {
+            EntityDragonBase dragon = (EntityDragonBase) mobEntity;
+            setDragonBreathTarget(dragon,null);
+        }
+        mobEntity.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
+            iCapabilityInfoHolder.setDestination(mobEntity.getPosition());
+        });
+        mobEntity.getNavigator().clearPath();
+        mobEntity.setAttackTarget(null);
+    }
+
+    public static void setPetReach(MobEntity mobEntity, @Nullable BlockPos blockPos) {
+        BlockPos pos = (blockPos != null ? blockPos : mobEntity.getPosition());
+        mobEntity.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
             iCapabilityInfoHolder.setDestination(pos);
             iCapabilityInfoHolder.setCommandStatus(EnumCommandStatus.REACH);
         });
-        if (isDragon(entity)) {
-            EntityDragonBase dragon = (EntityDragonBase) entity;
+        if (isDragon(mobEntity)) {
+            EntityDragonBase dragon = (EntityDragonBase) mobEntity;
             dragon.flightManager.setFlightTarget(Vector3d.copyCentered(pos));
             dragon.getNavigator().tryMoveToXYZ(pos.getX(), pos.getY(), pos.getZ(), 1.0f);
         } else {
-            entity.getNavigator().tryMoveToXYZ(pos.getX(), pos.getY(), pos.getZ(), 1.0f);
+            mobEntity.getNavigator().tryMoveToXYZ(pos.getX(), pos.getY(), pos.getZ(), 1.0f);
         }
     }
 

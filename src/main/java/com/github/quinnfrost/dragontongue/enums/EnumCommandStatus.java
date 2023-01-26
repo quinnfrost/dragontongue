@@ -3,7 +3,7 @@ package com.github.quinnfrost.dragontongue.enums;
 public enum EnumCommandStatus {
     NONE,
     REACH,
-    CIRCLE,
+    STAY,
     HOVER,
-    ARRIVED
+    ATTACK
 }

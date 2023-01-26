@@ -1,15 +1,8 @@
 package com.github.quinnfrost.dragontongue.event;
 
-import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.client.KeyBindRegistry;
-import com.github.quinnfrost.dragontongue.config.Config;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandEntity;
-import com.github.quinnfrost.dragontongue.message.MessageCommandEntity;
-import com.github.quinnfrost.dragontongue.message.RegistryMessages;
-import com.github.quinnfrost.dragontongue.utils.util;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.ColorHandlerEvent;
@@ -32,16 +25,27 @@ public class ClientEvents {
             event.setCanceled(true);
         }
     }
+    @SubscribeEvent
+    public static void detectClicks(InputEvent.ClickInputEvent event) {
+        if (
+                KeyBindRegistry.command_tamed.isKeyDown()
+                || KeyBindRegistry.select_tamed.isKeyDown()
+        ) {
+            event.setSwingHand(false);
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void detectKeys(InputEvent.KeyInputEvent event) {
+        ClientPlayerEntity clientPlayerEntity = Minecraft.getInstance().player;
+    }
 
     // TODO:组合快捷键
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event){
-        if (!event.player.world.isRemote) {
-            return;
-        }
-        ClientPlayerEntity clientPlayer = (ClientPlayerEntity) event.player;
-        KeyBindRegistry.scanKeyPress(clientPlayer);
-        KeyBindRegistry.scanScrollAction(clientPlayer);
+        ClientPlayerEntity clientPlayerEntity = Minecraft.getInstance().player;
+        KeyBindRegistry.scanKeyPress(clientPlayerEntity);
     }
 
     @SubscribeEvent

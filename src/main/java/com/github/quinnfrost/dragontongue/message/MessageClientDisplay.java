@@ -1,5 +1,6 @@
 package com.github.quinnfrost.dragontongue.message;
 
+import com.github.quinnfrost.dragontongue.client.gui.GUICrossHair;
 import com.github.quinnfrost.dragontongue.client.gui.GUIEvent;
 import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
 import net.minecraft.network.PacketBuffer;
@@ -34,17 +35,13 @@ public class MessageClientDisplay {
         }
     }
 
-
-
-
-
     public boolean handler(Supplier<NetworkEvent.Context> contextSupplier) {
         contextSupplier.get().enqueueWork(() -> {
             contextSupplier.get().setPacketHandled(true);
 
             switch (messageType) {
                 case ENTITY_DEBUG:
-                    GUIEvent.buffer = message;
+                    GUICrossHair.buffer = message;
                     break;
             }
 

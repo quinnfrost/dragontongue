@@ -218,5 +218,4 @@ public class util {
         return Minecraft.getInstance().player;
     }
 
-
 }

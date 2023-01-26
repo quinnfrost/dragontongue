@@ -5,19 +5,19 @@ import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImplementation;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
-import com.github.quinnfrost.dragontongue.iceandfire.IafTestClass;
+import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
 
 import java.util.EnumSet;
-import java.util.Optional;
 
 public class DragonAIAsYouWish extends Goal {
     private final EntityDragonBase dragon;
     private final ICapabilityInfoHolder capabilityInfoHolder;
     private boolean isTargetAir;
+    private BlockPos shouldStay;
 
     public DragonAIAsYouWish(EntityDragonBase dragonIn) {
         this.dragon = dragonIn;
@@ -28,7 +28,10 @@ public class DragonAIAsYouWish extends Goal {
     }
     @Override
     public boolean shouldExecute() {
-        return capabilityInfoHolder.getCommandStatus() != EnumCommandStatus.NONE;
+        return (
+                capabilityInfoHolder.getCommandStatus() != EnumCommandStatus.NONE
+                && dragon.getAttackTarget() == null
+        );
     }
     @Override
     public boolean shouldContinueExecuting() {
@@ -37,6 +40,7 @@ public class DragonAIAsYouWish extends Goal {
     @Override
     public void startExecuting() {
         BlockPos pos = capabilityInfoHolder.getDestination();
+        this.shouldStay = this.dragon.getPosition();
 
     }
 
@@ -44,28 +48,38 @@ public class DragonAIAsYouWish extends Goal {
     public void tick() {
         BlockPos targetPos = dragon.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(null).getDestination();
 
-        if (util.hasArrived(dragon, capabilityInfoHolder.getDestination())
-                && capabilityInfoHolder.getCommandStatus() != EnumCommandStatus.HOVER) {
-            dragon.getNavigator().clearPath();
-            capabilityInfoHolder.setCommandStatus(EnumCommandStatus.HOVER);
-            dragon.setMotion(0,0,0);
-            // TODO: 指令的目标应该是准星指着的那一格还是上一格
-            isTargetAir = shouldHover(dragon);
-        }
         switch (capabilityInfoHolder.getCommandStatus()) {
             case REACH:
-                dragon.flightManager.setFlightTarget(Vector3d.copyCentered(targetPos));
-                dragon.getNavigator().tryMoveToXYZ(targetPos.getX(), targetPos.getY(), targetPos.getZ(), 1.1D);
-
-                break;
-            case HOVER:
-                if (isTargetAir) {
-                    IafTestClass.setDragonHover(dragon);
+                if (util.hasArrived(dragon, capabilityInfoHolder.getDestination())
+                        && capabilityInfoHolder.getCommandStatus() == EnumCommandStatus.REACH) {
+                    dragon.getNavigator().clearPath();
+                    dragon.setMotion(0,0,0);
+                    // TODO: 指令的目标应该是准星指着的那一格还是上一格
+                    if (shouldHover(dragon)) {
+                        capabilityInfoHolder.setCommandStatus(EnumCommandStatus.HOVER);
+                    } else {
+                        capabilityInfoHolder.setCommandStatus(EnumCommandStatus.STAY);
+                    }
                 } else {
-                    IafTestClass.setDragonStay(dragon);
+                    this.shouldStay = targetPos;
+                    IafHelperClass.setDragonFlightTarget(dragon, targetPos);
+//                    dragon.flightManager.setFlightTarget(new Vector3d(targetPos.getX(), targetPos.getY(), targetPos.getZ()));
+//                    dragon.getNavigator().tryMoveToXYZ(targetPos.getX(), targetPos.getY(), targetPos.getZ(), 1.1D);
                 }
                 break;
-            case CIRCLE:
+            case STAY:
+                IafHelperClass.setDragonStay(dragon);
+                break;
+            case HOVER:
+                IafHelperClass.setDragonHover(dragon, targetPos);
+                break;
+            case ATTACK:
+                // TODO: 参照IafDragonAttacks.Air#HOVER_BLAST
+                IafHelperClass.setDragonBreathTarget(dragon, targetPos);
+                if (dragon.isFlying() || dragon.isHovering()) {
+                    IafHelperClass.setDragonHover(dragon, shouldStay);
+                }
+
                 break;
         }
     }

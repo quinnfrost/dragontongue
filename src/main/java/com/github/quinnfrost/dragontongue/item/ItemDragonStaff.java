@@ -6,7 +6,6 @@ import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpleme
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandEntity;
-import com.github.quinnfrost.dragontongue.iceandfire.IafTestClass;
 import com.github.quinnfrost.dragontongue.message.MessageCommandEntity;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
@@ -36,8 +35,7 @@ public class ItemDragonStaff extends Item {
 
     /**
      * Dragon staff function
-     *      Right click on tamed: select context entity
-     *
+     * Right click on tamed: select context entity
      *
      * @param worldIn
      * @param playerIn
@@ -47,7 +45,7 @@ public class ItemDragonStaff extends Item {
     @Override
     @OnlyIn(Dist.CLIENT)
     public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn) {
-        if (!worldIn.isRemote){
+        if (!worldIn.isRemote) {
             return super.onItemRightClick(worldIn, playerIn, handIn);
         }
         ICapabilityInfoHolder capabilityInfoHolder = playerIn.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(new CapabilityInfoHolderImplementation());
@@ -58,16 +56,17 @@ public class ItemDragonStaff extends Item {
                 null);
         BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(playerIn, (float) capabilityInfoHolder.getCommandDistance(), 1.0f);
 
+        if (entityRayTraceResult == null || entityRayTraceResult.getType() == RayTraceResult.Type.MISS) {
+            return super.onItemRightClick(worldIn, playerIn, handIn);
+        }
 
         // Different function based on holding hands and sneaking
         if (!playerIn.isSneaking() && handIn == Hand.MAIN_HAND) {
-            RegistryMessages
-                    .sendToServer(new MessageCommandEntity(EnumCommandEntity.CIRCLE, playerIn.getUniqueID(), blockRayTraceResult
-                            ));
+            RegistryMessages.sendToServer(
+                    new MessageCommandEntity(EnumCommandEntity.HALT, playerIn.getUniqueID(), entityRayTraceResult.getEntity().getUniqueID())
+            );
+
         } else if (playerIn.isSneaking() && handIn == Hand.MAIN_HAND) {
-            if (entityRayTraceResult == null || entityRayTraceResult.getType() == RayTraceResult.Type.MISS) {
-                return super.onItemRightClick(worldIn, playerIn, handIn);
-            }
             RegistryMessages.sendToServer(
                     new MessageCommandEntity(EnumCommandEntity.FOLLOW, playerIn.getUniqueID(),
                             entityRayTraceResult.getEntity().getUniqueID()));
@@ -76,23 +75,14 @@ public class ItemDragonStaff extends Item {
                             entityRayTraceResult.getEntity().getUniqueID()));
 
         } else if (!playerIn.isSneaking() && handIn == Hand.OFF_HAND) {
-            if (entityRayTraceResult == null || entityRayTraceResult.getType() == RayTraceResult.Type.MISS) {
-                return super.onItemRightClick(worldIn, playerIn, handIn);
-            }
             RegistryMessages.sendToServer(
                     new MessageCommandEntity(EnumCommandEntity.WONDER, playerIn.getUniqueID(),
                             entityRayTraceResult.getEntity().getUniqueID()));
 
         } else if (playerIn.isSneaking() && handIn == Hand.OFF_HAND) {
-            if (entityRayTraceResult == null || entityRayTraceResult.getType() == RayTraceResult.Type.MISS) {
-                return super.onItemRightClick(worldIn, playerIn, handIn);
-            }
             RegistryMessages.sendToServer(
-                    new MessageCommandEntity(EnumCommandEntity.HALT, playerIn.getUniqueID(),
+                    new MessageCommandEntity(EnumCommandEntity.LAND, playerIn.getUniqueID(),
                             entityRayTraceResult.getEntity().getUniqueID()));
-//            RegistryMessages.sendToServer(
-//                    new MessageCommandEntity(EnumCommandEntity.LAND, playerIn.getUniqueID(),
-//                            entityRayTraceResult.getEntity().getUniqueID()));
         }
 
         return super.onItemRightClick(worldIn, playerIn, handIn);

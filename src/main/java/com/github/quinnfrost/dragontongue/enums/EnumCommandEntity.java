@@ -2,6 +2,7 @@ package com.github.quinnfrost.dragontongue.enums;
 
 public enum EnumCommandEntity {
     PASS,
+    DEBUG,
     ADD,
     REMOVE,
     SET,

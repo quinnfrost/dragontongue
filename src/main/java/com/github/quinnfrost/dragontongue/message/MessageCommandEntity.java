@@ -2,10 +2,11 @@ package com.github.quinnfrost.dragontongue.message;
 
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImplementation;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandEntity;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
-import com.github.quinnfrost.dragontongue.iceandfire.IafTestClass;
+import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -31,31 +32,38 @@ import java.util.function.Supplier;
 
 public class MessageCommandEntity {
     private EnumCommandEntity action;
-    private UUID commander;
-    private UUID target;
+    private UUID commanderUUID;
+    private UUID targetUUID;
     private BlockPos blockPos;
 
     // Add a command entity
-    public MessageCommandEntity(EnumCommandEntity action, UUID commander, UUID addTarget) {
+    public MessageCommandEntity(EnumCommandEntity action, UUID commanderUUID, UUID addTarget) {
         this.action = action;
-        this.commander = commander;
-        this.target = addTarget;
+        this.commanderUUID = commanderUUID;
+        this.targetUUID = addTarget;
         this.blockPos = new BlockPos(0, 128, 0);
     }
 
     // Command attack target
-    public MessageCommandEntity(EnumCommandEntity action, UUID commander, @Nullable EntityRayTraceResult target) {
+    public MessageCommandEntity(EnumCommandEntity action, UUID commanderUUID, @Nullable EntityRayTraceResult targetUUID) {
         this.action = action;
-        this.commander = commander;
-        this.target = target != null ? target.getEntity().getUniqueID()
+        this.commanderUUID = commanderUUID;
+        this.targetUUID = targetUUID != null ? targetUUID.getEntity().getUniqueID()
                 : UUID.fromString("00000000-0000-0000-0000-000000000000");
         this.blockPos = new BlockPos(0, 128, 0);
     }
-
-    public MessageCommandEntity(EnumCommandEntity action, UUID commander, BlockRayTraceResult position) {
+    public MessageCommandEntity(EnumCommandEntity action, UUID commanderUUID, @Nullable EntityRayTraceResult targetUUID, BlockRayTraceResult blockRayTraceResult) {
         this.action = action;
-        this.commander = commander;
-        this.target = UUID.fromString("00000000-0000-0000-0000-000000000000");
+        this.commanderUUID = commanderUUID;
+        this.targetUUID = targetUUID != null ? targetUUID.getEntity().getUniqueID()
+                : UUID.fromString("00000000-0000-0000-0000-000000000000");
+        this.blockPos = new BlockPos(blockRayTraceResult.getHitVec());
+    }
+
+    public MessageCommandEntity(EnumCommandEntity action, UUID commanderUUID, BlockRayTraceResult position) {
+        this.action = action;
+        this.commanderUUID = commanderUUID;
+        this.targetUUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
         this.blockPos = new BlockPos(position.getHitVec());
 
     }
@@ -63,15 +71,15 @@ public class MessageCommandEntity {
 
     public MessageCommandEntity(PacketBuffer buf) {
         this.action = EnumCommandEntity.valueOf(buf.readString());
-        this.commander = buf.readUniqueId();
-        this.target = buf.readUniqueId();
+        this.commanderUUID = buf.readUniqueId();
+        this.targetUUID = buf.readUniqueId();
         this.blockPos = buf.readBlockPos();
     }
 
     public void toBytes(PacketBuffer buf) {
         buf.writeString(action.name());
-        buf.writeUniqueId(commander);
-        buf.writeUniqueId(target);
+        buf.writeUniqueId(commanderUUID);
+        buf.writeUniqueId(targetUUID);
         buf.writeBlockPos(blockPos);
     }
 
@@ -81,12 +89,15 @@ public class MessageCommandEntity {
 
             ServerWorld serverWorld = contextSupplier.get().getSender().getServerWorld();
             EnumCommandEntity action = this.action;
-            LivingEntity commander = (LivingEntity) serverWorld.getEntityByUuid(this.commander);
-            LivingEntity targetEntity = (LivingEntity) serverWorld.getEntityByUuid(this.target);
+            LivingEntity commander = (LivingEntity) serverWorld.getEntityByUuid(this.commanderUUID);
+            LivingEntity targetEntity = (LivingEntity) serverWorld.getEntityByUuid(this.targetUUID);
             BlockPos targetPos = this.blockPos;
 
             if (commander == null || action == null) {
                 return;
+            }
+            if (targetEntity != null) {
+                targetEntity.addPotionEffect(new EffectInstance(Effects.GLOWING, 20, 0, true, false));
             }
             commandEntity(serverWorld, commander, action, targetEntity, targetPos, null);
         });
@@ -101,21 +112,20 @@ public class MessageCommandEntity {
         }
 
         switch (action) {
+            case DEBUG:
+                DragonTongue.debugTarget = (MobEntity) target;
+                break;
             case ADD:
                 if (target != null) {
-                    target.addPotionEffect(new EffectInstance(Effects.GLOWING, 20, 0, true, false));
                     if (util.isOwner(target, commander)) {
                         commander.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
                             iCapabilityInfoHolder.addCommandEntity(target.getUniqueID());
                         });
                     }
-                    DragonTongue.debugTarget = (MobEntity) target;
-
                 }
                 break;
             case SET:
                 if (target != null) {
-                    target.addPotionEffect(new EffectInstance(Effects.GLOWING, 20, 0, true, false));
                     if (util.isOwner(target, commander)) {
                         commander.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
                             iCapabilityInfoHolder.setCommandEntity(target.getUniqueID());
@@ -125,7 +135,6 @@ public class MessageCommandEntity {
                 break;
             case REMOVE:
                 if (target != null) {
-                    target.addPotionEffect(new EffectInstance(Effects.GLOWING, 20, 0, true, false));
                     if (util.isOwner(target, commander)) {
                         commander.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
                             iCapabilityInfoHolder.removeCommandEntity(target.getUniqueID());
@@ -138,17 +147,19 @@ public class MessageCommandEntity {
                 }
                 break;
             case ATTACK:
-                commander.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE)
-                        .ifPresent(iCapabilityInfoHolder -> {
-                            for (UUID entity :
-                                    iCapabilityInfoHolder.getCommandEntities()) {
-                                commandAttack(commander,
-                                        (LivingEntity) serverWorld.getEntityByUuid(entity), target);
-                            }
-                        });
+                List<UUID> uuids = commander.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).orElse(new CapabilityInfoHolderImplementation()).getCommandEntities();
+                if (!uuids.isEmpty()) {
+                    for (UUID entityUUID :
+                            uuids) {
+                        commandAttack(commander,
+                                (LivingEntity) serverWorld.getEntityByUuid(entityUUID), target, pos);
+                    }
+                } else {
+                    commandNearbyAttack(commander, Config.NEARBY_RANGE.get().floatValue(), target, pos, excludeEntity);
+                }
                 break;
             case NEARBY_ATTACK:
-                commandNearbyAttack(commander, Config.NEARBY_RANGE.get().floatValue(), target, excludeEntity);
+                commandNearbyAttack(commander, Config.NEARBY_RANGE.get().floatValue(), target, pos, excludeEntity);
                 break;
             case LOOP_STATUS:
                 loopSitting(commander, target);
@@ -179,10 +190,10 @@ public class MessageCommandEntity {
             case CIRCLE:
                 commander.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE)
                         .ifPresent(iCapabilityInfoHolder -> {
-                            for (UUID entity :
+                            for (UUID entityUUID :
                                     iCapabilityInfoHolder.getCommandEntities()) {
                                 commandCircle(commander,
-                                        (LivingEntity) serverWorld.getEntityByUuid(entity), pos);
+                                        (LivingEntity) serverWorld.getEntityByUuid(entityUUID), pos);
                             }
                         });
                 break;
@@ -201,10 +212,11 @@ public class MessageCommandEntity {
      * @param commander     Command issuer
      * @param radius        Tamed within the radius will attack
      * @param target        Target to attack, set null to stop attacking
+     * @param pos           Only used for dragons, breath at desired location
      * @param excludeEntity Indicate which entity to exclude
      */
     private static void commandNearbyAttack(LivingEntity commander, float radius, @Nullable LivingEntity target,
-                                            @Nonnull Predicate<? super Entity> excludeEntity) {
+                                            BlockPos pos, @Nonnull Predicate<? super Entity> excludeEntity) {
         // Attack friendly, exit
         if (util.isOwner(target, commander)) {
             return;
@@ -236,7 +248,7 @@ public class MessageCommandEntity {
             // iteration through entities to set their target
             for (Entity entity : entities) {
                 if (entity instanceof TameableEntity) {
-                    commandAttack(commander, (LivingEntity) entity, target);
+                    commandAttack(commander, (LivingEntity) entity, target, pos);
                     ((LivingEntity) entity).addPotionEffect(new EffectInstance(Effects.GLOWING, 20, 0, true, false));
                 }
             }
@@ -251,25 +263,20 @@ public class MessageCommandEntity {
      * @param commander
      * @param tamed
      * @param target
+     * @param pos
      */
     public static void commandAttack(LivingEntity commander, @Nullable LivingEntity tamed,
-                                     @Nullable LivingEntity target) {
+                                     @Nullable LivingEntity target, BlockPos pos) {
         if (tamed == null) {
             return;
         }
         // TODO: 不要用setAttackTarget，因为它不检查是否可以攻击
         if (target == null || (tamed instanceof TameableEntity && !util.isOwner(target, commander)
                 && !Objects.equals(tamed.getAttackingEntity(), target) && !commander.isOnSameTeam(target))) {
-            if (!IafTestClass.setDragonAttackTarget(tamed, target)) {
+            if (!IafHelperClass.setDragonAttackTarget(tamed, target, pos)) {
                 ((TameableEntity) tamed).setAttackTarget(target);
             }
         }
-    }
-
-    public static void commandAttack(LivingEntity commander, @Nullable LivingEntity tamed,
-                                     @Nullable EntityRayTraceResult entityRayTraceResult) {
-        commandAttack(commander, tamed, entityRayTraceResult != null ? (LivingEntity) entityRayTraceResult.getEntity()
-                : null);
     }
 
     public static void commandSit(LivingEntity commander, @Nullable LivingEntity target) {
@@ -315,8 +322,24 @@ public class MessageCommandEntity {
 
     public static void commandHalt(LivingEntity commander, @Nullable LivingEntity target) {
         if (target instanceof TameableEntity && util.isOwner(target, commander)) {
-            AnimalEntity animalEntity = (AnimalEntity) target;
-            IafTestClass.setPetReach(animalEntity,null);
+            TameableEntity tameableEntity = (TameableEntity) target;
+//            commander.getCapability(CapabilityInfoHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
+//                switch (iCapabilityInfoHolder.getCommandStatus()) {
+//                    case NONE:
+//                        break;
+//                    case REACH:
+//                        iCapabilityInfoHolder.setCommandStatus(EnumCommandStatus.NONE);
+//                        break;
+//                    case STAY:
+//                        break;
+//                    case HOVER:
+//                        break;
+//                    case ATTACK:
+//                        break;
+//                }
+//            });
+
+            IafHelperClass.setPetHalt(tameableEntity);
 
         }
     }
@@ -328,9 +351,9 @@ public class MessageCommandEntity {
         if (target instanceof AnimalEntity && util.isOwner(target, commander)) {
             AnimalEntity animalEntity = (AnimalEntity) target;
             if (pos.getY() > commander.getPosY() + 1 || pos.distanceSq(animalEntity.getPosition()) > 30 * 30) {
-                IafTestClass.setDragonTakeOff(animalEntity);
+                IafHelperClass.setDragonTakeOff(animalEntity);
             }
-            IafTestClass.setPetReach(animalEntity,pos);
+            IafHelperClass.setPetReach(animalEntity,pos);
         }
     }
 
