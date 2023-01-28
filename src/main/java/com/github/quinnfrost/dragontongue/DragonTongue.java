@@ -40,9 +40,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.stream.Collectors;
 
-// Todo:
-//  整理代码
-
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(References.MOD_ID)
 @Mod.EventBusSubscriber(modid = References.MOD_ID)
@@ -112,7 +109,7 @@ public class DragonTongue
 //        ClientProxy.clientInit();
 
         KeyBindRegistry.registerKeyBind();
-        // 原本在init方法里
+
         MinecraftForge.EVENT_BUS.register(ClientEvents.class);
         MinecraftForge.EVENT_BUS.register(new OverlayRenderEvent(Minecraft.getInstance()));
 

@@ -18,7 +18,7 @@ import java.util.List;
 @OnlyIn(Dist.CLIENT)
 public class OverlayCrossHair extends AbstractGui {
     public static ResourceLocation markTexture = new ResourceLocation("dragontongue", "textures/gui/mark.png");
-    public static List<String> buffer = new ArrayList<>(3);
+    public static List<String> bufferInfoLeft = new ArrayList<>(3);
     private static String bufferCrossHair = "";
     public static int crStringTime = 0;
     public static int crIconTime = 0;
@@ -46,7 +46,17 @@ public class OverlayCrossHair extends AbstractGui {
         }
     }
 
-    public static void setCrossHairString(String string, int stringTime, int iconTime) {
+    /**
+     * Set cross-hair display
+     * @param string        Content to display
+     * @param stringTime    Time before the content disappears
+     * @param iconTime      Time before the cross-hair disappears, 0 for not showing at all
+     * @param force         Whether to refresh the display time even if content is the same
+     */
+    public static void setCrossHairDisplay(String string, int stringTime, int iconTime, boolean force) {
+        if (!force && bufferCrossHair.equals(string)) {
+            return;
+        }
         crStringTime = stringTime;
         crIconTime = iconTime;
         if (!string.isEmpty()) {
@@ -70,9 +80,9 @@ public class OverlayCrossHair extends AbstractGui {
         Color colour = new Color(255, 255, 255, 255);
 
         int heightoffset = 0;
-        for (int i = 0; i < buffer.size(); i++) {
-            String currentString = buffer.get(i);
-            if (buffer.get(i).length() < maxLength) {
+        for (int i = 0; i < bufferInfoLeft.size(); i++) {
+            String currentString = bufferInfoLeft.get(i);
+            if (bufferInfoLeft.get(i).length() < maxLength) {
                 fontRender.drawString(ms, currentString, 5, 5 + 10 * i + heightoffset, colour.getRGB());
             } else {
                 while (currentString.length() >= maxLength) {
@@ -103,7 +113,7 @@ public class OverlayCrossHair extends AbstractGui {
 //                bufferCrossHair = String.valueOf(iCapTargetHolder.getCommandDistance());
 //            }
 //            if (iCapTargetHolder.getCommandDistance() != Double.valueOf(bufferCrossHair)) {
-//                setCrossHairString(String.valueOf(iCapTargetHolder.getCommandDistance()));
+//                setCrossHairDisplay(String.valueOf(iCapTargetHolder.getCommandDistance()));
 //            }
 //        });
         if (crStringTime > 0) {

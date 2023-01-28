@@ -63,38 +63,32 @@ public class ItemDragonStaff extends Item {
         }
 
         Entity entity = entityRayTraceResult.getEntity();
-        if (playerIn.getDistanceSq(entityRayTraceResult.getEntity()) <= 4*4 && playerIn.isSneaking()) {
-//            ScreenDragon.openGui(playerIn, entity);
-//            return ActionResult.resultSuccess(itemStack);
-        } else {
-            // Different function based on holding hands and sneaking
-            if (!playerIn.isSneaking() && handIn == Hand.MAIN_HAND) {
-                RegistryMessages.sendToServer(
-                        new MessageCommandEntity(EnumCommandEntity.HALT, playerIn.getUniqueID(), entityRayTraceResult.getEntity().getUniqueID())
-                );
+        // Different function based on holding hands and sneaking
+        if (!playerIn.isSneaking() && handIn == Hand.MAIN_HAND) {
+            RegistryMessages.sendToServer(
+                    new MessageCommandEntity(EnumCommandEntity.ATTACK, playerIn.getUniqueID(), entityRayTraceResult.getEntity().getUniqueID())
+            );
 
-            } else if (playerIn.isSneaking() && handIn == Hand.MAIN_HAND) {
-                RegistryMessages.sendToServer(
-                        new MessageCommandEntity(EnumCommandEntity.FOLLOW, playerIn.getUniqueID(),
-                                entityRayTraceResult.getEntity().getUniqueID()));
-                RegistryMessages.sendToServer(
-                        new MessageCommandEntity(EnumCommandEntity.LAND, playerIn.getUniqueID(),
-                                entityRayTraceResult.getEntity().getUniqueID()));
+        } else if (playerIn.isSneaking() && handIn == Hand.MAIN_HAND) {
+            RegistryMessages.sendToServer(
+                    new MessageCommandEntity(EnumCommandEntity.FOLLOW, playerIn.getUniqueID(),
+                            entityRayTraceResult.getEntity().getUniqueID()));
+            RegistryMessages.sendToServer(
+                    new MessageCommandEntity(EnumCommandEntity.LAND, playerIn.getUniqueID(),
+                            entityRayTraceResult.getEntity().getUniqueID()));
 
-            } else if (!playerIn.isSneaking() && handIn == Hand.OFF_HAND) {
-                RegistryMessages.sendToServer(
-                        new MessageCommandEntity(EnumCommandEntity.WONDER, playerIn.getUniqueID(),
-                                entityRayTraceResult.getEntity().getUniqueID()));
+        } else if (!playerIn.isSneaking() && handIn == Hand.OFF_HAND) {
+            RegistryMessages.sendToServer(
+                    new MessageCommandEntity(EnumCommandEntity.WONDER, playerIn.getUniqueID(),
+                            entityRayTraceResult.getEntity().getUniqueID()));
 
-            } else if (playerIn.isSneaking() && handIn == Hand.OFF_HAND) {
-                RegistryMessages.sendToServer(
-                        new MessageCommandEntity(EnumCommandEntity.SIT, playerIn.getUniqueID(),
-                                entityRayTraceResult.getEntity().getUniqueID()));
-            }
+        } else if (playerIn.isSneaking() && handIn == Hand.OFF_HAND) {
+            RegistryMessages.sendToServer(
+                    new MessageCommandEntity(EnumCommandEntity.SIT, playerIn.getUniqueID(),
+                            entityRayTraceResult.getEntity().getUniqueID()));
         }
         return super.onItemRightClick(worldIn, playerIn, handIn);
     }
-
 
 
 }

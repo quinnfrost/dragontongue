@@ -1,0 +1,8 @@
+{
+    "damagemark.hit": {
+        "category": "player", 
+        "sounds": [ 
+            "damagemark:hit" 
+        ] 
+    }
+}

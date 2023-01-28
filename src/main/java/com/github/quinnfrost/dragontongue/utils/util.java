@@ -6,11 +6,14 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.entity.projectile.ProjectileHelper;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.particles.IParticleData;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -214,6 +217,19 @@ public class util {
 
     public static double getSpeed(MobEntity entity) {
         return 43.178 * entity.getBaseAttributeValue(Attributes.MOVEMENT_SPEED) - 0.02141;
+    }
+
+    public static <T extends IParticleData> int spawnParticleForce(ServerWorld serverWorld, T type, double posX, double posY, double posZ, int particleCount, double xOffset, double yOffset, double zOffset, double speed) {
+        int i = 0;
+
+        for(int j = 0; j < serverWorld.getPlayers().size(); ++j) {
+            ServerPlayerEntity serverplayerentity = serverWorld.getPlayers().get(j);
+            if (serverWorld.spawnParticle(serverplayerentity, type, true, posX, posY, posZ, particleCount, xOffset, yOffset, zOffset, speed)) {
+                ++i;
+            }
+        }
+
+        return i;
     }
 
     @OnlyIn(Dist.CLIENT)

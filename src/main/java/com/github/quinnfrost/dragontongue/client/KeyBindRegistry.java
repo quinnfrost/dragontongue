@@ -1,6 +1,5 @@
 package com.github.quinnfrost.dragontongue.client;
 
-import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.client.overlay.OverlayCrossHair;
@@ -14,7 +13,6 @@ import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.entity.MobEntity;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraftforge.api.distmarker.Dist;
@@ -22,7 +20,6 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 
 import java.lang.reflect.Field;
-import java.util.UUID;
 
 @OnlyIn(Dist.CLIENT)
 public class KeyBindRegistry {
@@ -50,7 +47,7 @@ public class KeyBindRegistry {
                         RegistryMessages.sendToServer(
                                 new MessageClientCommandDistance(iCapTargetHolder.modifyCommandDistance(1))
                         );
-                        OverlayCrossHair.setCrossHairString(String.valueOf(iCapTargetHolder.getCommandDistance()),3,0);
+                        OverlayCrossHair.setCrossHairDisplay(String.valueOf(iCapTargetHolder.getCommandDistance()),3,0, false);
                     });
                     break;
                 case DOWN:
@@ -58,7 +55,7 @@ public class KeyBindRegistry {
                         RegistryMessages.sendToServer(
                                 new MessageClientCommandDistance(iCapTargetHolder.modifyCommandDistance(-1))
                         );
-                        OverlayCrossHair.setCrossHairString(String.valueOf(iCapTargetHolder.getCommandDistance()),3,0);
+                        OverlayCrossHair.setCrossHairDisplay(String.valueOf(iCapTargetHolder.getCommandDistance()),3,0, false);
                     });
                     break;
             }

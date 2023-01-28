@@ -6,7 +6,7 @@ import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandEntity;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
-import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
+import com.github.quinnfrost.dragontongue.iceandfire.DragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -279,21 +279,21 @@ public class MessageCommandEntity {
         }
         // If target is null and a BlockPos is specified, set dragon breath target
         if (DragonTongue.isIafPresent && target == null) {
-            IafHelperClass.setDragonAttackTarget(tamed, null, pos);
+            DragonBehaviorHelper.setDragonAttackTarget(tamed, null, pos);
         }
 
         if (tamed instanceof TameableEntity
                 && !util.isOwner(target, commander)
                 && !Objects.equals(tamed.getAttackingEntity(), target)
                 && !commander.isOnSameTeam(target)) {
-            if (DragonTongue.isIafPresent && IafHelperClass.setDragonAttackTarget(tamed, target, pos)) {
+            if (DragonTongue.isIafPresent && DragonBehaviorHelper.setDragonAttackTarget(tamed, target, pos)) {
                 // For dragons
                 return;
             }
             // For vanilla creatures
-            tamed.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                iCapTargetHolder.setCommandStatus(EnumCommandStatus.ATTACK);
-            });
+//            tamed.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+//                iCapTargetHolder.setCommandStatus(EnumCommandStatus.ATTACK);
+//            });
             ((TameableEntity) tamed).setAttackTarget(target);
         }
     }
@@ -311,11 +311,11 @@ public class MessageCommandEntity {
         }
         AnimalEntity animalEntity = (AnimalEntity) tamed;
         if (DragonTongue.isIafPresent) {
-            IafHelperClass.setDragonBreathTarget(tamed, null);
+            DragonBehaviorHelper.setDragonBreathTarget(tamed, null);
         }
         animalEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
             iCapTargetHolder.setDestination(animalEntity.getPosition());
-            if (iCapTargetHolder.getCommandStatus() == EnumCommandStatus.ATTACK) {
+            if (iCapTargetHolder.getCommandStatus() == EnumCommandStatus.BREATH) {
                 iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
             }
         });
@@ -341,9 +341,9 @@ public class MessageCommandEntity {
         if (DragonTongue.isIafPresent) {
             // If destination is too far, fly there
             if (blockPos.getY() > commander.getPosY() + 1 || blockPos.distanceSq(animalEntity.getPosition()) > 30 * 30) {
-                IafHelperClass.setDragonTakeOff(animalEntity);
+                DragonBehaviorHelper.setDragonTakeOff(animalEntity);
             }
-            IafHelperClass.setDragonFlightTarget(animalEntity, blockPos);
+            DragonBehaviorHelper.setDragonFlightTarget(animalEntity, blockPos);
         }
 
         animalEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {

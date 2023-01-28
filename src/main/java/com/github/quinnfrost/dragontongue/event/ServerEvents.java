@@ -14,12 +14,13 @@ import com.github.quinnfrost.dragontongue.message.MessageCrowWand;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.entity.projectile.TridentEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.potion.EffectInstance;
@@ -32,13 +33,11 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -61,19 +60,15 @@ public class ServerEvents {
         Entity shooter = projectile.getShooter();
         ServerWorld serverWorld = (ServerWorld) shooter.getEntityWorld();
 
-        if (projectile instanceof TridentEntity && shooter instanceof PlayerEntity) {
-            PlayerEntity player = (PlayerEntity) shooter;
+        if (projectile instanceof TridentEntity && shooter instanceof ServerPlayerEntity) {
+            ServerPlayerEntity player = (ServerPlayerEntity) shooter;
             if (shooter.isSneaking() && event.getRayTraceResult().getType() != RayTraceResult.Type.MISS) {
                 Vector3d targetBlock = event.getRayTraceResult().getHitVec();
                 shooter.teleportKeepLoaded(targetBlock.getX(), targetBlock.getY(), targetBlock.getZ());
-                // shooter.getCapability(CapTargetHolder.ENTITY_TEST_CAPABILITY).ifPresent(iCapabilityInfoHolder
-                // -> {
-                // iCapabilityInfoHolder.setFallbackTimer(80);
-                // });
-                serverWorld.spawnParticle(ParticleTypes.PORTAL, targetBlock.getX(), targetBlock.getY(),
+                util.spawnParticleForce(serverWorld, ParticleTypes.PORTAL, targetBlock.getX(), targetBlock.getY(),
                         targetBlock.getZ(),
                         800, 2, 1, 2, 0.1);
-                player.addPotionEffect(new EffectInstance(Effects.BLINDNESS, 20, 0, true, false));
+                player.addPotionEffect(new EffectInstance(Effects.BLINDNESS, 10, 0, true, false));
             } else if (event.getRayTraceResult().getType() == RayTraceResult.Type.ENTITY) {
                 EntityRayTraceResult entityRayTraceResult = (EntityRayTraceResult) event.getRayTraceResult();
                 try {
@@ -98,29 +93,27 @@ public class ServerEvents {
 
         ServerPlayerEntity player = (ServerPlayerEntity) event.player;
         ServerWorld serverWorld = player.getServerWorld();
+        Item mainhandItem = player.getHeldItemMainhand().getItem();
+        Item offhandItem = player.getHeldItemOffhand().getItem();
         // Player can fall back before fallback timer tick to 0
         player.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
             iCapTargetHolder.tickFallbackTimer();
+            List<String> msg = new ArrayList<>();
+            msg.add(String.valueOf(iCapTargetHolder.getFallbackTimer()));
             // Sneak to fallback, set timer to 0 if not holding wand anymore
             if (iCapTargetHolder.getFallbackTimer() != 0 && player.isSneaking()) {
-                MessageCrowWand.teleportPlayer(EnumCrowWand.FALLBACK, player, serverWorld);
-            } else if (
-                    iCapTargetHolder.getFallbackTimer() != 0
-                            && !(player.getHeldItemMainhand().getItem().equals(RegistryItems.CROW_WAND.get())
-                            || player.getHeldItemOffhand().getItem().equals(RegistryItems.CROW_WAND.get()))
-            ) {
+                MessageCrowWand.crowWandAction(EnumCrowWand.FALLBACK, player, serverWorld);
+            } else if (iCapTargetHolder.getFallbackTimer() != 0 && !(
+                    mainhandItem.equals(RegistryItems.CROW_WAND.get())
+                            || offhandItem.equals(RegistryItems.CROW_WAND.get())
+            )) {
                 iCapTargetHolder.setFallbackTimer(0);
-//                player.getCapability(CapTargetHolder.TARGET_HOLDER, null).ifPresent(iCapTargetHolder1 -> {
-//                    iCapTargetHolder.setFallbackTimer(0);
-//                });
             }
         });
 
     }
 
     /**
-     *
-     *
      * @param event
      */
     @SubscribeEvent
@@ -136,11 +129,11 @@ public class ServerEvents {
 
             ICapTargetHolder capabilityInfoHolder = mobEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(null);
             BlockPos targetPos = mobEntity.getNavigator().getTargetPos();
-            String targetPosString = targetPos + "(" + (targetPos == null ? "" :
-                    String.valueOf(util.getDistance(mobEntity.getPosition(), targetPos))) + ")";
+            String targetPosString = (targetPos == null ? "" :
+                    targetPos.getCoordinatesAsString() + "(" + String.valueOf(util.getDistance(mobEntity.getPosition(), targetPos))) + ")";
             Entity targetEntity = mobEntity.getAttackTarget();
             String targetString = targetEntity == null ? "" :
-                    targetEntity.getEntityString() + " " + mobEntity.getAttackTarget().getPosition();
+                    targetEntity.getEntityString() + " " + mobEntity.getAttackTarget().getPosition().getCoordinatesAsString();
 
             List<String> debugMsg = Arrays.asList(
                     mobEntity.getEntityString() + "[" + mobEntity.getCustomName() + "]",
@@ -152,7 +145,7 @@ public class ServerEvents {
                     "Targets:" + targetString,
                     "Current dest:" + targetPosString,
                     "Command status:" + capabilityInfoHolder.getCommandStatus().toString(),
-                    "Command dest:" + capabilityInfoHolder.getDestination().toString() + "(" + util.getDistance(capabilityInfoHolder.getDestination(), mobEntity.getPosition()) + ")"
+                    "Command dest:" + capabilityInfoHolder.getDestination().getCoordinatesAsString() + "(" + util.getDistance(capabilityInfoHolder.getDestination(), mobEntity.getPosition()) + ")"
             );
             if (DragonTongue.isIafPresent) {
                 List<String> additional = IafHelperClass.getAdditionalDragonDebugStrings(mobEntity);
