@@ -2,7 +2,6 @@ package com.github.quinnfrost.dragontongue.utils;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityPredicate;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.ai.attributes.Attributes;
@@ -36,6 +35,7 @@ public class util {
 
     /**
      * Find out if the target's owner nbt tag matches the input owner's UUID
+     * If any of the input is null, return false
      *
      * @param target The entity's owner to determine
      * @param owner  Owner to determine
@@ -206,7 +206,10 @@ public class util {
     }
 
     public static double getDistance(BlockPos start, BlockPos end) {
-        return Math.sqrt(start.distanceSq(end));
+        return getDistance(Vector3d.copy(start), Vector3d.copy(end));
+    }
+    public static double getDistance(Vector3d start, Vector3d end) {
+        return Math.sqrt(start.distanceTo(end));
     }
 
     public static double getSpeed(MobEntity entity) {

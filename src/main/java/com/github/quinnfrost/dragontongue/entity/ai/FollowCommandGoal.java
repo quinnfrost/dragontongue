@@ -16,7 +16,8 @@ public class FollowCommandGoal extends Goal {
 
     @Override
     public boolean shouldExecute() {
-        return capabilityInfoHolder.getCommandStatus() != EnumCommandStatus.NONE;
+        return capabilityInfoHolder.getCommandStatus() != EnumCommandStatus.NONE
+                && mobEntity.getAttackTarget() == null;
     }
     @Override
     public boolean shouldContinueExecuting() {

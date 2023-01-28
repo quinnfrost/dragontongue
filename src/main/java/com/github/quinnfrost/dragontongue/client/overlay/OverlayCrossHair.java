@@ -2,6 +2,7 @@ package com.github.quinnfrost.dragontongue.client.overlay;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ResourceLocation;
@@ -15,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
-public class OverlayCrossHair {
+public class OverlayCrossHair extends AbstractGui {
     public static ResourceLocation markTexture = new ResourceLocation("dragontongue", "textures/gui/mark.png");
     public static List<String> buffer = new ArrayList<>(3);
     private static String bufferCrossHair = "";

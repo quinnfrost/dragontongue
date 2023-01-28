@@ -15,6 +15,6 @@ public enum EnumCommandEntity {
     LAND,
     HALT,
     REACH,
-    CIRCLE,
-    GUARD
+    GUARD,
+    GUI
 }

@@ -31,6 +31,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class MessageCommandEntity {
+    public static BlockPos INVALID_POS = new BlockPos(0, 0.5, 0);
     private EnumCommandEntity action;
     private UUID commanderUUID;
     private UUID targetUUID;
@@ -41,7 +42,7 @@ public class MessageCommandEntity {
         this.action = action;
         this.commanderUUID = commanderUUID;
         this.targetUUID = addTarget;
-        this.blockPos = new BlockPos(0, 128, 0);
+        this.blockPos = INVALID_POS;
     }
 
     // Command attack target
@@ -50,8 +51,9 @@ public class MessageCommandEntity {
         this.commanderUUID = commanderUUID;
         this.targetUUID = targetUUID != null ? targetUUID.getEntity().getUniqueID()
                 : UUID.fromString("00000000-0000-0000-0000-000000000000");
-        this.blockPos = new BlockPos(0, 128, 0);
+        this.blockPos = INVALID_POS;
     }
+
     public MessageCommandEntity(EnumCommandEntity action, UUID commanderUUID, @Nullable EntityRayTraceResult targetUUID, BlockRayTraceResult blockRayTraceResult) {
         this.action = action;
         this.commanderUUID = commanderUUID;
@@ -74,13 +76,22 @@ public class MessageCommandEntity {
         this.commanderUUID = buf.readUniqueId();
         this.targetUUID = buf.readUniqueId();
         this.blockPos = buf.readBlockPos();
+        if (this.blockPos.equals(INVALID_POS)) {
+            blockPos = null;
+        }
     }
 
     public void toBytes(PacketBuffer buf) {
         buf.writeString(action.name());
         buf.writeUniqueId(commanderUUID);
         buf.writeUniqueId(targetUUID);
-        buf.writeBlockPos(blockPos);
+        if (blockPos != null) {
+            buf.writeBlockPos(blockPos);
+            buf.writeBoolean(true);
+        } else {
+            buf.writeBlockPos(INVALID_POS);
+            buf.writeBoolean(false);
+        }
     }
 
     public boolean handle(Supplier<NetworkEvent.Context> contextSupplier) {
@@ -99,11 +110,27 @@ public class MessageCommandEntity {
             if (targetEntity != null) {
                 targetEntity.addPotionEffect(new EffectInstance(Effects.GLOWING, 20, 0, true, false));
             }
+
+            if (action == EnumCommandEntity.DEBUG && targetEntity instanceof MobEntity) {
+                DragonTongue.debugTarget = (MobEntity) targetEntity;
+                return;
+            }
+
             commandEntity(serverWorld, commander, action, targetEntity, targetPos, null);
         });
         return true;
     }
 
+    /**
+     * Main logic upon command entity package arrived
+     *
+     * @param serverWorld
+     * @param commander
+     * @param action
+     * @param target
+     * @param pos
+     * @param excludeEntity
+     */
     public static void commandEntity(ServerWorld serverWorld, LivingEntity commander, EnumCommandEntity action,
                                      @Nullable LivingEntity target,
                                      BlockPos pos, @Nullable Predicate<? super Entity> excludeEntity) {
@@ -112,40 +139,29 @@ public class MessageCommandEntity {
         }
 
         switch (action) {
-            case DEBUG:
-                if (target instanceof MobEntity) {
-                    DragonTongue.debugTarget = (MobEntity) target;
-                }
-                break;
             case ADD:
-                if (target != null) {
-                    if (util.isOwner(target, commander)) {
-                        commander.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                            iCapTargetHolder.addCommandEntity(target.getUniqueID());
-                        });
-                    }
+                if (util.isOwner(target, commander)) {
+                    commander.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                        iCapTargetHolder.addCommandEntity(target.getUniqueID());
+                    });
                 }
                 break;
             case SET:
-                if (target != null) {
-                    if (util.isOwner(target, commander)) {
-                        commander.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                            iCapTargetHolder.setCommandEntity(target.getUniqueID());
-                        });
-                    }
+                if (util.isOwner(target, commander)) {
+                    commander.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                        iCapTargetHolder.setCommandEntity(target.getUniqueID());
+                    });
                 }
                 break;
             case REMOVE:
-                if (target != null) {
-                    if (util.isOwner(target, commander)) {
-                        commander.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                            iCapTargetHolder.removeCommandEntity(target.getUniqueID());
-                        });
-                        target.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                            iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
-                        });
+                if (util.isOwner(target, commander)) {
+                    commander.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                        iCapTargetHolder.removeCommandEntity(target.getUniqueID());
+                    });
+                    target.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                        iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
+                    });
 
-                    }
                 }
                 break;
             case ATTACK:
@@ -189,16 +205,10 @@ public class MessageCommandEntity {
                     }
                 });
                 break;
-            case CIRCLE:
-                commander.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                            for (UUID entityUUID :
-                                    iCapTargetHolder.getCommandEntities()) {
-                                commandCircle(commander,
-                                        (LivingEntity) serverWorld.getEntityByUuid(entityUUID), pos);
-                            }
-                        });
-                break;
             case GUARD:
+                break;
+            case GUI:
+//                ScreenDragon.openGui(commander, target);
                 break;
             default:
                 DragonTongue.LOGGER.warn("False calling on commandEntity with type:" + action);
@@ -223,12 +233,9 @@ public class MessageCommandEntity {
             return;
         }
 
-        // commander.setLastAttackedEntity(target);
-
         // Get entities around commander, a range cube of size radius*radius, the
         // commander is automatically excluded
         if (commander instanceof PlayerEntity) {
-
             List<Entity> entities = commander.world.getEntitiesInAABBexcluding(commander,
                     (new AxisAlignedBB(commander.getPosX(), commander.getPosY(), commander.getPosZ(),
                             commander.getPosX() + 1.0d, commander.getPosY() + 1.0d, commander.getPosZ() + 1.0d)
@@ -249,12 +256,11 @@ public class MessageCommandEntity {
             // iteration through entities to set their target
             for (Entity entity : entities) {
                 if (entity instanceof TameableEntity) {
-                    commandAttack(commander, (LivingEntity) entity, target, pos);
+                    commandAttack(commander, (LivingEntity) entity, target, null);
                     ((LivingEntity) entity).addPotionEffect(new EffectInstance(Effects.GLOWING, 20, 0, true, false));
                 }
             }
         } // end if player
-
     }// end function commandTarget
 
     /**
@@ -267,18 +273,88 @@ public class MessageCommandEntity {
      * @param pos
      */
     public static void commandAttack(LivingEntity commander, @Nullable LivingEntity tamed,
-                                     @Nullable LivingEntity target, BlockPos pos) {
-        if (tamed == null) {
+                                     LivingEntity target, BlockPos pos) {
+        if (!util.isOwner(tamed, commander)) {
             return;
         }
-        // TODO: 不要用setAttackTarget，因为它不检查是否可以攻击
-        if (target == null || (tamed instanceof TameableEntity && !util.isOwner(target, commander)
-                && !Objects.equals(tamed.getAttackingEntity(), target) && !commander.isOnSameTeam(target))) {
-            if (!IafHelperClass.setDragonAttackTarget(tamed, target, pos)) {
-                ((TameableEntity) tamed).setAttackTarget(target);
+        // If target is null and a BlockPos is specified, set dragon breath target
+        if (DragonTongue.isIafPresent && target == null) {
+            IafHelperClass.setDragonAttackTarget(tamed, null, pos);
+        }
+
+        if (tamed instanceof TameableEntity
+                && !util.isOwner(target, commander)
+                && !Objects.equals(tamed.getAttackingEntity(), target)
+                && !commander.isOnSameTeam(target)) {
+            if (DragonTongue.isIafPresent && IafHelperClass.setDragonAttackTarget(tamed, target, pos)) {
+                // For dragons
+                return;
             }
+            // For vanilla creatures
+            tamed.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                iCapTargetHolder.setCommandStatus(EnumCommandStatus.ATTACK);
+            });
+            ((TameableEntity) tamed).setAttackTarget(target);
         }
     }
+
+    /**
+     * Command tamed to stop attacking or moving
+     * The command status is also removed, so they will wander
+     *
+     * @param commander
+     * @param tamed
+     */
+    public static void commandHalt(LivingEntity commander, @Nullable LivingEntity tamed) {
+        if (!(tamed instanceof AnimalEntity) || !util.isOwner(tamed, commander)) {
+            return;
+        }
+        AnimalEntity animalEntity = (AnimalEntity) tamed;
+        if (DragonTongue.isIafPresent) {
+            IafHelperClass.setDragonBreathTarget(tamed, null);
+        }
+        animalEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+            iCapTargetHolder.setDestination(animalEntity.getPosition());
+            if (iCapTargetHolder.getCommandStatus() == EnumCommandStatus.ATTACK) {
+                iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
+            }
+        });
+        animalEntity.getNavigator().clearPath();
+        animalEntity.setAttackTarget(null);
+    }
+
+    /**
+     * Command tamed to reach destination
+     *
+     * @param commander
+     * @param tamed
+     * @param pos
+     */
+    public static void commandReach(LivingEntity commander, LivingEntity tamed, BlockPos pos) {
+        if (!(tamed instanceof AnimalEntity) || !util.isOwner(tamed, commander)) {
+            return;
+        }
+
+        AnimalEntity animalEntity = (AnimalEntity) tamed;
+        BlockPos blockPos = (pos != null ? pos : animalEntity.getPosition());
+
+        if (DragonTongue.isIafPresent) {
+            // If destination is too far, fly there
+            if (blockPos.getY() > commander.getPosY() + 1 || blockPos.distanceSq(animalEntity.getPosition()) > 30 * 30) {
+                IafHelperClass.setDragonTakeOff(animalEntity);
+            }
+            IafHelperClass.setDragonFlightTarget(animalEntity, blockPos);
+        }
+
+        animalEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+            iCapTargetHolder.setDestination(pos);
+            iCapTargetHolder.setCommandStatus(EnumCommandStatus.REACH);
+        });
+        animalEntity.getNavigator().tryMoveToXYZ(pos.getX(), pos.getY(), pos.getZ(), 1.0f);
+
+
+    }
+
 
     public static void commandSit(LivingEntity commander, @Nullable LivingEntity target) {
         if (target instanceof TameableEntity && util.isOwner(target, commander)) {
@@ -321,44 +397,7 @@ public class MessageCommandEntity {
         }
     }
 
-    public static void commandHalt(LivingEntity commander, @Nullable LivingEntity target) {
-        if (target instanceof TameableEntity && util.isOwner(target, commander)) {
-            TameableEntity tameableEntity = (TameableEntity) target;
-//            commander.getCapability(CapTargetHolder.ENTITY_DATA_STORAGE).ifPresent(iCapabilityInfoHolder -> {
-//                switch (iCapabilityInfoHolder.getCommandStatus()) {
-//                    case NONE:
-//                        break;
-//                    case REACH:
-//                        iCapabilityInfoHolder.setCommandStatus(EnumCommandStatus.NONE);
-//                        break;
-//                    case STAY:
-//                        break;
-//                    case HOVER:
-//                        break;
-//                    case ATTACK:
-//                        break;
-//                }
-//            });
-
-            IafHelperClass.setPetHalt(tameableEntity);
-
-        }
-    }
-
-    public static void commandReach(LivingEntity commander, LivingEntity target, @Nonnull BlockPos pos) {
-        if (target == null) {
-            return;
-        }
-        if (target instanceof AnimalEntity && util.isOwner(target, commander)) {
-            AnimalEntity animalEntity = (AnimalEntity) target;
-            if (pos.getY() > commander.getPosY() + 1 || pos.distanceSq(animalEntity.getPosition()) > 30 * 30) {
-                IafHelperClass.setDragonTakeOff(animalEntity);
-            }
-            IafHelperClass.setPetReach(animalEntity,pos);
-        }
-    }
-
-    public static void commandCircle(LivingEntity commander, @Nullable LivingEntity target, @Nonnull BlockPos pos) {
+    public static void commandCircle(LivingEntity commander, @Nullable LivingEntity target, BlockPos pos) {
         if (target == null) {
             return;
         }

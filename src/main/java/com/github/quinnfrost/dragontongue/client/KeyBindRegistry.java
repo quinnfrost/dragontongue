@@ -3,7 +3,6 @@ package com.github.quinnfrost.dragontongue.client;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
-import com.github.quinnfrost.dragontongue.client.gui.GUITest;
 import com.github.quinnfrost.dragontongue.client.overlay.OverlayCrossHair;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandEntity;
@@ -23,6 +22,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 
 import java.lang.reflect.Field;
+import java.util.UUID;
 
 @OnlyIn(Dist.CLIENT)
 public class KeyBindRegistry {
@@ -89,7 +89,7 @@ public class KeyBindRegistry {
             EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(clientPlayerEntity,
                     Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f, null);
             if (entityRayTraceResult != null) {
-                DragonTongue.debugTarget = (MobEntity) entityRayTraceResult.getEntity();
+                RegistryMessages.sendToServer(new MessageCommandEntity(EnumCommandEntity.DEBUG, clientPlayerEntity.getUniqueID(), entityRayTraceResult.getEntity().getUniqueID()));
             }
         }
         if (
@@ -135,10 +135,6 @@ public class KeyBindRegistry {
             double commandDistance = clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(clientPlayerEntity)).getCommandDistance();
             EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(clientPlayerEntity,
                     Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f, null);
-
-            RegistryMessages.sendToServer(new MessageCommandEntity(
-                    EnumCommandEntity.DEBUG, clientPlayerEntity.getUniqueID(), entityRayTraceResult
-            ));
 
             if (gameSettings.keyBindAttack.isKeyDown()) {
                 RegistryMessages.sendToServer(new MessageCommandEntity(

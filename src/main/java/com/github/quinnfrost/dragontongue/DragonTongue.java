@@ -2,8 +2,12 @@ package com.github.quinnfrost.dragontongue;
 
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.client.KeyBindRegistry;
+import com.github.quinnfrost.dragontongue.event.CommonEvents;
+import com.github.quinnfrost.dragontongue.iceandfire.gui.ScreenDragon;
 import com.github.quinnfrost.dragontongue.client.overlay.OverlayRenderEvent;
+import com.github.quinnfrost.dragontongue.command.RegistryCommands;
 import com.github.quinnfrost.dragontongue.config.Config;
+import com.github.quinnfrost.dragontongue.container.RegistryContainers;
 import com.github.quinnfrost.dragontongue.event.ClientEvents;
 import com.github.quinnfrost.dragontongue.event.ServerEvents;
 import com.github.quinnfrost.dragontongue.proxy.ClientProxy;
@@ -12,6 +16,7 @@ import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.ScreenManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MobEntity;
 import net.minecraftforge.common.MinecraftForge;
@@ -36,7 +41,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.stream.Collectors;
 
 // Todo:
-//  在实体上使用DataWatcher代替Caps
+//  整理代码
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(References.MOD_ID)
@@ -59,13 +64,23 @@ public class DragonTongue
         // Register the doClientStuff method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::doClientStuff);
 
+        // Test if Ice-And-Fire is installed
+        if(util.isClassPresent(References.IAF_CLASS_NAME)) {
+            LOGGER.info("Ice and fire mod found");
+            isIafPresent = true;
+        } else {
+            LOGGER.info("Ice and fire mod not found");
+            isIafPresent = false;
+        }
+
         // The registration to the event bus must happen in your mod class constructor
         eventBus = FMLJavaModLoadingContext.get().getModEventBus();
         Registration.registerModContent(eventBus);
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
-        PROXY.init();
+//        PROXY.init();
+        MinecraftForge.EVENT_BUS.register(CommonEvents.class);
         MinecraftForge.EVENT_BUS.register(ServerEvents.class);
 
         // Load configs
@@ -82,16 +97,8 @@ public class DragonTongue
         LOGGER.info("HELLO FROM PREINIT");
         LOGGER.info("DIRT BLOCK >> {}", Blocks.DIRT.getRegistryName());
 
-        // Test if Ice-And-Fire is installed
-        if(util.isClassPresent("com.github.alexthe666.iceandfire.IceAndFire")) {
-            LOGGER.info("Ice and fire mod found");
-            isIafPresent = true;
-        } else {
-            LOGGER.info("Ice and fire mod not found");
-        }
-
         // Setup sided proxy
-        CommonProxy.commonInit();
+//        CommonProxy.commonInit();
 
         // Register the custom capability
         CapTargetHolder.register();
@@ -102,12 +109,17 @@ public class DragonTongue
         LOGGER.info("Got game settings {}", event.getMinecraftSupplier().get().gameSettings);
 
         // Setup client proxy
-        ClientProxy.clientInit();
+//        ClientProxy.clientInit();
 
         KeyBindRegistry.registerKeyBind();
         // 原本在init方法里
         MinecraftForge.EVENT_BUS.register(ClientEvents.class);
         MinecraftForge.EVENT_BUS.register(new OverlayRenderEvent(Minecraft.getInstance()));
+
+
+        event.enqueueWork(() -> {
+            ScreenManager.registerFactory(RegistryContainers.CONTAINER_DRAGON.get(), ScreenDragon::new);
+        });
     }
 
     private void enqueueIMC(final InterModEnqueueEvent event)
@@ -128,6 +140,7 @@ public class DragonTongue
     public void onServerStarting(FMLServerStartingEvent event) {
         // do something when the server starts
         LOGGER.info("HELLO from server starting");
+        RegistryCommands.registerCommands(event.getServer().getFunctionManager().getCommandDispatcher());
     }
 
     @SubscribeEvent

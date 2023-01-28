@@ -7,9 +7,7 @@ import net.minecraft.entity.MobEntity;
 public class RegistryAI {
     public static void registerAI(MobEntity mobEntity) {
         try {
-            if (IafHelperClass.isDragon(mobEntity)) {
-                IafHelperClass.registerDragonAI(mobEntity);
-            } else {
+            if (!(DragonTongue.isIafPresent && IafHelperClass.registerDragonAI(mobEntity))) {
                 mobEntity.goalSelector.addGoal(0, new FollowCommandGoal(mobEntity));
             }
         } catch (Exception e) {
