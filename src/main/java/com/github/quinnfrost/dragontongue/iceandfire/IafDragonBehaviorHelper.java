@@ -2,12 +2,15 @@ package com.github.quinnfrost.dragontongue.iceandfire;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAIAsYouWish;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAICalmLook;
+import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
+import net.minecraft.particles.ParticleTypes;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.util.math.BlockPos;
@@ -63,7 +66,7 @@ public class IafDragonBehaviorHelper {
             return false;
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-        ICapTargetHolder iCapTargetHolder = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(null);
+        ICapTargetHolder iCapTargetHolder = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
 
         dragon.setHovering(false);
         dragon.setFlying(false);
@@ -80,7 +83,7 @@ public class IafDragonBehaviorHelper {
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
         if (target == null && breathPos != null) {
             dragon.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                iCapTargetHolder.setDestination(breathPos);
+                iCapTargetHolder.setBreathTarget(breathPos);
                 iCapTargetHolder.setCommandStatus(EnumCommandStatus.BREATH);
             });
         } else {
@@ -132,9 +135,12 @@ public class IafDragonBehaviorHelper {
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
 
-        if (dragon.getCommand() != 0) {
-            dragon.setCommand(0);
-        }
+        // This is commented because this is not elegant
+        // Will try using custom dragon logic to make dragon movable during sleeping or command state 1
+//        if (dragon.getCommand() != 0) {
+//            dragon.setCommand(0);
+//        }
+//        dragon.setQueuedToSit(false); // In case dragon is sleeping
 
         dragon.getNavigator().tryMoveToXYZ(blockPos.getX(), blockPos.getY(), blockPos.getZ(), 1.0f);
 
@@ -147,22 +153,28 @@ public class IafDragonBehaviorHelper {
             return false;
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+        int deathStage = dragon.getDeathStage();
 
-        if (dragon.getDeathStage() != 0 || !dragon.isModelDead()) {
+        if (!dragon.isModelDead() || dragon.isSkeletal()) {
             return false;
         }
-
-        dragon.setHealth((float) Math.ceil(dragon.getMaxHealth() / 20.0f));
-        dragon.clearActivePotions();
-        dragon.addPotionEffect(new EffectInstance(Effects.REGENERATION, 900, 1));
+        if (deathStage == 0) {
+            dragon.setHealth((float) Math.ceil(dragon.getMaxHealth() / 20.0f));
+            dragon.clearActivePotions();
+            dragon.addPotionEffect(new EffectInstance(Effects.REGENERATION, 900, 1));
 //        dragon.addPotionEffect(new EffectInstance(Effects.REGENERATION, 900, 1));
-        dragon.addPotionEffect(new EffectInstance(Effects.ABSORPTION, 100, 1));
-        dragon.addPotionEffect(new EffectInstance(Effects.FIRE_RESISTANCE, 800, 0));
-        dragon.world.setEntityState(dragon, (byte)35);
+            dragon.addPotionEffect(new EffectInstance(Effects.ABSORPTION, 100, 1));
+            dragon.addPotionEffect(new EffectInstance(Effects.FIRE_RESISTANCE, 800, 0));
+            dragon.world.setEntityState(dragon, (byte) 35);
 
-        dragon.setModelDead(false);
-        dragon.setNoAI(false);
-
+            dragon.setDeathStage(0);
+            dragon.setModelDead(false);
+            dragon.setNoAI(false);
+        } else if (deathStage > 0 && deathStage <= 2) {
+//            util.spawnParticleForce(dragon.world, ParticleTypes.HAPPY_VILLAGER, )
+            dragon.world.setEntityState(dragon, (byte) 35);
+            dragon.setDeathStage(deathStage - 1);
+        }
         return true;
     }
 }

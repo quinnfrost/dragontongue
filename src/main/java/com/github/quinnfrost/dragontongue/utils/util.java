@@ -1,5 +1,7 @@
 package com.github.quinnfrost.dragontongue.utils;
 
+import com.github.quinnfrost.dragontongue.config.Config;
+import com.google.common.collect.Sets;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -19,6 +21,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public class util {
@@ -69,7 +72,32 @@ public class util {
     }
 
     /**
+     * Get entity looking at
+     * This will return the first block or entity the ray encounters, for entity ray trace this won't go through walls.
+     *
+     * @param entity
+     * @param maxDistance
+     * @param excludeEntity
+     * @return  A BlockRayTraceResult or EntityRayTraceResult, separated by its type
+     */
+    public static RayTraceResult getTargetBlockOrEntity(Entity entity, float maxDistance, @Nullable Predicate<? super Entity> excludeEntity) {
+        BlockRayTraceResult blockRayTraceResult = getTargetBlock(entity, maxDistance, 1.0f);
+        float entityRayTraceDistance = maxDistance;
+        if (blockRayTraceResult.getType() != RayTraceResult.Type.MISS) {
+            entityRayTraceDistance = (float) Math.sqrt(entity.getDistanceSq(blockRayTraceResult.getHitVec()));
+        }
+        // Limit the max ray trace distance to the first block it sees
+        EntityRayTraceResult entityRayTraceResult = getTargetEntity(entity, entityRayTraceDistance, 1.0f, null);
+        if (entityRayTraceResult != null) {
+            return entityRayTraceResult;
+        } else {
+            return blockRayTraceResult;
+        }
+    }
+
+    /**
      * Get the entity that is looking at
+     * Note that this will trace through walls
      *
      * @param entity        The entity whom you want to trace its vision
      * @param maxDistance   Only entity within the distance in block is traced

@@ -212,7 +212,7 @@ public class MessageCommandEntity {
 //                ScreenDragon.openGui(commander, target);
                 break;
             default:
-                DragonTongue.LOGGER.warn("False calling on commandEntity with type:" + action);
+//                DragonTongue.LOGGER.warn("False calling on commandEntity with type:" + action);
                 break;
         }
 
@@ -316,8 +316,8 @@ public class MessageCommandEntity {
         }
         animalEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
             iCapTargetHolder.setDestination(animalEntity.getPosition());
-            if (iCapTargetHolder.getCommandStatus() == EnumCommandStatus.BREATH) {
-                iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
+            if (iCapTargetHolder.getCommandStatus() != EnumCommandStatus.NONE) {
+                iCapTargetHolder.setCommandStatus(EnumCommandStatus.REACH);
             }
         });
         animalEntity.getNavigator().clearPath();

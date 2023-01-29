@@ -1,6 +1,7 @@
 package com.github.quinnfrost.dragontongue.entity.ai;
 
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import net.minecraft.entity.MobEntity;
@@ -11,7 +12,7 @@ public class FollowCommandGoal extends Goal {
     ICapTargetHolder capabilityInfoHolder;
     public FollowCommandGoal(MobEntity entity) {
         this.mobEntity = entity;
-        this.capabilityInfoHolder = entity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(null);
+        this.capabilityInfoHolder = entity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(entity));
     }
 
     @Override

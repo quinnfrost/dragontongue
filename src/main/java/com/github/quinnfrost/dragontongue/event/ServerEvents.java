@@ -2,6 +2,7 @@ package com.github.quinnfrost.dragontongue.event;
 
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.entity.ai.RegistryAI;
 import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
@@ -133,7 +134,7 @@ public class ServerEvents {
             CompoundNBT compoundNBT = new CompoundNBT();
             DragonTongue.debugTarget.writeAdditional(compoundNBT);
 
-            ICapTargetHolder capabilityInfoHolder = mobEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(null);
+            ICapTargetHolder capabilityInfoHolder = mobEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(mobEntity));
             BlockPos targetPos = mobEntity.getNavigator().getTargetPos();
             String targetPosString = (targetPos == null ? "" :
                     targetPos.getCoordinatesAsString() + "(" + String.valueOf(util.getDistance(mobEntity.getPosition(), targetPos))) + ")";

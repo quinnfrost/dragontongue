@@ -10,6 +10,7 @@ import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3d;
 
 import java.util.EnumSet;
 
@@ -27,27 +28,30 @@ public class DragonAIAsYouWish extends Goal {
         this.isTargetAir = (dragon.isFlying() || dragon.isHovering());
         this.setMutexFlags(EnumSet.of(Flag.MOVE));
     }
+
     @Override
     public boolean shouldExecute() {
         return (
                 capabilityInfoHolder.getCommandStatus() != EnumCommandStatus.NONE
-                && dragon.getAttackTarget() == null
+                        && dragon.getAttackTarget() == null
         );
     }
+
     @Override
     public boolean shouldContinueExecuting() {
         return shouldExecute();
     }
+
     @Override
     public void startExecuting() {
         BlockPos pos = capabilityInfoHolder.getDestination();
-        this.shouldStay = this.dragon.getPosition();
 
     }
 
     @Override
     public void tick() {
-        BlockPos targetPos = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(null).getDestination();
+        BlockPos targetPos = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon)).getDestination();
+        BlockPos breathPos = capabilityInfoHolder.getBreathTarget();
 
         if (dragon.getAttackTarget() != null && !dragon.getAttackTarget().isAlive()) {
             dragon.setAttackTarget(null);
@@ -58,7 +62,7 @@ public class DragonAIAsYouWish extends Goal {
                 if (util.hasArrived(dragon, capabilityInfoHolder.getDestination())
                         && capabilityInfoHolder.getCommandStatus() == EnumCommandStatus.REACH) {
                     dragon.getNavigator().clearPath();
-                    dragon.setMotion(0,0,0);
+                    dragon.setMotion(0, 0, 0);
                     // Determine if destination has support block
                     if (shouldHover(dragon)) {
                         capabilityInfoHolder.setCommandStatus(EnumCommandStatus.HOVER);
@@ -68,16 +72,30 @@ public class DragonAIAsYouWish extends Goal {
                 } else {
                     this.shouldStay = targetPos;
                     IafDragonBehaviorHelper.setDragonFlightTarget(dragon, targetPos);
+                    IafDragonBehaviorHelper.setDragonReachTarget(dragon, targetPos);
                 }
                 break;
             case STAY:
                 IafDragonBehaviorHelper.setDragonStay(dragon);
+                // Release control if the owner climbs up
+                if (dragon.isOnePlayerRiding()) {
+                    dragon.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                        iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
+                    });
+                }
                 break;
             case HOVER:
                 IafDragonBehaviorHelper.setDragonHover(dragon, targetPos);
+                // Release control if the owner climbs up
+                if (dragon.isOnePlayerRiding()) {
+                    dragon.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                        iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
+                    });
+                }
                 break;
             case BREATH:
-                IafDragonBehaviorHelper.setDragonBreathTarget(dragon, targetPos);
+                IafDragonBehaviorHelper.setDragonBreathTarget(dragon, new BlockPos(breathPos));
+                // Hover blast
                 if (dragon.isFlying() || dragon.isHovering()) {
                     IafDragonBehaviorHelper.setDragonHover(dragon, shouldStay);
                 }
@@ -92,6 +110,6 @@ public class DragonAIAsYouWish extends Goal {
         BlockPos targetPos = capabilityInfoHolder.getDestination();
 
         return (dragon.world.getBlockState(targetPos).isAir()
-                && dragon.world.getBlockState(targetPos.add(0,-1,0)).isAir());
+                && dragon.world.getBlockState(targetPos.add(0, -1, 0)).isAir());
     }
 }

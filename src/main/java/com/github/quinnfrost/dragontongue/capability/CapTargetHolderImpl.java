@@ -4,6 +4,7 @@ import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3d;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,11 +12,12 @@ import java.util.UUID;
 
 public class CapTargetHolderImpl implements ICapTargetHolder {
     private List<UUID> commandEntitiesUUIDs = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
-    private BlockPos commandDestination = null;
-    private EnumCommandStatus status = EnumCommandStatus.NONE;
     private double commandDistance = 128;
     private BlockPos fallbackPosition = null;
     private int fallbackTimer = 0;
+    private BlockPos commandDestination = null;
+    private EnumCommandStatus status = EnumCommandStatus.NONE;
+    private BlockPos breathTarget = null;
 
     public CapTargetHolderImpl() {
 
@@ -121,6 +123,16 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
     @Override
     public EnumCommandStatus getCommandStatus() {
         return status;
+    }
+
+    @Override
+    public void setBreathTarget(BlockPos target) {
+        this.breathTarget = target;
+    }
+
+    @Override
+    public BlockPos getBreathTarget() {
+        return breathTarget;
     }
 
 }

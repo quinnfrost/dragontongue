@@ -15,6 +15,7 @@ import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
@@ -83,10 +84,12 @@ public class KeyBindRegistry {
      */
     public static void scanKeyPress(ClientPlayerEntity clientPlayerEntity) {
         if (KeyBindRegistry.debug_tamed.isKeyDown()) {
-            EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(clientPlayerEntity,
-                    Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f, null);
-            if (entityRayTraceResult != null) {
-                RegistryMessages.sendToServer(new MessageCommandEntity(EnumCommandEntity.DEBUG, clientPlayerEntity.getUniqueID(), entityRayTraceResult.getEntity().getUniqueID()));
+//            EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(clientPlayerEntity,
+//                    Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f, null);
+            RayTraceResult rayTraceResult = util.getTargetBlockOrEntity(clientPlayerEntity,
+                    Config.COMMAND_DISTANCE_MAX.get().floatValue(), null);
+            if (rayTraceResult.getType() == RayTraceResult.Type.ENTITY) {
+                RegistryMessages.sendToServer(new MessageCommandEntity(EnumCommandEntity.DEBUG, clientPlayerEntity.getUniqueID(), ((EntityRayTraceResult) rayTraceResult).getEntity().getUniqueID()));
             }
         }
         if (
@@ -102,6 +105,7 @@ public class KeyBindRegistry {
                 KeyBindRegistry.scan_scroll = false;
             }
         }
+
         if (KeyBindRegistry.command_tamed.isKeyDown()) {
             GameSettings gameSettings = Minecraft.getInstance().gameSettings;
             double commandDistance = clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(clientPlayerEntity)).getCommandDistance();

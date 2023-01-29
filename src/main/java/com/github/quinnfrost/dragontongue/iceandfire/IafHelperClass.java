@@ -4,6 +4,7 @@ import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.Entity;
@@ -59,7 +60,7 @@ public class IafHelperClass {
         CompoundNBT compoundNBT = new CompoundNBT();
         DragonTongue.debugTarget.writeAdditional(compoundNBT);
 
-        ICapTargetHolder capabilityInfoHolder = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(null);
+        ICapTargetHolder capabilityInfoHolder = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
         BlockPos targetPos = dragon.getNavigator().getTargetPos();
 
         return Arrays.asList(
