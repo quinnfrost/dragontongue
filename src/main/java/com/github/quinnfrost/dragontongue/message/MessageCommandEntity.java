@@ -6,7 +6,8 @@ import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandEntity;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
-import com.github.quinnfrost.dragontongue.iceandfire.DragonBehaviorHelper;
+import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
+import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -76,7 +77,7 @@ public class MessageCommandEntity {
         this.commanderUUID = buf.readUniqueId();
         this.targetUUID = buf.readUniqueId();
         this.blockPos = buf.readBlockPos();
-        if (this.blockPos.equals(INVALID_POS)) {
+        if (!buf.readBoolean() && this.blockPos.equals(INVALID_POS)) {
             blockPos = null;
         }
     }
@@ -149,7 +150,7 @@ public class MessageCommandEntity {
             case SET:
                 if (util.isOwner(target, commander)) {
                     commander.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                        iCapTargetHolder.setCommandEntity(target.getUniqueID());
+                        iCapTargetHolder.setCommandEntities(new ArrayList<>(Arrays.asList(target.getUniqueID())));
                     });
                 }
                 break;
@@ -279,14 +280,14 @@ public class MessageCommandEntity {
         }
         // If target is null and a BlockPos is specified, set dragon breath target
         if (DragonTongue.isIafPresent && target == null) {
-            DragonBehaviorHelper.setDragonAttackTarget(tamed, null, pos);
+            IafDragonBehaviorHelper.setDragonAttackTarget(tamed, null, pos);
         }
 
         if (tamed instanceof TameableEntity
                 && !util.isOwner(target, commander)
                 && !Objects.equals(tamed.getAttackingEntity(), target)
                 && !commander.isOnSameTeam(target)) {
-            if (DragonTongue.isIafPresent && DragonBehaviorHelper.setDragonAttackTarget(tamed, target, pos)) {
+            if (DragonTongue.isIafPresent && IafDragonBehaviorHelper.setDragonAttackTarget(tamed, target, pos)) {
                 // For dragons
                 return;
             }
@@ -311,7 +312,7 @@ public class MessageCommandEntity {
         }
         AnimalEntity animalEntity = (AnimalEntity) tamed;
         if (DragonTongue.isIafPresent) {
-            DragonBehaviorHelper.setDragonBreathTarget(tamed, null);
+            IafDragonBehaviorHelper.setDragonBreathTarget(tamed, null);
         }
         animalEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
             iCapTargetHolder.setDestination(animalEntity.getPosition());
@@ -338,21 +339,20 @@ public class MessageCommandEntity {
         AnimalEntity animalEntity = (AnimalEntity) tamed;
         BlockPos blockPos = (pos != null ? pos : animalEntity.getPosition());
 
-        if (DragonTongue.isIafPresent) {
+        if (DragonTongue.isIafPresent && IafHelperClass.isDragon(animalEntity)) {
             // If destination is too far, fly there
             if (blockPos.getY() > commander.getPosY() + 1 || blockPos.distanceSq(animalEntity.getPosition()) > 30 * 30) {
-                DragonBehaviorHelper.setDragonTakeOff(animalEntity);
+                IafDragonBehaviorHelper.setDragonTakeOff(animalEntity);
             }
-            DragonBehaviorHelper.setDragonFlightTarget(animalEntity, blockPos);
+            IafDragonBehaviorHelper.setDragonFlightTarget(animalEntity, blockPos);
+            IafDragonBehaviorHelper.setDragonReachTarget(animalEntity, blockPos);
+        } else {
+            animalEntity.getNavigator().tryMoveToXYZ(pos.getX(), pos.getY(), pos.getZ(), 1.0f);
         }
-
         animalEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
             iCapTargetHolder.setDestination(pos);
             iCapTargetHolder.setCommandStatus(EnumCommandStatus.REACH);
         });
-        animalEntity.getNavigator().tryMoveToXYZ(pos.getX(), pos.getY(), pos.getZ(), 1.0f);
-
-
     }
 
 

@@ -11,6 +11,7 @@ Features
 - Tell your pets where to go, or your dragons where to hover.
 - Command your pets to attack mobs, or your dragons to breath at an area.
 - Use dragon staff from a distance, cycle the command mode from the ground, no dragon flute is ever needed.
+- Use totem of undying to resurrect dragons.
 
 Other stuff
 -----------
@@ -19,7 +20,3 @@ Other stuff
 - A wand that teleport you to anywhere you pointed.
 - A simple damage feedback system migrated from https://www.mcbbs.net/forum.php?mod=viewthread&tid=795249
 
-Todo:
-    campfire prevent mob spawn
-    totem resurrects dragons
-    custom gui settings for dragon specific griefing rules

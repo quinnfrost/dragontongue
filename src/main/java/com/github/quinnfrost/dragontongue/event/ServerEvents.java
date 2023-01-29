@@ -6,6 +6,7 @@ import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.entity.ai.RegistryAI;
 import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
 import com.github.quinnfrost.dragontongue.enums.EnumCrowWand;
+import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import com.github.quinnfrost.dragontongue.item.RegistryItems;
 import com.github.quinnfrost.dragontongue.message.MessageClientCommandDistance;
@@ -14,17 +15,21 @@ import com.github.quinnfrost.dragontongue.message.MessageCrowWand;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.entity.projectile.TridentEntity;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
+import net.minecraft.util.ActionResultType;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
@@ -34,6 +39,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import java.util.ArrayList;
@@ -180,6 +186,28 @@ public class ServerEvents {
             playerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                 RegistryMessages.sendToClient(new MessageClientCommandDistance(iCapTargetHolder.getCommandDistance()), (ServerPlayerEntity) playerEntity);
             });
+        }
+    }
+
+    @SubscribeEvent
+    public static void onEntityUseItem(PlayerInteractEvent.EntityInteractSpecific event) {
+        if (event.getEntity().world.isRemote) {
+            return;
+        }
+
+        if (DragonTongue.isIafPresent) {
+            PlayerEntity playerEntity = event.getPlayer();
+            Hand hand = event.getHand();
+            ItemStack itemStack = playerEntity.getHeldItem(hand);
+            Entity target = event.getTarget();
+            if (itemStack.getItem() == Items.TOTEM_OF_UNDYING && IafHelperClass.isDragon(target)) {
+                LivingEntity dragon = (LivingEntity) target;
+                if (IafDragonBehaviorHelper.resurrectDragon(dragon)) {
+                    itemStack.shrink(1);
+                }
+                event.setCancellationResult(ActionResultType.SUCCESS);
+                event.setCanceled(true);
+            }
         }
     }
 

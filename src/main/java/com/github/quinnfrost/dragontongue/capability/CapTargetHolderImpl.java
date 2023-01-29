@@ -1,6 +1,5 @@
 package com.github.quinnfrost.dragontongue.capability;
 
-import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import net.minecraft.entity.Entity;
@@ -11,7 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class CapTargetHolderImpl implements ICapTargetHolder {
-    private List<UUID> commandEntitiesUUID = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
+    private List<UUID> commandEntitiesUUIDs = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
     private BlockPos commandDestination = null;
     private EnumCommandStatus status = EnumCommandStatus.NONE;
     private double commandDistance = 128;
@@ -29,33 +28,49 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
 
     @Override
     public List<UUID> getCommandEntities() {
-        return commandEntitiesUUID;
+        return commandEntitiesUUIDs;
     }
 
     @Override
     public void setCommandEntities(List<UUID> uuids) {
-        commandEntitiesUUID = uuids;
-    }
-
-    @Override
-    public void setCommandEntity(UUID uuid) {
-        List<UUID> uuids = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
-        uuids.add(uuid);
-        setCommandEntities(uuids);
+        commandEntitiesUUIDs = uuids;
     }
 
     @Override
     public void addCommandEntity(UUID uuid) {
-        if (!commandEntitiesUUID.contains(uuid)) {
-            commandEntitiesUUID.add(uuid);
+        if (!commandEntitiesUUIDs.contains(uuid)) {
+            commandEntitiesUUIDs.add(uuid);
         }
     }
 
     @Override
     public void removeCommandEntity(UUID uuid) {
-        commandEntitiesUUID.remove(uuid);
+        commandEntitiesUUIDs.remove(uuid);
+    }
+    @Override
+    public void setCommandDistance(double distance) {
+        if (distance > 0 && distance <= Config.COMMAND_DISTANCE_MAX.get()) {
+            this.commandDistance = distance;
+        }
     }
 
+    @Override
+    public double getCommandDistance() {
+        return commandDistance;
+    }
+
+    @Override
+    public double modifyCommandDistance(double offset) {
+        if (commandDistance + offset < 0) {
+            this.commandDistance = 0;
+
+        } else if (commandDistance + offset > Config.COMMAND_DISTANCE_MAX.get()) {
+            this.commandDistance = Config.COMMAND_DISTANCE_MAX.get();
+        } else {
+            this.commandDistance = commandDistance + offset;
+        }
+        return this.commandDistance;
+    }
     @Override
     public BlockPos getFallbackPosition() {
         return fallbackPosition;
@@ -68,9 +83,9 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
 
     @Override
     public void tickFallbackTimer() {
-        if (fallbackTimer > 0){
+        if (fallbackTimer > 0) {
             --fallbackTimer;
-        }else if (fallbackTimer < 0){
+        } else if (fallbackTimer < 0) {
             fallbackTimer = 0;
         }
     }
@@ -86,6 +101,7 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
             this.fallbackTimer = value;
         }
     }
+
 
     @Override
     public void setDestination(BlockPos blockPos) {
@@ -105,31 +121,6 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
     @Override
     public EnumCommandStatus getCommandStatus() {
         return status;
-    }
-
-    @Override
-    public void setCommandDistance(double distance) {
-        if (distance > 0 && distance <= Config.COMMAND_DISTANCE_MAX.get()) {
-            this.commandDistance = distance;
-        }
-    }
-
-    @Override
-    public double getCommandDistance() {
-        return commandDistance;
-    }
-
-    @Override
-    public double modifyCommandDistance(double offset) {
-        if (commandDistance + offset < 0 ) {
-            this.commandDistance = 0;
-
-        } else if (commandDistance + offset > Config.COMMAND_DISTANCE_MAX.get()) {
-            this.commandDistance = Config.COMMAND_DISTANCE_MAX.get();
-        } else {
-            this.commandDistance = commandDistance + offset;
-        }
-        return this.commandDistance;
     }
 
 }

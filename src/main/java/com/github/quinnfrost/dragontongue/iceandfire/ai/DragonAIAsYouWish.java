@@ -5,7 +5,7 @@ import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
-import com.github.quinnfrost.dragontongue.iceandfire.DragonBehaviorHelper;
+import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.goal.Goal;
@@ -67,19 +67,19 @@ public class DragonAIAsYouWish extends Goal {
                     }
                 } else {
                     this.shouldStay = targetPos;
-                    DragonBehaviorHelper.setDragonFlightTarget(dragon, targetPos);
+                    IafDragonBehaviorHelper.setDragonFlightTarget(dragon, targetPos);
                 }
                 break;
             case STAY:
-                DragonBehaviorHelper.setDragonStay(dragon);
+                IafDragonBehaviorHelper.setDragonStay(dragon);
                 break;
             case HOVER:
-                DragonBehaviorHelper.setDragonHover(dragon, targetPos);
+                IafDragonBehaviorHelper.setDragonHover(dragon, targetPos);
                 break;
             case BREATH:
-                DragonBehaviorHelper.setDragonBreathTarget(dragon, targetPos);
+                IafDragonBehaviorHelper.setDragonBreathTarget(dragon, targetPos);
                 if (dragon.isFlying() || dragon.isHovering()) {
-                    DragonBehaviorHelper.setDragonHover(dragon, shouldStay);
+                    IafDragonBehaviorHelper.setDragonHover(dragon, shouldStay);
                 }
                 break;
             case ATTACK:

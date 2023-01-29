@@ -9,19 +9,21 @@ import java.util.UUID;
 public interface ICapTargetHolder {
     List<UUID> getCommandEntities();
     void setCommandEntities(List<UUID> uuids);
-    void setCommandEntity(UUID uuid);
     void addCommandEntity(UUID uuid);
     void removeCommandEntity(UUID uuid);
+    void setCommandDistance(double distance);
+    double getCommandDistance();
+    double modifyCommandDistance(double offset);
     BlockPos getFallbackPosition();
     void setFallbackPosition(BlockPos blockPos);
     void tickFallbackTimer();
     int getFallbackTimer();
     void setFallbackTimer(int value);
+
+
     void setDestination(BlockPos blockPos);
     BlockPos getDestination();
     void setCommandStatus(EnumCommandStatus status);
     EnumCommandStatus getCommandStatus();
-    void setCommandDistance(double distance);
-    double getCommandDistance();
-    double modifyCommandDistance(double offset);
+
 }

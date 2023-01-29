@@ -8,12 +8,14 @@ import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAIAsYouWish;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAICalmLook;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
+import net.minecraft.potion.EffectInstance;
+import net.minecraft.potion.Effects;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
 
 import javax.annotation.Nullable;
 
-public class DragonBehaviorHelper {
+public class IafDragonBehaviorHelper {
     public static boolean registerDragonAI(MobEntity mobEntity) {
         if (IafHelperClass.isDragon(mobEntity)) {
             EntityDragonBase dragon = (EntityDragonBase) mobEntity;
@@ -120,6 +122,46 @@ public class DragonBehaviorHelper {
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
         dragon.flightManager.setFlightTarget(Vector3d.copyCentered(blockPos));
+
+        return true;
+    }
+
+    public static boolean setDragonReachTarget(LivingEntity dragonIn, BlockPos blockPos) {
+        if (!IafHelperClass.isDragon(dragonIn)) {
+            return false;
+        }
+        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+
+        if (dragon.getCommand() != 0) {
+            dragon.setCommand(0);
+        }
+
+        dragon.getNavigator().tryMoveToXYZ(blockPos.getX(), blockPos.getY(), blockPos.getZ(), 1.0f);
+
+
+        return true;
+    }
+
+    public static boolean resurrectDragon(LivingEntity dragonIn) {
+        if (!IafHelperClass.isDragon(dragonIn)) {
+            return false;
+        }
+        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+
+        if (dragon.getDeathStage() != 0 || !dragon.isModelDead()) {
+            return false;
+        }
+
+        dragon.setHealth((float) Math.ceil(dragon.getMaxHealth() / 20.0f));
+        dragon.clearActivePotions();
+        dragon.addPotionEffect(new EffectInstance(Effects.REGENERATION, 900, 1));
+//        dragon.addPotionEffect(new EffectInstance(Effects.REGENERATION, 900, 1));
+        dragon.addPotionEffect(new EffectInstance(Effects.ABSORPTION, 100, 1));
+        dragon.addPotionEffect(new EffectInstance(Effects.FIRE_RESISTANCE, 800, 0));
+        dragon.world.setEntityState(dragon, (byte)35);
+
+        dragon.setModelDead(false);
+        dragon.setNoAI(false);
 
         return true;
     }
