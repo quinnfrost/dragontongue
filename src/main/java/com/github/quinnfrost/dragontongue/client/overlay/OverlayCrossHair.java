@@ -36,7 +36,7 @@ public class OverlayCrossHair extends AbstractGui {
                             || crIconTime > 0
             ) {
                 try {
-                    sleep(1000L);
+                    sleep(50L);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -49,19 +49,22 @@ public class OverlayCrossHair extends AbstractGui {
     /**
      * Set cross-hair display
      * @param string        Content to display
-     * @param stringTime    Time before the content disappears
-     * @param iconTime      Time before the cross-hair disappears, 0 for not showing at all
+     * @param stringTime    Time before the content disappears in ticks
+     * @param iconTime      Time before the cross-hair disappears in ticks, 0 for not showing at all
      * @param force         Whether to refresh the display time even if content is the same
      */
     public static void setCrossHairDisplay(String string, int stringTime, int iconTime, boolean force) {
         if (!force && bufferCrossHair.equals(string)) {
             return;
         }
-        crStringTime = stringTime;
-        crIconTime = iconTime;
-        if (!string.isEmpty()) {
+        if (string != null && !string.isEmpty() && stringTime != 0) {
+            crStringTime = stringTime;
             bufferCrossHair = string;
         }
+        if (iconTime != 0) {
+            crIconTime = iconTime;
+        }
+
         if (!timer.isAlive()) {
             timer = new delayedTimer();
             timer.start();

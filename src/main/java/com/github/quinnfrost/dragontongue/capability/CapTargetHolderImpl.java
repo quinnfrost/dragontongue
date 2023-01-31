@@ -2,13 +2,12 @@ package com.github.quinnfrost.dragontongue.capability;
 
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import javax.annotation.Nullable;
+import java.util.*;
 
 public class CapTargetHolderImpl implements ICapTargetHolder {
     private List<UUID> commandEntitiesUUIDs = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
@@ -16,16 +15,20 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
     private BlockPos fallbackPosition = null;
     private int fallbackTimer = 0;
     private BlockPos commandDestination = null;
-    private EnumCommandStatus status = EnumCommandStatus.NONE;
-    private BlockPos breathTarget = null;
+    private Optional<BlockPos> breathTarget = Optional.empty();
+    private int lastCommandState = 0;
+    private Map<EnumCommandType, Object> commandMaps = new EnumMap<EnumCommandType, Object>(EnumCommandType.class);
 
     public CapTargetHolderImpl() {
-
+        new CapTargetHolderImpl(null);
     }
 
     public CapTargetHolderImpl(Entity entity) {
-        this.commandDestination = entity.getPosition();
-        this.fallbackPosition = entity.getPosition();
+        if (entity != null) {
+            this.commandDestination = entity.getPosition();
+            this.fallbackPosition = entity.getPosition();
+        }
+        commandMaps.put(EnumCommandType.COMMAND_STATUS, EnumCommandStatus.NONE);
     }
 
     @Override
@@ -117,22 +120,27 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
 
     @Override
     public void setCommandStatus(EnumCommandStatus status) {
-        this.status = status;
+        commandMaps.put(EnumCommandType.COMMAND_STATUS, status);
     }
 
     @Override
     public EnumCommandStatus getCommandStatus() {
-        return status;
+        return (EnumCommandStatus) commandMaps.get(EnumCommandType.COMMAND_STATUS);
     }
 
     @Override
-    public void setBreathTarget(BlockPos target) {
-        this.breathTarget = target;
+    public void setBreathTarget(@Nullable BlockPos target) {
+        if (target != null) {
+            this.breathTarget = Optional.of(target);
+        } else {
+            this.breathTarget = Optional.empty();
+        }
     }
 
     @Override
-    public BlockPos getBreathTarget() {
+    public Optional<BlockPos> getBreathTarget() {
         return breathTarget;
     }
+
 
 }

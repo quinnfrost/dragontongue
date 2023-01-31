@@ -45,65 +45,11 @@ public class DragonAIAsYouWish extends Goal {
     @Override
     public void startExecuting() {
         BlockPos pos = capabilityInfoHolder.getDestination();
-
     }
 
     @Override
     public void tick() {
-        BlockPos targetPos = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon)).getDestination();
-        BlockPos breathPos = capabilityInfoHolder.getBreathTarget();
 
-        if (dragon.getAttackTarget() != null && !dragon.getAttackTarget().isAlive()) {
-            dragon.setAttackTarget(null);
-        }
-
-        switch (capabilityInfoHolder.getCommandStatus()) {
-            case REACH:
-                if (util.hasArrived(dragon, capabilityInfoHolder.getDestination())
-                        && capabilityInfoHolder.getCommandStatus() == EnumCommandStatus.REACH) {
-                    dragon.getNavigator().clearPath();
-                    dragon.setMotion(0, 0, 0);
-                    // Determine if destination has support block
-                    if (shouldHover(dragon)) {
-                        capabilityInfoHolder.setCommandStatus(EnumCommandStatus.HOVER);
-                    } else {
-                        capabilityInfoHolder.setCommandStatus(EnumCommandStatus.STAY);
-                    }
-                } else {
-                    this.shouldStay = targetPos;
-                    IafDragonBehaviorHelper.setDragonFlightTarget(dragon, targetPos);
-                    IafDragonBehaviorHelper.setDragonReachTarget(dragon, targetPos);
-                }
-                break;
-            case STAY:
-                IafDragonBehaviorHelper.setDragonStay(dragon);
-                // Release control if the owner climbs up
-                if (dragon.isOnePlayerRiding()) {
-                    dragon.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                        iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
-                    });
-                }
-                break;
-            case HOVER:
-                IafDragonBehaviorHelper.setDragonHover(dragon, targetPos);
-                // Release control if the owner climbs up
-                if (dragon.isOnePlayerRiding()) {
-                    dragon.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                        iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
-                    });
-                }
-                break;
-            case BREATH:
-                IafDragonBehaviorHelper.setDragonBreathTarget(dragon, new BlockPos(breathPos));
-                // Hover blast
-                if (dragon.isFlying() || dragon.isHovering()) {
-                    IafDragonBehaviorHelper.setDragonHover(dragon, shouldStay);
-                }
-                break;
-            case ATTACK:
-
-                break;
-        }
     }
 
     public boolean shouldHover(EntityDragonBase dragon) {

@@ -112,9 +112,8 @@ public class MessageCommandEntity {
                 targetEntity.addPotionEffect(new EffectInstance(Effects.GLOWING, 20, 0, true, false));
             }
 
-            if (action == EnumCommandEntity.DEBUG && targetEntity instanceof MobEntity) {
+            if (targetEntity instanceof MobEntity) {
                 DragonTongue.debugTarget = (MobEntity) targetEntity;
-                return;
             }
 
             commandEntity(serverWorld, commander, action, targetEntity, targetPos, null);
@@ -174,11 +173,11 @@ public class MessageCommandEntity {
                                 (LivingEntity) serverWorld.getEntityByUuid(entityUUID), target, pos);
                     }
                 } else {
-                    commandNearbyAttack(commander, Config.NEARBY_RANGE.get().floatValue(), target, pos, excludeEntity);
+                    commandNearby(EnumCommandEntity.ATTACK, commander, target, pos, excludeEntity, Config.NEARBY_RANGE.get().floatValue());
                 }
                 break;
             case NEARBY_ATTACK:
-                commandNearbyAttack(commander, Config.NEARBY_RANGE.get().floatValue(), target, pos, excludeEntity);
+                commandNearby(EnumCommandEntity.ATTACK, commander, target, pos, excludeEntity, Config.NEARBY_RANGE.get().floatValue());
                 break;
             case LOOP_STATUS:
                 loopSitting(commander, target);
@@ -196,7 +195,11 @@ public class MessageCommandEntity {
                 commandLand(commander, target);
                 break;
             case HALT:
-                commandHalt(commander, target);
+                if (target != null) {
+                    commandHalt(commander, target);
+                } else {
+                    commandNearby(EnumCommandEntity.HALT, commander, null, null, excludeEntity, Config.NEARBY_RANGE.get().floatValue());
+                }
                 break;
             case REACH:
                 commander.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
@@ -221,18 +224,15 @@ public class MessageCommandEntity {
     /**
      * Command tamed entities around to attack target
      *
+     * @param command
      * @param commander     Command issuer
-     * @param radius        Tamed within the radius will attack
      * @param target        Target to attack, set null to stop attacking
      * @param pos           Only used for dragons, breath at desired location
      * @param excludeEntity Indicate which entity to exclude
+     * @param radius        Tamed within the radius will attack
      */
-    private static void commandNearbyAttack(LivingEntity commander, float radius, @Nullable LivingEntity target,
-                                            BlockPos pos, @Nonnull Predicate<? super Entity> excludeEntity) {
-        // Attack friendly, exit
-        if (util.isOwner(target, commander)) {
-            return;
-        }
+    private static void commandNearby(EnumCommandEntity command, LivingEntity commander, @Nullable LivingEntity target, BlockPos pos, @Nonnull Predicate<? super Entity> excludeEntity, float radius) {
+
 
         // Get entities around commander, a range cube of size radius*radius, the
         // commander is automatically excluded
@@ -255,10 +255,20 @@ public class MessageCommandEntity {
             // .grow(radius)).toString());
 
             // iteration through entities to set their target
-            for (Entity entity : entities) {
-                if (entity instanceof TameableEntity) {
-                    commandAttack(commander, (LivingEntity) entity, target, null);
-                    ((LivingEntity) entity).addPotionEffect(new EffectInstance(Effects.GLOWING, 20, 0, true, false));
+            for (Entity tamed : entities) {
+                if (tamed instanceof TameableEntity) {
+                    ((LivingEntity) tamed).addPotionEffect(new EffectInstance(Effects.GLOWING, 20, 0, true, false));
+                    switch (command) {
+                        case ATTACK:
+                            // Attack friendly, exit
+                            if (!util.isOwner(target, commander)) {
+                                commandAttack(commander, (LivingEntity) tamed, target, null);
+                            }
+                            break;
+                        case HALT:
+                            commandHalt(commander,(LivingEntity) tamed);
+                            break;
+                    }
                 }
             }
         } // end if player
@@ -311,17 +321,23 @@ public class MessageCommandEntity {
             return;
         }
         AnimalEntity animalEntity = (AnimalEntity) tamed;
-        if (DragonTongue.isIafPresent) {
-            IafDragonBehaviorHelper.setDragonBreathTarget(tamed, null);
+
+        if (DragonTongue.isIafPresent && IafHelperClass.isDragon(animalEntity)) {
+            IafDragonBehaviorHelper.setDragonHalt(animalEntity);
+        } else {
+            animalEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                iCapTargetHolder.setDestination(animalEntity.getPosition());
+                // If no command was issued, do as the vanilla way
+                if (iCapTargetHolder.getCommandStatus() != EnumCommandStatus.NONE) {
+                    iCapTargetHolder.setCommandStatus(EnumCommandStatus.REACH);
+                }
+//            IafDragonBehaviorHelper.setDragonFlightTarget(animalEntity, animalEntity.getPosition());
+            });
+//        animalEntity.getNavigator().tryMoveToXYZ(animalEntity.getPosX(), animalEntity.getPosY(), animalEntity.getPosZ(), 1.0f);
+            animalEntity.getNavigator().clearPath();
+            animalEntity.setAttackTarget(null);
         }
-        animalEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-            iCapTargetHolder.setDestination(animalEntity.getPosition());
-            if (iCapTargetHolder.getCommandStatus() != EnumCommandStatus.NONE) {
-                iCapTargetHolder.setCommandStatus(EnumCommandStatus.REACH);
-            }
-        });
-        animalEntity.getNavigator().clearPath();
-        animalEntity.setAttackTarget(null);
+
     }
 
     /**
@@ -345,7 +361,7 @@ public class MessageCommandEntity {
                 IafDragonBehaviorHelper.setDragonTakeOff(animalEntity);
             }
             IafDragonBehaviorHelper.setDragonFlightTarget(animalEntity, blockPos);
-            IafDragonBehaviorHelper.setDragonReachTarget(animalEntity, blockPos);
+            IafDragonBehaviorHelper.setDragonWalkTarget(animalEntity, blockPos);
         } else {
             animalEntity.getNavigator().tryMoveToXYZ(pos.getX(), pos.getY(), pos.getZ(), 1.0f);
         }
@@ -363,6 +379,9 @@ public class MessageCommandEntity {
             } else {
                 util.setByteTag(target, "Sitting", (byte) 1);
             }
+            target.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
+            });
         }
     }
 
@@ -373,6 +392,9 @@ public class MessageCommandEntity {
             } else {
                 util.setByteTag(target, "Sitting", (byte) 0);
             }
+            target.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
+            });
         }
     }
 
@@ -392,17 +414,8 @@ public class MessageCommandEntity {
         if (target instanceof TameableEntity && util.isOwner(target, commander)) {
             if (util.getByteTag(target, "Flying").isPresent()) {
                 util.setByteTag(target, "Flying", (byte) 0);
-            } else {
             }
         }
-    }
-
-    public static void commandCircle(LivingEntity commander, @Nullable LivingEntity target, BlockPos pos) {
-        if (target == null) {
-            return;
-        }
-
-
     }
 
     private static void loopSitting(LivingEntity commander, @Nullable LivingEntity target) {

@@ -70,8 +70,8 @@ public class IafHelperClass {
                 "Flying:" + compoundNBT.getByte("Flying"),
                 "Hovering:" + dragon.isHovering(),
                 "HoverTicks:" + dragon.hoverTicks,
-                "TacklingTicks:" + dragon.tacklingTicks,
-                "TicksStill:" + dragon.ticksStill
+                "TicksStill:" + dragon.ticksStill,
+                "LookVec:" + dragon.getLookVec()
         );
 
 

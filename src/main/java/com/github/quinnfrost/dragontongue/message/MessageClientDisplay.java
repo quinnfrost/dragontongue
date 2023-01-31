@@ -50,11 +50,11 @@ public class MessageClientDisplay {
                 case PASS:
                     break;
                 case DAMAGE:
-                    OverlayCrossHair.setCrossHairDisplay(message.get(0), displayTime,1, false);
+                    OverlayCrossHair.setCrossHairDisplay(message.get(0), displayTime,20, true);
                     OverlayCrossHair.critical = false;
                     break;
                 case CRITICAL:
-                    OverlayCrossHair.setCrossHairDisplay(message.get(0),displayTime,1, false);
+                    OverlayCrossHair.setCrossHairDisplay(message.get(0),displayTime,20, true);
                     OverlayCrossHair.critical = true;
                     break;
                 case ENTITY_DEBUG:

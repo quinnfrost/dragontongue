@@ -2,9 +2,9 @@ package com.github.quinnfrost.dragontongue.capability;
 
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ICapTargetHolder {
@@ -27,6 +27,6 @@ public interface ICapTargetHolder {
     void setCommandStatus(EnumCommandStatus status);
     EnumCommandStatus getCommandStatus();
     void setBreathTarget(BlockPos target);
-    BlockPos getBreathTarget();
+    Optional<BlockPos> getBreathTarget();
 
 }

@@ -30,6 +30,7 @@ public class ClientEvents {
         if (
                 KeyBindRegistry.command_tamed.isKeyDown()
                 || KeyBindRegistry.select_tamed.isKeyDown()
+                || KeyBindRegistry.set_tamed_status.isKeyDown()
         ) {
             event.setSwingHand(false);
             event.setCanceled(true);

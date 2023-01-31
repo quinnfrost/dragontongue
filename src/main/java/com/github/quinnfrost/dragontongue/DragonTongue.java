@@ -32,6 +32,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
+import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
@@ -138,6 +139,11 @@ public class DragonTongue
         // do something when the server starts
         LOGGER.info("HELLO from server starting");
         RegistryCommands.registerCommands(event.getServer().getFunctionManager().getCommandDispatcher());
+    }
+
+    @SubscribeEvent
+    public void onServerStarted(FMLServerStartedEvent event) {
+
     }
 
     @SubscribeEvent

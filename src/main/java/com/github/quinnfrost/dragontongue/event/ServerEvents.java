@@ -7,6 +7,7 @@ import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.entity.ai.RegistryAI;
 import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
 import com.github.quinnfrost.dragontongue.enums.EnumCrowWand;
+import com.github.quinnfrost.dragontongue.iceandfire.IafAdvancedDragonLogic;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import com.github.quinnfrost.dragontongue.item.RegistryItems;
@@ -124,9 +125,14 @@ public class ServerEvents {
      * @param event
      */
     @SubscribeEvent
-    public static void updateLivingDestination(LivingEvent.LivingUpdateEvent event) {
+    public static void onLivingUpdate(LivingEvent.LivingUpdateEvent event) {
         if (event.getEntity().world.isRemote) {
             return;
+        }
+        if (DragonTongue.isIafPresent) {
+            if (IafHelperClass.isDragon(event.getEntityLiving())) {
+                IafDragonBehaviorHelper.updateDragonCommand(event.getEntityLiving());
+            }
         }
         // Ask all client to display entity debug string
         if (event.getEntity() == DragonTongue.debugTarget) {
@@ -179,7 +185,9 @@ public class ServerEvents {
         if (entity instanceof MobEntity) {
             MobEntity mobEntity = (MobEntity) event.getEntity();
             RegistryAI.registerAI(mobEntity);
-
+            if (DragonTongue.isIafPresent && IafHelperClass.isDragon(mobEntity)) {
+                IafAdvancedDragonLogic.applyDragonLogic(mobEntity);
+            }
         }
         // Update command distance for clients
         if (entity instanceof PlayerEntity) {
