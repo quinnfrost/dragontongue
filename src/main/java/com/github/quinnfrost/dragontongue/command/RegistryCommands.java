@@ -2,12 +2,19 @@ package com.github.quinnfrost.dragontongue.command;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.References;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
+import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.container.ContainerDragon;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
+import net.minecraft.command.arguments.ComponentArgument;
 import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -28,58 +35,73 @@ public class RegistryCommands {
 
         dispatcher.register(Commands.literal("dragontongue")
                 .redirect(cmdDragonTongue)
-                );
+        );
 
         dispatcher.register(Commands.literal("gui").requires(commandSource -> {
-            return commandSource.hasPermissionLevel(0);
-        }).executes(context -> {
-            context.getSource().sendFeedback(
-                    new StringTextComponent("Command showGUI called"),
-                    false
-            );
-            return 0;
-        }).then(Commands.argument("target", EntityArgument.entity()).executes(context -> {
-
-            context.getSource().sendFeedback(
-                    new StringTextComponent("Command showGUI called"),
-                    false
-            );
-
-            try {
-                Entity entity = EntityArgument.getEntity(context, "target");
-                if (IafHelperClass.isDragon(entity)) {
-                    ServerPlayerEntity serverPlayerEntity = context.getSource().asPlayer();
-                    serverPlayerEntity.openContainer(new INamedContainerProvider() {
-                                                         @Override
-                                                         public ITextComponent getDisplayName() {
-                                                             return serverPlayerEntity.getDisplayName();
-                                                         }
-
-                                                         @Nullable
-                                                         @Override
-                                                         public Container createMenu(int p_createMenu_1_, PlayerInventory p_createMenu_2_, PlayerEntity p_createMenu_3_) {
-                                                             return new ContainerDragon(
-                                                                     p_createMenu_1_,
-                                                                     p_createMenu_2_,
-                                                                     ((EntityDragonBase) entity).dragonInventory,
-                                                                     (EntityDragonBase) entity
-                                                             );
-                                                         }
-                                                     }
-
-                    );
-                } else {
+                    return commandSource.hasPermissionLevel(0);
+                }).executes(context -> {
                     context.getSource().sendFeedback(
-                            new StringTextComponent("None dragon entity selected"),
+                            new StringTextComponent("Command showGUI called"),
                             false
                     );
-                    return 1;
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return 0;
+                    return 0;
+                }).then(Commands.argument("target", EntityArgument.entity()).executes(context -> {
+
+                    context.getSource().sendFeedback(
+                            new StringTextComponent("Command showGUI called"),
+                            false
+                    );
+
+                    try {
+                        Entity entity = EntityArgument.getEntity(context, "target");
+                        if (IafHelperClass.isDragon(entity)) {
+                            ServerPlayerEntity serverPlayerEntity = context.getSource().asPlayer();
+                            serverPlayerEntity.openContainer(new INamedContainerProvider() {
+                                                                 @Override
+                                                                 public ITextComponent getDisplayName() {
+                                                                     return serverPlayerEntity.getDisplayName();
+                                                                 }
+
+                                                                 @Nullable
+                                                                 @Override
+                                                                 public Container createMenu(int p_createMenu_1_, PlayerInventory p_createMenu_2_, PlayerEntity p_createMenu_3_) {
+                                                                     return new ContainerDragon(
+                                                                             p_createMenu_1_,
+                                                                             p_createMenu_2_,
+                                                                             ((EntityDragonBase) entity).dragonInventory,
+                                                                             (EntityDragonBase) entity
+                                                                     );
+                                                                 }
+                                                             }
+
+                            );
+                        } else {
+                            context.getSource().sendFeedback(
+                                    new StringTextComponent("None dragon entity selected"),
+                                    false
+                            );
+                            return 1;
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    return 0;
                 }))
         );
+
+        dispatcher.register(Commands.literal("dragon").requires(commandSource -> commandSource.hasPermissionLevel(0))
+                .then(Commands.argument("target", EntityArgument.entity())
+                        .then(Commands.argument("setting", StringArgumentType.word())
+                                .then(Commands.argument("value", BoolArgumentType.bool())
+                                        .executes(context -> {
+                                            Entity entity = EntityArgument.getEntity(context, "target");
+                                            ICapTargetHolder cap = entity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(entity));
+                                            String str = StringArgumentType.getString(context, "setting");
+                                            boolean value = BoolArgumentType.getBool(context, "value");
+                                            cap.setObjectSetting(EnumCommandSettingType.SHOULD_RETURN_ROOST, value);
+                                            return 0;
+                                        }))))
+        );
+
     }
 }

@@ -1,17 +1,21 @@
 package com.github.quinnfrost.dragontongue.item;
 
-import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.Registration;
+import com.github.quinnfrost.dragontongue.client.overlay.OverlayCrossHair;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCrowWand;
 import com.github.quinnfrost.dragontongue.message.MessageCrowWand;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
+import com.github.quinnfrost.dragontongue.utils.util;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Rarity;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -60,5 +64,17 @@ public class ItemCrowWand extends Item {
 
         return super.onItemRightClick(world, player, hand);
 
+    }
+
+    @Override
+    @OnlyIn(Dist.CLIENT)
+    public void inventoryTick(ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
+        super.inventoryTick(stack, worldIn, entityIn, itemSlot, isSelected);
+        if (isSelected) {
+            BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(entityIn, Config.CROW_WAND_RANGE_MAX.get().floatValue(), 1.0f);
+            if (blockRayTraceResult.getType() != RayTraceResult.Type.MISS) {
+                OverlayCrossHair.setCrossHairDisplay(null, 0, 2, OverlayCrossHair.IconType.TARGET, true);
+            }
+        }
     }
 }

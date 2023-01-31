@@ -1,17 +1,29 @@
 package com.github.quinnfrost.dragontongue.iceandfire;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
+import com.github.alexthe666.iceandfire.entity.util.HomePosition;
+import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
+import com.github.quinnfrost.dragontongue.iceandfire.gui.ScreenDragon;
+import com.github.quinnfrost.dragontongue.item.RegistryItems;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.ActionResultType;
+import net.minecraft.util.Hand;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -75,6 +87,39 @@ public class IafHelperClass {
         );
 
 
+    }
+
+    public static boolean onEntityInteract(PlayerInteractEvent.EntityInteract event) {
+        if (event.getWorld().isRemote) {
+            return false;
+        }
+        if (!isDragon(event.getTarget())) {
+            return false;
+        }
+
+        EntityDragonBase dragon = (EntityDragonBase) event.getTarget();
+        PlayerEntity playerEntity = (PlayerEntity) event.getEntityLiving();
+        Hand hand = event.getHand();
+        ItemStack itemStack = playerEntity.getHeldItem(hand);
+        if (itemStack.getItem() == IafItemRegistry.DRAGON_STAFF
+                && playerEntity.getDistance(dragon) < 5) {
+            playerEntity.sendMessage(ITextComponent.getTextComponentOrEmpty("Dragon staff used"), Util.DUMMY_UUID);
+            if (dragon.hasHomePosition) {
+                dragon.hasHomePosition = false;
+                playerEntity.sendStatusMessage(new TranslationTextComponent("dragon.command.remove_home"), true);
+                dragon.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                    iCapTargetHolder.setHomePosition(null);
+                });
+            } else {
+                BlockPos pos = dragon.getPosition();
+                dragon.homePos = new HomePosition(pos, dragon.world);
+                dragon.hasHomePosition = true;
+                playerEntity.sendStatusMessage(new TranslationTextComponent("dragon.command.new_home", pos.getX(), pos.getY(), pos.getZ(), dragon.homePos.getDimension()), true);
+            }
+            event.setCancellationResult(ActionResultType.SUCCESS);
+            event.setCanceled(true);
+        }
+        return true;
     }
 
 }

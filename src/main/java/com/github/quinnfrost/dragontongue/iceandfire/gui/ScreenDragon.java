@@ -4,7 +4,7 @@ import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.References;
 import com.github.quinnfrost.dragontongue.container.ContainerDragon;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandEntity;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
 import com.github.quinnfrost.dragontongue.message.MessageCommandEntity;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.mojang.blaze3d.matrix.MatrixStack;
@@ -187,7 +187,7 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
             } else {
                 ScreenDragon.referencedDragon = dragon;
                 RegistryMessages.sendToServer(new MessageCommandEntity(
-                        EnumCommandEntity.GUI,
+                        EnumCommandType.GUI,
                         playerEntity.getUniqueID(),
                         dragon.getUniqueID()
                 ));

@@ -2,7 +2,6 @@ package com.github.quinnfrost.dragontongue.event;
 
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
-import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import com.github.quinnfrost.dragontongue.iceandfire.gui.ScreenDragon;
 import com.github.quinnfrost.dragontongue.item.RegistryItems;
@@ -12,9 +11,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -37,13 +34,15 @@ public class CommonEvents {
                 Hand hand = event.getHand();
                 ItemStack itemStack = playerEntity.getHeldItem(hand);
 
-                if (playerEntity.isSneaking()
-                        && itemStack.getItem() == RegistryItems.DRAGON_STAFF.get()
-                        && playerEntity.getDistance(dragon) < 5
-                ) {
-                    ScreenDragon.openGui(playerEntity, dragon);
-                    event.setCancellationResult(ActionResultType.SUCCESS);
-                    event.setCanceled(true);
+                if (playerEntity.isSneaking()) {
+                    IafHelperClass.onEntityInteract(event);
+                    if (itemStack.getItem() == RegistryItems.DRAGON_STAFF.get()
+                            && playerEntity.getDistance(dragon) < 5) {
+                        ScreenDragon.openGui(playerEntity, dragon);
+                        event.setCancellationResult(ActionResultType.SUCCESS);
+                        event.setCanceled(true);
+                    }
+
                 }
 
 

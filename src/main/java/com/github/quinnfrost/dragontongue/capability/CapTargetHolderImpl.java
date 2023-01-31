@@ -1,8 +1,8 @@
 package com.github.quinnfrost.dragontongue.capability;
 
 import com.github.quinnfrost.dragontongue.config.Config;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 
@@ -10,14 +10,19 @@ import javax.annotation.Nullable;
 import java.util.*;
 
 public class CapTargetHolderImpl implements ICapTargetHolder {
+    public static BlockPos INVALID_POS = new BlockPos(0, 0.5, 0);
+
     private List<UUID> commandEntitiesUUIDs = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
     private double commandDistance = 128;
+    private double selectDistance = 128;
     private BlockPos fallbackPosition = null;
     private int fallbackTimer = 0;
     private BlockPos commandDestination = null;
+    private EnumCommandStatus status = EnumCommandStatus.NONE;
     private Optional<BlockPos> breathTarget = Optional.empty();
-    private int lastCommandState = 0;
-    private Map<EnumCommandType, Object> commandMaps = new EnumMap<EnumCommandType, Object>(EnumCommandType.class);
+    private Optional<BlockPos> homePosition = Optional.empty();
+    private Map<EnumCommandSettingType, Object> commandMaps = new EnumMap<EnumCommandSettingType, Object>(EnumCommandSettingType.class);
+//    private Map<EnumCommandSettingType.BooleanSettings, Boolean> settingMaps = new EnumMap<EnumCommandSettingType.BooleanSettings, Boolean>(EnumCommandSettingType.BooleanSettings.class);
 
     public CapTargetHolderImpl() {
         new CapTargetHolderImpl(null);
@@ -28,7 +33,20 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
             this.commandDestination = entity.getPosition();
             this.fallbackPosition = entity.getPosition();
         }
-        commandMaps.put(EnumCommandType.COMMAND_STATUS, EnumCommandStatus.NONE);
+        commandMaps.put(EnumCommandSettingType.COMMAND_STATUS, EnumCommandStatus.NONE);
+        commandMaps.put(EnumCommandSettingType.GROUND_ATTACK_TYPE, EnumCommandSettingType.GroundAttackType.BITE);
+        commandMaps.put(EnumCommandSettingType.AIR_ATTACK_TYPE, EnumCommandSettingType.AirAttackType.HOVER_BLAST);
+
+        commandMaps.put(EnumCommandSettingType.MOVEMENT_TYPE, EnumCommandSettingType.MovementType.ANY);
+        commandMaps.put(EnumCommandSettingType.DESTROY_TYPE, EnumCommandSettingType.DestroyType.ANY);
+        commandMaps.put(EnumCommandSettingType.BREATH_TYPE, EnumCommandSettingType.BreathType.ANY);
+        commandMaps.put(EnumCommandSettingType.SHOULD_RETURN_ROOST, true);
+
+
+//        for (EnumCommandSettingType.BooleanSettings type :
+//                EnumCommandSettingType.BooleanSettings.values()) {
+//            settingMaps.put(type, true);
+//        }
     }
 
     @Override
@@ -76,6 +94,30 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
         }
         return this.commandDistance;
     }
+
+    @Override
+    public void setSelectDistance(double distance) {
+        this.selectDistance = distance;
+    }
+
+    @Override
+    public double getSelectDistance() {
+        return selectDistance;
+    }
+
+    @Override
+    public double modifySelectDistance(double offset) {
+        if (selectDistance + offset < 0) {
+            this.selectDistance = 0;
+
+        } else if (selectDistance + offset > Config.NEARBY_RANGE.get()) {
+            this.selectDistance = Config.NEARBY_RANGE.get();
+        } else {
+            this.selectDistance = selectDistance + offset;
+        }
+        return this.selectDistance;
+    }
+
     @Override
     public BlockPos getFallbackPosition() {
         return fallbackPosition;
@@ -120,12 +162,12 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
 
     @Override
     public void setCommandStatus(EnumCommandStatus status) {
-        commandMaps.put(EnumCommandType.COMMAND_STATUS, status);
+        commandMaps.put(EnumCommandSettingType.COMMAND_STATUS, status);
     }
 
     @Override
     public EnumCommandStatus getCommandStatus() {
-        return (EnumCommandStatus) commandMaps.get(EnumCommandType.COMMAND_STATUS);
+        return (EnumCommandStatus) commandMaps.get(EnumCommandSettingType.COMMAND_STATUS);
     }
 
     @Override
@@ -140,6 +182,30 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
     @Override
     public Optional<BlockPos> getBreathTarget() {
         return breathTarget;
+    }
+
+    @Override
+    public void setHomePosition(BlockPos blockPos) {
+        if (blockPos != null) {
+            this.homePosition = Optional.of(blockPos);
+        } else {
+            this.homePosition = Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<BlockPos> getHomePosition() {
+        return homePosition;
+    }
+
+    @Override
+    public void setObjectSetting(EnumCommandSettingType type, Object setting) {
+        commandMaps.put(type, setting);
+    }
+
+    @Override
+    public Object getObjectSetting(EnumCommandSettingType type) {
+        return commandMaps.get(type);
     }
 
 

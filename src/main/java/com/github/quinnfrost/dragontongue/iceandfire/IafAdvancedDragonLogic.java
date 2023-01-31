@@ -2,9 +2,11 @@ package com.github.quinnfrost.dragontongue.iceandfire;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.IafDragonLogic;
+import com.github.alexthe666.iceandfire.entity.util.HomePosition;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.LivingEntity;
@@ -30,6 +32,29 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             super.updateDragonServer();
         }
 
+        // Update home position if valid
+        if ((Boolean) cap.getObjectSetting(EnumCommandSettingType.SHOULD_RETURN_ROOST)) {
+            if (dragon.hasHomePosition) {
+                // Vanilla behavior: return to roost
+//                cap.setHomePosition(dragon.getHomePosition());
+            } else {
+                // Recover home pos
+                cap.getHomePosition().ifPresent(blockPos -> {
+                    dragon.homePos = new HomePosition(blockPos, dragon.world);
+                    dragon.hasHomePosition = true;
+                    // Get up so she can return to roost
+                    dragon.setQueuedToSit(false);
+                });
+            }
+        } else {
+            // Don't return to roost
+            if (dragon.hasHomePosition) {
+                cap.setHomePosition(dragon.homePos.getPosition());
+                // If dragon should not return to roost, invalidate roost pos
+                dragon.hasHomePosition = false;
+            }
+        }
+
         // Resets everything to vanilla
         if (cap.getCommandStatus() == EnumCommandStatus.NONE) {
             cap.setBreathTarget(null);
@@ -47,24 +72,25 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             return;
         }
         // Resets attack target if the target is dead
-        if (dragon.getAttackTarget() != null && !dragon.getAttackTarget().isAlive()) {
-            if (cap.getCommandStatus() == EnumCommandStatus.ATTACK) {
-//                IafDragonBehaviorHelper.setDragonReach(dragon, dragon.getPosition());
-                cap.setDestination(dragon.getPosition());
-                if (dragon.isFlying() || dragon.isHovering()) {
-                    cap.setCommandStatus(EnumCommandStatus.HOVER);
-                } else {
-                    cap.setCommandStatus(EnumCommandStatus.STAY);
-                }
+        if ((dragon.getAttackTarget() != null && !dragon.getAttackTarget().isAlive())
+                || (dragon.getAttackTarget() == null && cap.getCommandStatus() == EnumCommandStatus.ATTACK)) {
+            cap.setDestination(dragon.getPosition());
+            if (IafDragonBehaviorHelper.isDragonInAir(dragon)) {
+                cap.setCommandStatus(EnumCommandStatus.HOVER);
+            } else {
+                cap.setCommandStatus(EnumCommandStatus.STAY);
             }
             dragon.setAttackTarget(null);
         }
         // Breath to target if not empty
-        cap.getBreathTarget().ifPresent(breathPos -> {
+        if (cap.getBreathTarget().isPresent()) {
+            BlockPos breathPos = cap.getBreathTarget().get();
             dragon.setQueuedToSit(false); // In case dragon is sleeping
             IafDragonBehaviorHelper.keepDragonBreathTarget(dragon, breathPos);
             IafDragonBehaviorHelper.setDragonLook(dragon, breathPos);
-        });
+        } else {
+            dragon.setBreathingFire(false);
+        }
 
         switch (cap.getCommandStatus()) {
             case REACH:

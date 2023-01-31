@@ -1,5 +1,6 @@
 package com.github.quinnfrost.dragontongue.capability;
 
+import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import net.minecraft.util.math.BlockPos;
 
@@ -15,6 +16,9 @@ public interface ICapTargetHolder {
     void setCommandDistance(double distance);
     double getCommandDistance();
     double modifyCommandDistance(double offset);
+    void setSelectDistance(double distance);
+    double getSelectDistance();
+    double modifySelectDistance(double offset);
     BlockPos getFallbackPosition();
     void setFallbackPosition(BlockPos blockPos);
     void tickFallbackTimer();
@@ -28,5 +32,9 @@ public interface ICapTargetHolder {
     EnumCommandStatus getCommandStatus();
     void setBreathTarget(BlockPos target);
     Optional<BlockPos> getBreathTarget();
+    void setHomePosition(BlockPos blockPos);
+    Optional<BlockPos> getHomePosition();
+    void setObjectSetting(EnumCommandSettingType type, Object setting);
+    Object getObjectSetting(EnumCommandSettingType type);
 
 }

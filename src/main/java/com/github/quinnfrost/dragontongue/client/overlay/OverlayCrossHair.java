@@ -11,6 +11,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.client.gui.GuiUtils;
 
+import javax.annotation.Nullable;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +23,16 @@ public class OverlayCrossHair extends AbstractGui {
     private static String bufferCrossHair = "";
     public static int crStringTime = 0;
     public static int crIconTime = 0;
+    public static IconType crIconType = IconType.HIT;
     public static boolean critical = false;
     public static delayedTimer timer = new delayedTimer();
+
+    public enum IconType {
+        HIT,
+        CRITICAL,
+        WARN,
+        TARGET
+    }
 
     public static class delayedTimer extends Thread {
         public delayedTimer() {
@@ -48,12 +57,19 @@ public class OverlayCrossHair extends AbstractGui {
 
     /**
      * Set cross-hair display
-     * @param string        Content to display
-     * @param stringTime    Time before the content disappears in ticks
-     * @param iconTime      Time before the cross-hair disappears in ticks, 0 for not showing at all
-     * @param force         Whether to refresh the display time even if content is the same
+     *
+     * @param string     Content to display
+     * @param stringTime Time before the content disappears in ticks
+     * @param iconTime   Time before the cross-hair disappears in ticks, 0 for not showing at all
+     * @param type
+     * @param force      Whether to refresh the display time even if content is the same
      */
-    public static void setCrossHairDisplay(String string, int stringTime, int iconTime, boolean force) {
+    public static void setCrossHairDisplay(@Nullable String string, int stringTime, int iconTime,@Nullable IconType type, boolean force) {
+        setCrossHairIcon(type, iconTime);
+        setCrossHairString(string, stringTime, force);
+    }
+
+    public static void setCrossHairString(@Nullable String string, int stringTime, boolean force) {
         if (!force && bufferCrossHair.equals(string)) {
             return;
         }
@@ -61,8 +77,17 @@ public class OverlayCrossHair extends AbstractGui {
             crStringTime = stringTime;
             bufferCrossHair = string;
         }
-        if (iconTime != 0) {
+
+        if (!timer.isAlive()) {
+            timer = new delayedTimer();
+            timer.start();
+        }
+    }
+
+    public static void setCrossHairIcon(@Nullable IconType type, int iconTime) {
+        if (iconTime != 0 || type == null) {
             crIconTime = iconTime;
+            crIconType = type;
         }
 
         if (!timer.isAlive()) {
@@ -134,12 +159,22 @@ public class OverlayCrossHair extends AbstractGui {
             int screenHeight = event.getWindow().getHeight();
             MatrixStack ms = new MatrixStack();
             Minecraft.getInstance().getTextureManager().bindTexture(markTexture);
-            if (!critical) {
-//                AbstractGui.blit(event.getMatrixStack(), screenWidth / 2 - textureLength / 2, screenHeight / 2 - textureLength / 2, 0, 0,textureLength,textureLength,textureLength,textureLength);
-                GuiUtils.drawTexturedModalRect(ms, scaledWidth / 2 - textureLength / 2, scaledHeight / 2 - textureLength / 2, 0, 0, textureLength, textureLength, 1);
-            } else {
-                GuiUtils.drawTexturedModalRect(ms, scaledWidth / 2 - textureLength / 2, scaledHeight / 2 - textureLength / 2, textureLength, 0, textureLength, textureLength, 1);
+            switch (crIconType) {
+
+                case HIT:
+                    GuiUtils.drawTexturedModalRect(ms, scaledWidth / 2 - textureLength / 2, scaledHeight / 2 - textureLength / 2, 0, 0, textureLength, textureLength, 1);
+                    break;
+                case CRITICAL:
+                    GuiUtils.drawTexturedModalRect(ms, scaledWidth / 2 - textureLength / 2, scaledHeight / 2 - textureLength / 2, textureLength, 0, textureLength, textureLength, 1);
+                    break;
+                case WARN:
+                    GuiUtils.drawTexturedModalRect(ms, scaledWidth / 2 - textureLength / 2, scaledHeight / 2 - textureLength / 2, textureLength * 2, 0, textureLength, textureLength, 1);
+                    break;
+                case TARGET:
+                    GuiUtils.drawTexturedModalRect(ms, scaledWidth / 2 - textureLength / 2, scaledHeight / 2 - textureLength / 2, textureLength * 3, 0, textureLength, textureLength, 1);
+                    break;
             }
+
         }
     }
 

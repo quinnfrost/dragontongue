@@ -3,6 +3,7 @@ package com.github.quinnfrost.dragontongue.capability;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.References;
 import com.github.quinnfrost.dragontongue.config.Config;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class CapTargetHolder {
+    public static final BlockPos INVALID_POS = new BlockPos(0, 0, 0);
     @CapabilityInject(ICapTargetHolder.class)
     public static Capability<ICapTargetHolder> TARGET_HOLDER = null;
 
@@ -47,9 +49,20 @@ public class CapTargetHolder {
                 CompoundNBT dataNBT = new CompoundNBT();
                 dataNBT.putLong("FallbackPosL", instance.getFallbackPosition().toLong());
                 dataNBT.putInt("FallbackTimer", instance.getFallbackTimer());
-                dataNBT.putString("CommandStatus", instance.getCommandStatus().toString());
                 dataNBT.putLong("Destination", instance.getDestination().toLong());
                 dataNBT.putDouble("CommandDistance", instance.getCommandDistance());
+                dataNBT.putDouble("SelectDistance", instance.getSelectDistance());
+
+                dataNBT.putLong("BreathTarget", instance.getBreathTarget().orElse(new BlockPos(0, 0, 0)).toLong());
+                dataNBT.putLong("HomePosition", instance.getHomePosition().orElse(new BlockPos(0, 0, 0)).toLong());
+
+                dataNBT.putInt("CommandStatus", ((Enum) instance.getObjectSetting(EnumCommandSettingType.COMMAND_STATUS)).ordinal());
+                dataNBT.putInt("GroundAttack", ((Enum) instance.getObjectSetting(EnumCommandSettingType.GROUND_ATTACK_TYPE)).ordinal());
+                dataNBT.putInt("AirAttack", ((Enum) instance.getObjectSetting(EnumCommandSettingType.AIR_ATTACK_TYPE)).ordinal());
+                dataNBT.putInt("Movement", ((Enum) instance.getObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE)).ordinal());
+                dataNBT.putInt("Destroy", ((Enum) instance.getObjectSetting(EnumCommandSettingType.DESTROY_TYPE)).ordinal());
+                dataNBT.putInt("Breath", ((Enum) instance.getObjectSetting(EnumCommandSettingType.BREATH_TYPE)).ordinal());
+                dataNBT.putInt("ReturnRoost", ((Boolean) instance.getObjectSetting(EnumCommandSettingType.SHOULD_RETURN_ROOST)) ? 1 : 0);
                 listNBT.add(dataNBT);
 
                 List<UUID> uuids = instance.getCommandEntities();
@@ -70,17 +83,39 @@ public class CapTargetHolder {
             ListNBT listNBT = (ListNBT) nbt;
             try {
                 CompoundNBT dataNBT = listNBT.getCompound(0);
-                BlockPos blockPos = BlockPos.fromLong(dataNBT.getLong("FallbackPosL"));
-                int fallbackTimer = dataNBT.getInt("FallbackTimer");
-                EnumCommandStatus commandStatus = EnumCommandStatus.valueOf(dataNBT.getString("CommandStatus"));
-                BlockPos destination = BlockPos.fromLong(dataNBT.getLong("Destination"));
-                double commandDistance = dataNBT.getDouble("CommandDistance");
+//                BlockPos blockPos = ;
+//                int fallbackTimer = ;
+////                EnumCommandStatus commandStatus = EnumCommandStatus.valueOf(dataNBT.getString("CommandStatus"));
+//                BlockPos destination = ;
+//                double commandDistance = ;
 
-                instance.setFallbackPosition(blockPos);
-                instance.setFallbackTimer(fallbackTimer);
-                instance.setCommandStatus(commandStatus);
-                instance.setDestination(destination);
-                instance.setCommandDistance(commandDistance);
+                instance.setFallbackPosition(BlockPos.fromLong(dataNBT.getLong("FallbackPosL")));
+                instance.setFallbackTimer(dataNBT.getInt("FallbackTimer"));
+//                instance.setCommandStatus(commandStatus);
+                instance.setDestination(BlockPos.fromLong(dataNBT.getLong("Destination")));
+                instance.setCommandDistance(dataNBT.getDouble("CommandDistance"));
+                instance.setSelectDistance(dataNBT.getDouble("SelectDistance"));
+
+                BlockPos breathTarget = BlockPos.fromLong(dataNBT.getLong("BreathTarget"));
+                instance.setBreathTarget(!breathTarget.equals(INVALID_POS) ? breathTarget : null);
+                BlockPos homePos = BlockPos.fromLong(dataNBT.getLong("HomePosition"));
+                instance.setHomePosition(!homePos.equals(INVALID_POS) ? homePos : null);
+
+                // Todo: serializer!
+                instance.setObjectSetting(
+                        EnumCommandSettingType.COMMAND_STATUS, EnumCommandStatus.class.getEnumConstants()[dataNBT.getInt("CommandStatus")]);
+                instance.setObjectSetting(
+                        EnumCommandSettingType.GROUND_ATTACK_TYPE, EnumCommandSettingType.GroundAttackType.class.getEnumConstants()[dataNBT.getInt("GroundAttack")]);
+                instance.setObjectSetting(
+                        EnumCommandSettingType.AIR_ATTACK_TYPE, EnumCommandSettingType.AirAttackType.class.getEnumConstants()[dataNBT.getInt("AirAttack")]);
+                instance.setObjectSetting(
+                        EnumCommandSettingType.MOVEMENT_TYPE, EnumCommandSettingType.MovementType.class.getEnumConstants()[dataNBT.getInt("Movement")]);
+                instance.setObjectSetting(
+                        EnumCommandSettingType.DESTROY_TYPE, EnumCommandSettingType.DestroyType.class.getEnumConstants()[dataNBT.getInt("Destroy")]);
+                instance.setObjectSetting(
+                        EnumCommandSettingType.BREATH_TYPE, EnumCommandSettingType.BreathType.class.getEnumConstants()[dataNBT.getInt("Breath")]);
+                instance.setObjectSetting(
+                        EnumCommandSettingType.SHOULD_RETURN_ROOST, dataNBT.getInt("ReturnRoost") == 1);
 
                 List<UUID> uuids = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
                 for (int i = 1; i < listNBT.size(); i++) {

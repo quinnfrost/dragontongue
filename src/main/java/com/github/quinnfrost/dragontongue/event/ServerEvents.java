@@ -193,9 +193,15 @@ public class ServerEvents {
         if (entity instanceof PlayerEntity) {
             PlayerEntity playerEntity = (PlayerEntity) entity;
             playerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                RegistryMessages.sendToClient(new MessageClientCommandDistance(iCapTargetHolder.getCommandDistance()), (ServerPlayerEntity) playerEntity);
+                RegistryMessages.sendToClient(new MessageClientCommandDistance(MessageClientCommandDistance.DistanceType.COMMAND, iCapTargetHolder.getCommandDistance()), (ServerPlayerEntity) playerEntity);
+                RegistryMessages.sendToClient(new MessageClientCommandDistance(MessageClientCommandDistance.DistanceType.SELECT, iCapTargetHolder.getSelectDistance()), (ServerPlayerEntity) playerEntity);
             });
         }
+    }
+
+    @SubscribeEvent
+    public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
+
     }
 
     @SubscribeEvent

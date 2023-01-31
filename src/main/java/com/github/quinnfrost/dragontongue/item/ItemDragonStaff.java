@@ -5,7 +5,7 @@ import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.config.Config;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandEntity;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
 import com.github.quinnfrost.dragontongue.message.MessageCommandEntity;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
@@ -66,25 +66,25 @@ public class ItemDragonStaff extends Item {
         // Different function based on holding hands and sneaking
         if (!playerIn.isSneaking() && handIn == Hand.MAIN_HAND) {
             RegistryMessages.sendToServer(
-                    new MessageCommandEntity(EnumCommandEntity.FOLLOW, playerIn.getUniqueID(),
+                    new MessageCommandEntity(EnumCommandType.FOLLOW, playerIn.getUniqueID(),
                             entityRayTraceResult.getEntity().getUniqueID()));
         } else if (playerIn.isSneaking() && handIn == Hand.MAIN_HAND) {
             RegistryMessages.sendToServer(
-                    new MessageCommandEntity(EnumCommandEntity.SIT, playerIn.getUniqueID(),
+                    new MessageCommandEntity(EnumCommandType.SIT, playerIn.getUniqueID(),
                             entityRayTraceResult.getEntity().getUniqueID()));
 
 
         } else if (!playerIn.isSneaking() && handIn == Hand.OFF_HAND) {
             RegistryMessages.sendToServer(
-                    new MessageCommandEntity(EnumCommandEntity.WONDER, playerIn.getUniqueID(),
+                    new MessageCommandEntity(EnumCommandType.WONDER, playerIn.getUniqueID(),
                             entityRayTraceResult.getEntity().getUniqueID()));
 
         } else if (playerIn.isSneaking() && handIn == Hand.OFF_HAND) {
             RegistryMessages.sendToServer(
-                    new MessageCommandEntity(EnumCommandEntity.FOLLOW, playerIn.getUniqueID(),
+                    new MessageCommandEntity(EnumCommandType.FOLLOW, playerIn.getUniqueID(),
                             entityRayTraceResult.getEntity().getUniqueID()));
             RegistryMessages.sendToServer(
-                    new MessageCommandEntity(EnumCommandEntity.LAND, playerIn.getUniqueID(),
+                    new MessageCommandEntity(EnumCommandType.LAND, playerIn.getUniqueID(),
                             entityRayTraceResult.getEntity().getUniqueID()));
         }
         return super.onItemRightClick(worldIn, playerIn, handIn);

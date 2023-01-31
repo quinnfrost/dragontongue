@@ -49,6 +49,12 @@ public class RegistryMessages {
                 .consumer(MessageClientCommandDistance::handler)
                 .add();
 
+        CHANNEL.messageBuilder(MessageCommandSettings.class, nextID())
+                .encoder(MessageCommandSettings::encoder)
+                .decoder(MessageCommandSettings::new)
+                .consumer(MessageCommandSettings::handler)
+                .add();
+
     }
 
     /**
