@@ -31,16 +31,3 @@ point if you are sneaking.
 How to use
 ----------
 
-- Use "Select" key (default to G) to select your pet (like dragons or wolves, horses). While holding the key,
-point your crosshair to your pet and use left mouse button to add the pet you pointed to you command list,
-click right mouse button will remove it from the list, and remove any command it follows, click both will clear the list.
-The middle scroll button can be used to set the command list with only the pet you pointed. Scroll up and down will adjust
-the select range.
-- Use "Command" key (default to V) to command, holding the command key and click left mouse button will make all the pet
-on the command list to attack, if the command list is empty, it will make any tamed pet in the select range to attack the target,
-right click will make all pet on the list move to the location crosshair points, specially if the crosshair is pointed to the
-sky, the dragons in the command list will try to fly and hold to that position, you can use mouse scroll to adjust the
-distance you want the dragons to hover. Click both button will make all the dragon breath to the target position and if
-the list is empty the dragons within the select range will breathe. Use middle button to command any tamed pet to stop doing anything.
-- Use "Status" key (default to H) to set the state of the pet. Left click will make the pet to follow you (Vanilla behavior),
-right click will make the pet sit (Vanilla too), middle button let a dragon wander (Iaf only), same as the dragon staff works.

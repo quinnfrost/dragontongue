@@ -4,6 +4,7 @@ import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAIAsYouWish;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAICalmLook;
@@ -174,6 +175,10 @@ public class IafDragonBehaviorHelper {
             }
             // One target at a time
             IafDragonBehaviorHelper.setDragonAttackTarget(dragon, null);
+        } else {
+            cap.setBreathTarget(null);
+            dragon.burningTarget = null;
+            dragon.setBreathingFire(false);
         }
 
         return true;
@@ -184,6 +189,8 @@ public class IafDragonBehaviorHelper {
             return false;
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+        ICapTargetHolder cap = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
+        EnumCommandSettingType.BreathType breathType = (EnumCommandSettingType.BreathType) cap.getObjectSetting(EnumCommandSettingType.BREATH_TYPE);
 
 //        dragon.groundAttack = IafDragonAttacks.GroundAttackType.FIRE;
 //        dragon.usingGroundAttack = true;
@@ -192,20 +199,28 @@ public class IafDragonBehaviorHelper {
             dragon.burningTarget = breathPos;
             dragon.getLookController().setLookPosition(breathPos.getX() + 0.5D, breathPos.getY() + 0.5D, breathPos.getZ() + 0.5D, 180F, 180F);
             dragon.rotationYaw = dragon.renderYawOffset;
-            if (dragon.getDragonStage() >= 4) {
-                // SyncType=1 : no charge, SyncType=5 : with charge
-                dragon.stimulateFire(breathPos.getX() + 0.5F, breathPos.getY() + 0.5F, breathPos.getZ() + 0.5F, 5);
-            } else if (dragon.getDragonStage() >= 2){
-                dragon.stimulateFire(breathPos.getX() + 0.5F, breathPos.getY() + 0.5F, breathPos.getZ() + 0.5F, 1);
+            switch (breathType) {
+                case ANY:
+                    if (dragon.getDragonStage() >= 4 && dragon.getDragonStage() / 2.0f - 1.5 > dragon.getRNG().nextFloat() ) {
+                        dragon.stimulateFire(breathPos.getX() + 0.5F, breathPos.getY() + 0.5F, breathPos.getZ() + 0.5F, 5);
+                    }
+                case WITHOUT_BLAST:
+                    if (dragon.getDragonStage() >= 2) {
+                        dragon.stimulateFire(breathPos.getX() + 0.5F, breathPos.getY() + 0.5F, breathPos.getZ() + 0.5F, 1);
+                        dragon.setBreathingFire(true);
+                    }
+                    break;
+                case NONE:
+                    cap.setBreathTarget(null);
+                    dragon.setBreathingFire(false);
+                    break;
             }
-            dragon.setBreathingFire(true);
         } else {
             dragon.setBreathingFire(false);
         }
         return true;
     }
 
-    // fixme: always takeoff
     public static boolean keepDragonReach(LivingEntity dragonIn, BlockPos targetPos) {
         if (!IafHelperClass.isDragon(dragonIn)) {
             return false;
@@ -357,5 +372,9 @@ public class IafDragonBehaviorHelper {
 
         return (dragon.world.getBlockState(targetPos).isAir()
                 && dragon.world.getBlockState(targetPos.add(0, -1, 0)).isAir());
+    }
+
+    public static boolean isOverAir(EntityDragonBase dragon) {
+        return dragon.world.isAirBlock(new BlockPos(dragon.getPosX(), dragon.getBoundingBox().minY - 1, dragon.getPosZ()));
     }
 }

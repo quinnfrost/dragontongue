@@ -6,15 +6,13 @@ import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.entity.ai.RegistryAI;
 import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCrowWand;
 import com.github.quinnfrost.dragontongue.iceandfire.IafAdvancedDragonLogic;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import com.github.quinnfrost.dragontongue.item.RegistryItems;
-import com.github.quinnfrost.dragontongue.message.MessageClientCommandDistance;
-import com.github.quinnfrost.dragontongue.message.MessageClientDisplay;
-import com.github.quinnfrost.dragontongue.message.MessageCrowWand;
-import com.github.quinnfrost.dragontongue.message.RegistryMessages;
+import com.github.quinnfrost.dragontongue.message.*;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -41,6 +39,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
@@ -189,15 +188,28 @@ public class ServerEvents {
                 IafAdvancedDragonLogic.applyDragonLogic(mobEntity);
             }
         }
-        // Update command distance for clients
+        // Initial capability update for the first time player logs in
         if (entity instanceof PlayerEntity) {
             PlayerEntity playerEntity = (PlayerEntity) entity;
             playerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                RegistryMessages.sendToClient(new MessageClientCommandDistance(MessageClientCommandDistance.DistanceType.COMMAND, iCapTargetHolder.getCommandDistance()), (ServerPlayerEntity) playerEntity);
-                RegistryMessages.sendToClient(new MessageClientCommandDistance(MessageClientCommandDistance.DistanceType.SELECT, iCapTargetHolder.getSelectDistance()), (ServerPlayerEntity) playerEntity);
+                RegistryMessages.sendToClient(new MessageSyncCapability(playerEntity), (ServerPlayerEntity) playerEntity);
             });
         }
     }
+
+    @SubscribeEvent
+    public static void onPlayerStartTracking(PlayerEvent.StartTracking event) {
+        if (event.getEntity().world.isRemote) {
+            return;
+        }
+        ServerPlayerEntity serverPlayerEntity = (ServerPlayerEntity) event.getPlayer();
+        if (event.getTarget() instanceof MobEntity) {
+            MobEntity mobEntity = (MobEntity) event.getTarget();
+            // Initial capability update for the player client loads the entity for the first time
+            RegistryMessages.sendToClient(new MessageSyncCapability(mobEntity), serverPlayerEntity);
+        }
+    }
+
 
     @SubscribeEvent
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {

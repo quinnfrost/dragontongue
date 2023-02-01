@@ -27,11 +27,7 @@ public class MessageCommandSettings {
         this.objectSettings = objectSettings;
         this.objectValue = settingEnum.ordinal();
     }
-    public MessageCommandSettings(Entity entity, EnumCommandSettingType objectSettings, boolean settingBool) {
-        this.entityUUID = entity.getUniqueID();
-        this.objectSettings = objectSettings;
-        this.objectValue = settingBool ? 1 : 0;
-    }
+
     public MessageCommandSettings(PacketBuffer buffer) {
         this.entityUUID = buffer.readUniqueId();
         this.objectSettings = buffer.readEnumValue(EnumCommandSettingType.class);
@@ -48,15 +44,12 @@ public class MessageCommandSettings {
         contextSupplier.get().enqueueWork(() -> {
             contextSupplier.get().setPacketHandled(true);
 
-            if (contextSupplier.get().getSender().world.isRemote) {
-                return;
-            }
+            boolean response = contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_SERVER;
             ServerWorld serverWorld = contextSupplier.get().getSender().getServerWorld();
             Entity entity = serverWorld.getEntityByUuid(entityUUID);
             ICapTargetHolder cap = entity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(entity));
 
             switch (objectSettings) {
-
                 case COMMAND_STATUS:
                     cap.setObjectSetting(EnumCommandSettingType.COMMAND_STATUS, EnumCommandStatus.class.getEnumConstants()[objectValue]);
                     break;
@@ -75,10 +68,13 @@ public class MessageCommandSettings {
                 case BREATH_TYPE:
                     cap.setObjectSetting(EnumCommandSettingType.BREATH_TYPE, EnumCommandSettingType.BreathType.class.getEnumConstants()[objectValue]);
                     break;
-                case SHOULD_RETURN_ROOST:
-                    cap.setObjectSetting(EnumCommandSettingType.SHOULD_RETURN_ROOST, objectValue == 1);
-                    break;
             }
+
+            if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
+            } else if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_SERVER) {
+                MessageSyncCapability.syncCapability(entity);
+            }
+
 
 
         });

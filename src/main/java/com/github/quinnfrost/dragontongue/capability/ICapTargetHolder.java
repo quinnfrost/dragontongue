@@ -5,10 +5,12 @@ import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface ICapTargetHolder {
+    void copy(ICapTargetHolder cap);
     List<UUID> getCommandEntities();
     void setCommandEntities(List<UUID> uuids);
     void addCommandEntity(UUID uuid);
@@ -34,7 +36,10 @@ public interface ICapTargetHolder {
     Optional<BlockPos> getBreathTarget();
     void setHomePosition(BlockPos blockPos);
     Optional<BlockPos> getHomePosition();
-    void setObjectSetting(EnumCommandSettingType type, Object setting);
-    Object getObjectSetting(EnumCommandSettingType type);
+    void setReturnHome(boolean value);
+    boolean getReturnHome();
+    Map<EnumCommandSettingType, Enum> getCommandMaps();
+    void setObjectSetting(EnumCommandSettingType type, Enum setting);
+    Enum getObjectSetting(EnumCommandSettingType type);
 
 }

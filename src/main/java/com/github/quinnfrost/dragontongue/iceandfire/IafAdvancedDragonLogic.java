@@ -1,6 +1,7 @@
 package com.github.quinnfrost.dragontongue.iceandfire;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
+import com.github.alexthe666.iceandfire.entity.EntityDragonCharge;
 import com.github.alexthe666.iceandfire.entity.IafDragonLogic;
 import com.github.alexthe666.iceandfire.entity.util.HomePosition;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
@@ -9,8 +10,14 @@ import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import com.github.quinnfrost.dragontongue.utils.util;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.projectile.ProjectileEntity;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+
+import java.util.List;
+import java.util.function.Predicate;
 
 public class IafAdvancedDragonLogic extends IafDragonLogic {
     private EntityDragonBase dragon;
@@ -32,10 +39,13 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             super.updateDragonServer();
         }
 
+        // Return to roost logic
         // Update home position if valid
-        if ((Boolean) cap.getObjectSetting(EnumCommandSettingType.SHOULD_RETURN_ROOST)) {
+        if (cap.getReturnHome()) {
             if (dragon.hasHomePosition) {
                 // Vanilla behavior: return to roost
+                // In LivingUpdateEvent, original Iaf dragon staff use event is hijacked to do the same plus invalidate
+                // the home position in capability
 //                cap.setHomePosition(dragon.getHomePosition());
             } else {
                 // Recover home pos
@@ -55,6 +65,30 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             }
         }
 
+        // Do not breathe logic
+        if (cap.getObjectSetting(EnumCommandSettingType.BREATH_TYPE) == EnumCommandSettingType.BreathType.NONE) {
+            dragon.burnProgress = 0;
+            if (dragon.getAnimation() == EntityDragonBase.ANIMATION_FIRECHARGE) {
+                dragon.setAnimation(EntityDragonBase.NO_ANIMATION);
+            }
+            dragon.setBreathingFire(false);
+            IafDragonBehaviorHelper.setDragonBreathTarget(dragon, null);
+        } else if (cap.getObjectSetting(EnumCommandSettingType.BREATH_TYPE) == EnumCommandSettingType.BreathType.WITHOUT_BLAST) {
+            List<Entity> entities = dragon.world.getEntitiesInAABBexcluding(dragon,
+                    (new AxisAlignedBB(dragon.getHeadPosition().x, dragon.getHeadPosition().y, dragon.getHeadPosition().z,
+                            dragon.getPosX() + 1.0d, dragon.getPosY() + 1.0d, dragon.getPosZ() + 1.0d)
+                            .grow(2.0f)),
+                    entityGet -> (entityGet instanceof EntityDragonCharge)
+                            && (util.isShooter((ProjectileEntity) entityGet, dragon))
+            );
+            for (Entity charge :
+                    entities) {
+                charge.remove();
+            }
+        } else {
+            // Vanilla behavior
+        }
+
         // Resets everything to vanilla
         if (cap.getCommandStatus() == EnumCommandStatus.NONE) {
             cap.setBreathTarget(null);
@@ -71,7 +105,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             dragon.setCommand(2);
             return;
         }
-        // Resets attack target if the target is dead
+        // Resets attack target if the target is dead, vanilla behavior did this in the entity AI resetTask
         if ((dragon.getAttackTarget() != null && !dragon.getAttackTarget().isAlive())
                 || (dragon.getAttackTarget() == null && cap.getCommandStatus() == EnumCommandStatus.ATTACK)) {
             cap.setDestination(dragon.getPosition());

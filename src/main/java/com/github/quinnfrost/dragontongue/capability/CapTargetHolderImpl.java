@@ -1,27 +1,31 @@
 package com.github.quinnfrost.dragontongue.capability;
 
+import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
+import com.github.quinnfrost.dragontongue.message.MessageSyncCapability;
+import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.fml.common.thread.SidedThreadGroups;
 
 import javax.annotation.Nullable;
 import java.util.*;
 
 public class CapTargetHolderImpl implements ICapTargetHolder {
     public static BlockPos INVALID_POS = new BlockPos(0, 0.5, 0);
-
+    private Entity entity;
     private List<UUID> commandEntitiesUUIDs = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
     private double commandDistance = 128;
     private double selectDistance = 128;
     private BlockPos fallbackPosition = null;
     private int fallbackTimer = 0;
     private BlockPos commandDestination = null;
-    private EnumCommandStatus status = EnumCommandStatus.NONE;
     private Optional<BlockPos> breathTarget = Optional.empty();
     private Optional<BlockPos> homePosition = Optional.empty();
-    private Map<EnumCommandSettingType, Object> commandMaps = new EnumMap<EnumCommandSettingType, Object>(EnumCommandSettingType.class);
+    private boolean shouldReturnHome = true;
+    private Map<EnumCommandSettingType, Enum> commandMaps = new EnumMap<>(EnumCommandSettingType.class);
 //    private Map<EnumCommandSettingType.BooleanSettings, Boolean> settingMaps = new EnumMap<EnumCommandSettingType.BooleanSettings, Boolean>(EnumCommandSettingType.BooleanSettings.class);
 
     public CapTargetHolderImpl() {
@@ -29,6 +33,7 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
     }
 
     public CapTargetHolderImpl(Entity entity) {
+        this.entity = entity;
         if (entity != null) {
             this.commandDestination = entity.getPosition();
             this.fallbackPosition = entity.getPosition();
@@ -40,13 +45,22 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
         commandMaps.put(EnumCommandSettingType.MOVEMENT_TYPE, EnumCommandSettingType.MovementType.ANY);
         commandMaps.put(EnumCommandSettingType.DESTROY_TYPE, EnumCommandSettingType.DestroyType.ANY);
         commandMaps.put(EnumCommandSettingType.BREATH_TYPE, EnumCommandSettingType.BreathType.ANY);
-        commandMaps.put(EnumCommandSettingType.SHOULD_RETURN_ROOST, true);
+//        commandMaps.put(EnumCommandSettingType.SHOULD_RETURN_ROOST, true);
 
+    }
 
-//        for (EnumCommandSettingType.BooleanSettings type :
-//                EnumCommandSettingType.BooleanSettings.values()) {
-//            settingMaps.put(type, true);
-//        }
+    @Override
+    public void copy(ICapTargetHolder cap) {
+        commandEntitiesUUIDs = cap.getCommandEntities();
+        commandDistance = cap.getCommandDistance();
+        selectDistance = cap.getSelectDistance();
+        fallbackPosition = cap.getFallbackPosition();
+        fallbackTimer = cap.getFallbackTimer();
+        commandDestination = cap.getDestination();
+        breathTarget = cap.getBreathTarget();
+        homePosition = cap.getHomePosition();
+        shouldReturnHome = cap.getReturnHome();
+        commandMaps = cap.getCommandMaps();
     }
 
     @Override
@@ -199,12 +213,27 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
     }
 
     @Override
-    public void setObjectSetting(EnumCommandSettingType type, Object setting) {
+    public void setReturnHome(boolean value) {
+        this.shouldReturnHome = value;
+    }
+
+    @Override
+    public boolean getReturnHome() {
+        return shouldReturnHome;
+    }
+
+    @Override
+    public Map<EnumCommandSettingType, Enum> getCommandMaps() {
+        return commandMaps;
+    }
+
+    @Override
+    public void setObjectSetting(EnumCommandSettingType type, Enum setting) {
         commandMaps.put(type, setting);
     }
 
     @Override
-    public Object getObjectSetting(EnumCommandSettingType type) {
+    public Enum getObjectSetting(EnumCommandSettingType type) {
         return commandMaps.get(type);
     }
 

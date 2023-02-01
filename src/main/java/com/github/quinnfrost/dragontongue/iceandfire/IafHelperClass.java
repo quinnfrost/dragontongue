@@ -101,6 +101,7 @@ public class IafHelperClass {
         PlayerEntity playerEntity = (PlayerEntity) event.getEntityLiving();
         Hand hand = event.getHand();
         ItemStack itemStack = playerEntity.getHeldItem(hand);
+        // Hijack the original dragon staff function in EntityDragonBase#1269
         if (itemStack.getItem() == IafItemRegistry.DRAGON_STAFF
                 && playerEntity.getDistance(dragon) < 5) {
             playerEntity.sendMessage(ITextComponent.getTextComponentOrEmpty("Dragon staff used"), Util.DUMMY_UUID);

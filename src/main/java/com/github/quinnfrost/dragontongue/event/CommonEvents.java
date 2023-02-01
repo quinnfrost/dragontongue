@@ -16,6 +16,7 @@ import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -36,7 +37,7 @@ public class CommonEvents {
 
                 if (playerEntity.isSneaking()) {
                     IafHelperClass.onEntityInteract(event);
-                    if (itemStack.getItem() == RegistryItems.DRAGON_STAFF.get()
+                    if (itemStack.isEmpty()
                             && playerEntity.getDistance(dragon) < 5) {
                         ScreenDragon.openGui(playerEntity, dragon);
                         event.setCancellationResult(ActionResultType.SUCCESS);
@@ -79,4 +80,5 @@ public class CommonEvents {
             );
         }
     }
+
 }

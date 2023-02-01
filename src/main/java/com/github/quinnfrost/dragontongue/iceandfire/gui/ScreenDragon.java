@@ -3,9 +3,15 @@ package com.github.quinnfrost.dragontongue.iceandfire.gui;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.References;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
+import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.container.ContainerDragon;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
 import com.github.quinnfrost.dragontongue.message.MessageCommandEntity;
+import com.github.quinnfrost.dragontongue.message.MessageCommandSettings;
+import com.github.quinnfrost.dragontongue.message.MessageSyncCapability;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
@@ -38,6 +44,12 @@ import java.util.List;
 public class ScreenDragon extends ContainerScreen<ContainerDragon> {
     private static final ResourceLocation textureGuiDragon = new ResourceLocation(References.MOD_ID, "textures/gui/dragon.png");
     public static EntityDragonBase referencedDragon;
+    private ICapTargetHolder cap;
+    private Boolean shouldReturnRoost;
+    private EnumCommandSettingType.BreathType breathType;
+    private EnumCommandSettingType.DestroyType destroyType;
+
+    private List<Button> buttons = new ArrayList<>();
     int startYOffset = 75;
     int lineSpacing = 9;
     private float mousePosX;
@@ -55,19 +67,60 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
         int relX = (this.width - this.xSize) / 2;
         int relY = (this.height - this.ySize) / 2;
 
-        Button button1 = new Button(
+        cap = referencedDragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(referencedDragon));
+
+        Button buttonRoost = new Button(
                 relX + this.xSize + 10,
                 relY + startYOffset,
+                40,
                 20,
-                20,
-                new StringTextComponent("Test"),
+                new StringTextComponent(""),
                 button -> {
-                    minecraft.player.sendMessage(ITextComponent.getTextComponentOrEmpty("Test button"), Util.DUMMY_UUID);
-                    minecraft.player.sendStatusMessage(ITextComponent.getTextComponentOrEmpty("Test button"),true);
-                    minecraft.displayGuiScreen(null);
+//                    minecraft.player.sendMessage(ITextComponent.getTextComponentOrEmpty("Test button"), Util.DUMMY_UUID);
+                    shouldReturnRoost = !shouldReturnRoost;
+                    cap.setReturnHome(shouldReturnRoost);
+                    RegistryMessages.sendToServer(new MessageSyncCapability(referencedDragon));
+                    minecraft.player.sendStatusMessage(ITextComponent.getTextComponentOrEmpty(String.valueOf(cap.getReturnHome())), true);
+//                    minecraft.displayGuiScreen(null);
                 });
-        button1.setAlpha(0.5f);
-        addButton(button1);
+        buttonRoost.setAlpha(0.9f);
+        buttons.add(buttonRoost);
+
+        Button buttonBreath = new Button(
+                relX + this.xSize + 10,
+                relY + startYOffset + 20 * 1,
+                40,
+                20,
+                new StringTextComponent(""),
+                button -> {
+                    breathType = breathType.next();
+                    cap.setObjectSetting(EnumCommandSettingType.BREATH_TYPE, breathType);
+                    RegistryMessages.sendToServer(new MessageSyncCapability(referencedDragon));
+                    minecraft.player.sendStatusMessage(ITextComponent.getTextComponentOrEmpty(cap.getObjectSetting(EnumCommandSettingType.BREATH_TYPE).toString()), true);
+                });
+        buttonBreath.setAlpha(0.9f);
+        buttons.add(buttonBreath);
+
+        Button buttonDestroy = new Button(
+                relX + this.xSize + 10,
+                relY + startYOffset + 20 * 2,
+                40,
+                20,
+                new StringTextComponent(""),
+                button -> {
+                    destroyType = destroyType.next();
+                    cap.setObjectSetting(EnumCommandSettingType.BREATH_TYPE, destroyType);
+                    RegistryMessages.sendToServer(new MessageSyncCapability(referencedDragon));
+                    minecraft.player.sendStatusMessage(ITextComponent.getTextComponentOrEmpty(cap.getObjectSetting(EnumCommandSettingType.DESTROY_TYPE).toString()), true);
+                });
+        buttonDestroy.setAlpha(0.9f);
+        buttons.add(buttonDestroy);
+
+        for (Button button :
+                buttons) {
+            addButton(button);
+        }
+
     }
 
     @Override
@@ -108,11 +161,27 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
         stringList.add(referencedDragon.getOwner() != null ? translateToLocal("dragon.owner") + referencedDragon.getOwner().getName().getString() : translateToLocal("dragon.untamed"));
 
         int offset = 0;
-        for (String displayString:
+        for (String displayString :
                 stringList) {
             font.drawString(matrixStack, displayString, relX + xSize / 2 - font.getStringWidth(displayString) / 2, relY + startYOffset + offset, 0XFFFFFF);
             offset += lineSpacing;
         }
+
+        shouldReturnRoost = cap.getReturnHome();
+        breathType = (EnumCommandSettingType.BreathType) cap.getObjectSetting(EnumCommandSettingType.BREATH_TYPE);
+        destroyType = (EnumCommandSettingType.DestroyType) cap.getObjectSetting(EnumCommandSettingType.DESTROY_TYPE);
+
+        buttons.get(0).setMessage(ITextComponent.getTextComponentOrEmpty(
+                String.valueOf(shouldReturnRoost)
+        ));
+        buttons.get(1).setMessage(ITextComponent.getTextComponentOrEmpty(
+                String.valueOf(breathType)
+        ));
+        buttons.get(2).setMessage(ITextComponent.getTextComponentOrEmpty(
+                String.valueOf(destroyType)
+        ));
+
+
     }
 
     public static void drawEntityOnScreen(int posX, int posY, float scale, float mouseX, float mouseY, LivingEntity livingEntity) {

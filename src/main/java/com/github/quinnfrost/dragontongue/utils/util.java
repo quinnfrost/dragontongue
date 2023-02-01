@@ -9,17 +9,20 @@ import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.entity.projectile.ProjectileHelper;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.particles.IParticleData;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -37,6 +40,13 @@ public class util {
         } catch (Exception ignored) {
             return false;
         }
+    }
+
+    public static boolean isShooter(@Nullable ProjectileEntity target, @Nullable LivingEntity owner) {
+        if (target == null || owner == null) {
+            return false;
+        }
+        return target.getShooter() == owner;
     }
 
     /**
@@ -157,6 +167,14 @@ public class util {
                 RayTraceContext.FluidMode.NONE, entity));
     }
 
+
+//    public static List<Entity> getEntitiesAround(BlockPos blockPos, World world, float radius, Predicate<? super Entity> excludeEntity) {
+//        if (excludeEntity == null) {
+//            excludeEntity = (Predicate<Entity>) entity -> true;
+//        }
+//
+//    }
+
     /**
      * Set NBT tag on target entity
      * @param target    Target entity to hold the tag
@@ -259,6 +277,10 @@ public class util {
 
         return i;
     }
+
+//    public static <T extends Enum> T getNextEnum(T enumType) {
+//        return Enum.class.getEnumConstants()[(enumType.ordinal() + 1) % ]
+//    }
 
     @OnlyIn(Dist.CLIENT)
     public static PlayerEntity getClientSidePlayer() {

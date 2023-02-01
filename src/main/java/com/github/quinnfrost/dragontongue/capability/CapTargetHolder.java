@@ -35,7 +35,7 @@ public class CapTargetHolder {
     public static void onAttachCapabilitiesEvent(AttachCapabilitiesEvent<Entity> event) {
         if (event.getObject() instanceof LivingEntity) {
             CapabilityProvider provider = new CapabilityProvider(event.getObject());
-            event.addCapability(new ResourceLocation(References.MOD_ID, "dragontongue"), provider);
+            event.addCapability(new ResourceLocation(References.MOD_ID, "extend_command_data"), provider);
             event.addListener(provider::invalidate);
         }
     }
@@ -55,14 +55,15 @@ public class CapTargetHolder {
 
                 dataNBT.putLong("BreathTarget", instance.getBreathTarget().orElse(new BlockPos(0, 0, 0)).toLong());
                 dataNBT.putLong("HomePosition", instance.getHomePosition().orElse(new BlockPos(0, 0, 0)).toLong());
+                dataNBT.putBoolean("ReturnRoost", instance.getReturnHome());
 
-                dataNBT.putInt("CommandStatus", ((Enum) instance.getObjectSetting(EnumCommandSettingType.COMMAND_STATUS)).ordinal());
-                dataNBT.putInt("GroundAttack", ((Enum) instance.getObjectSetting(EnumCommandSettingType.GROUND_ATTACK_TYPE)).ordinal());
-                dataNBT.putInt("AirAttack", ((Enum) instance.getObjectSetting(EnumCommandSettingType.AIR_ATTACK_TYPE)).ordinal());
-                dataNBT.putInt("Movement", ((Enum) instance.getObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE)).ordinal());
-                dataNBT.putInt("Destroy", ((Enum) instance.getObjectSetting(EnumCommandSettingType.DESTROY_TYPE)).ordinal());
-                dataNBT.putInt("Breath", ((Enum) instance.getObjectSetting(EnumCommandSettingType.BREATH_TYPE)).ordinal());
-                dataNBT.putInt("ReturnRoost", ((Boolean) instance.getObjectSetting(EnumCommandSettingType.SHOULD_RETURN_ROOST)) ? 1 : 0);
+                dataNBT.putInt("CommandStatus", instance.getObjectSetting(EnumCommandSettingType.COMMAND_STATUS).ordinal());
+                dataNBT.putInt("GroundAttack", instance.getObjectSetting(EnumCommandSettingType.GROUND_ATTACK_TYPE).ordinal());
+                dataNBT.putInt("AirAttack", instance.getObjectSetting(EnumCommandSettingType.AIR_ATTACK_TYPE).ordinal());
+                dataNBT.putInt("Movement", instance.getObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE).ordinal());
+                dataNBT.putInt("Destroy", instance.getObjectSetting(EnumCommandSettingType.DESTROY_TYPE).ordinal());
+                dataNBT.putInt("Breath", instance.getObjectSetting(EnumCommandSettingType.BREATH_TYPE).ordinal());
+//                dataNBT.putInt("ReturnRoost", ((Boolean) instance.getObjectSetting(EnumCommandSettingType.SHOULD_RETURN_ROOST)) ? 1 : 0);
                 listNBT.add(dataNBT);
 
                 List<UUID> uuids = instance.getCommandEntities();
@@ -100,6 +101,7 @@ public class CapTargetHolder {
                 instance.setBreathTarget(!breathTarget.equals(INVALID_POS) ? breathTarget : null);
                 BlockPos homePos = BlockPos.fromLong(dataNBT.getLong("HomePosition"));
                 instance.setHomePosition(!homePos.equals(INVALID_POS) ? homePos : null);
+                instance.setReturnHome(dataNBT.getBoolean("ReturnRoost"));
 
                 // Todo: serializer!
                 instance.setObjectSetting(
@@ -114,8 +116,8 @@ public class CapTargetHolder {
                         EnumCommandSettingType.DESTROY_TYPE, EnumCommandSettingType.DestroyType.class.getEnumConstants()[dataNBT.getInt("Destroy")]);
                 instance.setObjectSetting(
                         EnumCommandSettingType.BREATH_TYPE, EnumCommandSettingType.BreathType.class.getEnumConstants()[dataNBT.getInt("Breath")]);
-                instance.setObjectSetting(
-                        EnumCommandSettingType.SHOULD_RETURN_ROOST, dataNBT.getInt("ReturnRoost") == 1);
+//                instance.setObjectSetting(
+//                        EnumCommandSettingType.SHOULD_RETURN_ROOST, dataNBT.getInt("ReturnRoost") == 1);
 
                 List<UUID> uuids = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
                 for (int i = 1; i < listNBT.size(); i++) {

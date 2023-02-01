@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 public class MessageClientDisplay {
 
     private EnumClientDisplay messageType = EnumClientDisplay.PASS;
-    private int displayTime = 3;
+    private int displayTime = 20;
     private int size = 3;
     private List<String> message = new ArrayList<>();
 
@@ -50,10 +50,10 @@ public class MessageClientDisplay {
                 case PASS:
                     break;
                 case DAMAGE:
-                    OverlayCrossHair.setCrossHairDisplay(message.get(0), displayTime,20, OverlayCrossHair.IconType.HIT, true);
+                    OverlayCrossHair.setCrossHairDisplay(message.get(0), 20,20, OverlayCrossHair.IconType.HIT, true);
                     break;
                 case CRITICAL:
-                    OverlayCrossHair.setCrossHairDisplay(message.get(0),displayTime,20, OverlayCrossHair.IconType.CRITICAL, true);
+                    OverlayCrossHair.setCrossHairDisplay(message.get(0),20,20, OverlayCrossHair.IconType.CRITICAL, true);
                     break;
                 case ENTITY_DEBUG:
                     OverlayCrossHair.bufferInfoLeft = message;

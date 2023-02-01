@@ -14,6 +14,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
+import net.minecraft.command.ISuggestionProvider;
 import net.minecraft.command.arguments.ComponentArgument;
 import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.entity.Entity;
@@ -26,6 +27,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
 
 public class RegistryCommands {
     public static void registerCommands(CommandDispatcher<CommandSource> dispatcher) {
@@ -92,15 +94,44 @@ public class RegistryCommands {
         dispatcher.register(Commands.literal("dragon").requires(commandSource -> commandSource.hasPermissionLevel(0))
                 .then(Commands.argument("target", EntityArgument.entity())
                         .then(Commands.argument("setting", StringArgumentType.word())
-                                .then(Commands.argument("value", BoolArgumentType.bool())
+                                .suggests((context, builder) -> {
+                                    return ISuggestionProvider.suggest(Arrays.asList("home", "breath"), builder);
+                                })
+                                .then(Commands.argument("bool", BoolArgumentType.bool())
                                         .executes(context -> {
                                             Entity entity = EntityArgument.getEntity(context, "target");
                                             ICapTargetHolder cap = entity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(entity));
                                             String str = StringArgumentType.getString(context, "setting");
-                                            boolean value = BoolArgumentType.getBool(context, "value");
-                                            cap.setObjectSetting(EnumCommandSettingType.SHOULD_RETURN_ROOST, value);
+                                            boolean value = BoolArgumentType.getBool(context, "bool");
+                                            cap.setReturnHome(value);
                                             return 0;
-                                        }))))
+                                        }))
+                                .then(Commands.argument("value", StringArgumentType.word())
+                                        .suggests((context, builder) -> ISuggestionProvider.suggest(Arrays.asList("none", "without_blast", "any"), builder))
+                                        .executes(context -> {
+                                            Entity entity = EntityArgument.getEntity(context, "target");
+                                            ICapTargetHolder cap = entity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(entity));
+                                            String str = StringArgumentType.getString(context, "setting");
+                                            String value = StringArgumentType.getString(context, "value");
+                                            if (str.equals("breath")) {
+                                                switch (value) {
+                                                    case "none":
+                                                        cap.setObjectSetting(EnumCommandSettingType.BREATH_TYPE, EnumCommandSettingType.BreathType.NONE);
+                                                        break;
+                                                    case "without_blast":
+                                                        cap.setObjectSetting(EnumCommandSettingType.BREATH_TYPE, EnumCommandSettingType.BreathType.WITHOUT_BLAST);
+                                                        break;
+                                                    case "any":
+                                                        cap.setObjectSetting(EnumCommandSettingType.BREATH_TYPE, EnumCommandSettingType.BreathType.ANY);
+                                                        break;
+                                                }
+
+                                            }
+
+                                            return 0;
+                                        })
+                                )
+                        ))
         );
 
     }

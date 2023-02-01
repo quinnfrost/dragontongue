@@ -55,6 +55,11 @@ public class RegistryMessages {
                 .consumer(MessageCommandSettings::handler)
                 .add();
 
+        CHANNEL.messageBuilder(MessageSyncCapability.class, nextID())
+                .encoder(MessageSyncCapability::encoder)
+                .decoder(MessageSyncCapability::new)
+                .consumer(MessageSyncCapability::handler)
+                .add();
     }
 
     /**
