@@ -2,7 +2,9 @@ package com.github.quinnfrost.dragontongue;
 
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.client.KeyBindRegistry;
+import com.github.quinnfrost.dragontongue.client.render.RenderEvent;
 import com.github.quinnfrost.dragontongue.event.CommonEvents;
+import com.github.quinnfrost.dragontongue.iceandfire.event.IafServerEvent;
 import com.github.quinnfrost.dragontongue.iceandfire.gui.ScreenDragon;
 import com.github.quinnfrost.dragontongue.client.overlay.OverlayRenderEvent;
 import com.github.quinnfrost.dragontongue.command.RegistryCommands;
@@ -81,6 +83,10 @@ public class DragonTongue
         MinecraftForge.EVENT_BUS.register(CommonEvents.class);
         MinecraftForge.EVENT_BUS.register(ServerEvents.class);
 
+        if (isIafPresent) {
+            IafServerEvent.register(MinecraftForge.EVENT_BUS);
+        }
+
         // Load configs
         Config.loadConfig(Config.CLIENT_CONFIG,
                 FMLPaths.CONFIGDIR.get().resolve(References.CLIENT_CONFIG_NAME + "-client.toml"));
@@ -113,6 +119,7 @@ public class DragonTongue
 
         MinecraftForge.EVENT_BUS.register(ClientEvents.class);
         MinecraftForge.EVENT_BUS.register(new OverlayRenderEvent(Minecraft.getInstance()));
+        MinecraftForge.EVENT_BUS.register(RenderEvent.class);
 
 
         event.enqueueWork(() -> {

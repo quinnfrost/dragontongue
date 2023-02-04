@@ -31,11 +31,14 @@ public class FollowCommandGoal extends Goal {
 
     @Override
     public void tick() {
-        mobEntity.getNavigator().tryMoveToXYZ(
-                capabilityInfoHolder.getDestination().getX(),
-                capabilityInfoHolder.getDestination().getY(),
-                capabilityInfoHolder.getDestination().getZ(),
-        1.1D
-        );
+        capabilityInfoHolder.getDestination().ifPresent(blockPos -> {
+            mobEntity.getNavigator().tryMoveToXYZ(
+                    blockPos.getX(),
+                    blockPos.getY(),
+                    blockPos.getZ(),
+                    1.1D
+            );
+
+        });
     }
 }

@@ -1,10 +1,11 @@
 package com.github.quinnfrost.dragontongue.message;
 
+import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
+import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
-import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
@@ -23,6 +24,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.fml.network.NetworkEvent;
 
@@ -146,6 +148,7 @@ public class MessageCommandEntity {
                 }
                 break;
             case SET:
+                // Allow set a single entity and remove all
                 if (target == null) {
                     capTargetHolder.setCommandEntities(new ArrayList<>());
                 } else if (util.isOwner(target, commander)) {
@@ -221,8 +224,10 @@ public class MessageCommandEntity {
             case GUI:
 //                ScreenDragon.openGui(commander, target);
                 break;
+            case DEBUG:
+                break;
             default:
-//                DragonTongue.LOGGER.warn("False calling on commandEntity with type:" + action);
+                DragonTongue.LOGGER.info("Debug triggered");
                 break;
         }
 
@@ -370,19 +375,22 @@ public class MessageCommandEntity {
         BlockPos blockPos = (pos != null ? pos : animalEntity.getPosition());
 
         if (DragonTongue.isIafPresent && IafHelperClass.isDragon(animalEntity)) {
-            // If destination is too far, fly there
-            if (blockPos.getY() > commander.getPosY() + 1 || blockPos.distanceSq(animalEntity.getPosition()) > 30 * 30) {
-                IafDragonBehaviorHelper.setDragonTakeOff(animalEntity);
-            }
-            IafDragonBehaviorHelper.setDragonFlightTarget(animalEntity, blockPos);
-            IafDragonBehaviorHelper.setDragonWalkTarget(animalEntity, blockPos);
+//            // If destination is too far, fly there
+//            if (blockPos.getY() > commander.getPosY() + 10 || blockPos.distanceSq(animalEntity.getPosition()) > 45 * 45) {
+//                if (!IafDragonBehaviorHelper.isDragonInAir(animalEntity)) {
+//                    IafDragonBehaviorHelper.setDragonTakeOff(animalEntity);
+//                }
+//            }
+//            IafDragonBehaviorHelper.setDragonFlightTarget(animalEntity, Vector3d.copyCentered(blockPos));
+//            IafDragonBehaviorHelper.setDragonTargetPosition(animalEntity, blockPos);
+            IafDragonBehaviorHelper.setDragonReach(animalEntity, blockPos);
         } else {
             animalEntity.getNavigator().tryMoveToXYZ(pos.getX(), pos.getY(), pos.getZ(), 1.0f);
         }
-        animalEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-            iCapTargetHolder.setDestination(pos);
-            iCapTargetHolder.setCommandStatus(EnumCommandStatus.REACH);
-        });
+//        animalEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+//            iCapTargetHolder.setDestination(pos);
+//            iCapTargetHolder.setCommandStatus(EnumCommandStatus.REACH);
+//        });
     }
 
 

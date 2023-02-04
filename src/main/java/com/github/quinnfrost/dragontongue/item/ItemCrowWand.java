@@ -72,8 +72,8 @@ public class ItemCrowWand extends Item {
         super.inventoryTick(stack, worldIn, entityIn, itemSlot, isSelected);
         if (isSelected) {
             BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(entityIn, Config.CROW_WAND_RANGE_MAX.get().floatValue(), 1.0f);
-            if (blockRayTraceResult.getType() != RayTraceResult.Type.MISS) {
-                OverlayCrossHair.setCrossHairDisplay(null, 0, 2, OverlayCrossHair.IconType.TARGET, true);
+            if (blockRayTraceResult.getType() == RayTraceResult.Type.MISS) {
+                OverlayCrossHair.setCrossHairDisplay(null, 0, 2, OverlayCrossHair.IconType.WARN, true);
             }
         }
     }

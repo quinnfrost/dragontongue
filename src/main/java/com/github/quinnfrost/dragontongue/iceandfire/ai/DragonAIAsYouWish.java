@@ -44,18 +44,11 @@ public class DragonAIAsYouWish extends Goal {
 
     @Override
     public void startExecuting() {
-        BlockPos pos = capabilityInfoHolder.getDestination();
+
     }
 
     @Override
     public void tick() {
 
-    }
-
-    public boolean shouldHover(EntityDragonBase dragon) {
-        BlockPos targetPos = capabilityInfoHolder.getDestination();
-
-        return (dragon.world.getBlockState(targetPos).isAir()
-                && dragon.world.getBlockState(targetPos.add(0, -1, 0)).isAir());
     }
 }

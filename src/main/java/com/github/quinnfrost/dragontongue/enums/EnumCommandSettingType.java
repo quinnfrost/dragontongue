@@ -5,13 +5,14 @@ public enum EnumCommandSettingType {
         COMMAND_STATUS,
         GROUND_ATTACK_TYPE,
         AIR_ATTACK_TYPE,
+        ATTACK_DECISION_TYPE,
         MOVEMENT_TYPE,
         DESTROY_TYPE,
         BREATH_TYPE,
         SHOULD_RETURN_ROOST
     ;
     public enum GroundAttackType {
-        NONE,
+        ANY,
         BITE,
         SHAKE_PREY,
         TAIL_WHIP,
@@ -26,7 +27,7 @@ public enum EnumCommandSettingType {
     }
 
     public enum AirAttackType {
-        NONE,
+        ANY,
         SCORCH_STREAM,
         HOVER_BLAST,
         TACKLE
@@ -34,6 +35,19 @@ public enum EnumCommandSettingType {
         private static final AirAttackType[] vals = values();
 
         public AirAttackType next() {
+            return vals[(this.ordinal() + 1) % vals.length];
+        }
+    }
+
+    public enum AttackDecisionType {
+        DEFAULT,
+        OPEN_FIRE,
+        ALWAYS_HELP,
+        NONE
+        ;
+        private static final AttackDecisionType[] vals = values();
+
+        public AttackDecisionType next() {
             return vals[(this.ordinal() + 1) % vals.length];
         }
     }
@@ -52,7 +66,7 @@ public enum EnumCommandSettingType {
 
     public enum DestroyType {
         ANY,
-        AROUND_ROOST,
+        CAREFUL_AROUND_ROOST,
         NONE
         ;
         private static final DestroyType[] vals = values();

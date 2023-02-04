@@ -60,6 +60,18 @@ public class RegistryMessages {
                 .decoder(MessageSyncCapability::new)
                 .consumer(MessageSyncCapability::handler)
                 .add();
+
+        CHANNEL.messageBuilder(MessageClientDraw.class, nextID())
+                .encoder(MessageClientDraw::encoder)
+                .decoder(MessageClientDraw::decoder)
+                .consumer(MessageClientDraw::handler)
+                .add();
+
+        CHANNEL.messageBuilder(MessageClientSetReferenceDragon.class, nextID())
+                .encoder(MessageClientSetReferenceDragon::encoder)
+                .decoder(MessageClientSetReferenceDragon::decoder)
+                .consumer(MessageClientSetReferenceDragon::handler)
+                .add();
     }
 
     /**

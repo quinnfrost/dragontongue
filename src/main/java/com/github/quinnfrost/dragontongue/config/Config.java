@@ -13,7 +13,6 @@ import java.nio.file.Path;
 @Mod.EventBusSubscriber(modid = References.MOD_ID,bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Config {
     public static final String CATEGORY_GENERAL = "general";
-    public static final String SUBCATEGORY_DEBUG = "debug";
     public static final String CATEGORY_ITEM = "item";
     public static final String SUBCATEGORY_WAND = "wand";
 
@@ -32,13 +31,10 @@ public class Config {
 
     static {
         COMMON_BUILDER.comment("General settings").push(CATEGORY_GENERAL);
+        DEBUG = COMMON_BUILDER.comment("Enable verbose output to console")
+                .define("verbose", false);
         COMMAND_ENTITIES_MAX = COMMON_BUILDER.comment("Max entities to command")
                         .defineInRange("count", 10, 1, 20);
-        COMMON_BUILDER.pop();
-
-        COMMON_BUILDER.comment("Debug settings").push(SUBCATEGORY_DEBUG);
-        DEBUG = COMMON_BUILDER.comment("Enable verbose output to console")
-                        .define("verbose", false);
         COMMON_BUILDER.pop();
 
         COMMON_BUILDER.comment("Item settings").push(CATEGORY_ITEM);
@@ -51,13 +47,10 @@ public class Config {
     }
 
     private static void setupItemConfig(){
-        COMMON_BUILDER.comment("Wand configs").push(SUBCATEGORY_WAND);
 
-        COMMAND_DISTANCE_MAX = COMMON_BUILDER.comment("Distance in block the entity can be targeted").defineInRange("command_distance_max",128f,0,512);
-        NEARBY_RANGE = COMMON_BUILDER.comment("Distance in block the entity nearby will attack").defineInRange("nearby_range",20f,0,512);
-        CROW_WAND_RANGE_MAX = COMMON_BUILDER.comment("Distance in block the crow wand can takes you").defineInRange("crow_wand_range_max",128f,0,512);
-
-        COMMON_BUILDER.pop();
+        COMMAND_DISTANCE_MAX = COMMON_BUILDER.comment("Distance in block the entity can be targeted").defineInRange("command_distance_max",256f,0,512);
+        NEARBY_RANGE = COMMON_BUILDER.comment("Distance in block the entity nearby will attack").defineInRange("nearby_range",128f,0,512);
+        CROW_WAND_RANGE_MAX = COMMON_BUILDER.comment("Distance in block the crow wand can takes you").defineInRange("crow_wand_range_max",256f,0,512);
 
     }
 

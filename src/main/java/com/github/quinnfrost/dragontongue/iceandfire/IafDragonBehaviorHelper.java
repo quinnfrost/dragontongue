@@ -1,6 +1,8 @@
 package com.github.quinnfrost.dragontongue.iceandfire;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
+import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
+import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
@@ -8,6 +10,7 @@ import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAIAsYouWish;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAICalmLook;
+import com.github.quinnfrost.dragontongue.iceandfire.event.IafServerEvent;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
@@ -31,77 +34,21 @@ public class IafDragonBehaviorHelper {
         return false;
     }
 
-    public static boolean isDragonInAir(LivingEntity dragonIn) {
-        if (!IafHelperClass.isDragon(dragonIn)) {
-            return false;
-        }
-        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-
-        return dragon.isHovering() || dragon.isFlying();
-    }
-
-    public static boolean setDragonTakeOff(LivingEntity dragonIn) {
-        if (!IafHelperClass.isDragon(dragonIn)) {
-            return false;
-        }
-        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-
-        dragon.setHovering(true);
-        dragon.setQueuedToSit(false);
-        dragon.setSitting(false);
-        dragon.flyTicks = 0;
-
-        return true;
-    }
-
-    public static boolean setDragonLand(LivingEntity dragonIn) {
-        if (!IafHelperClass.isDragon(dragonIn)) {
-            return false;
-        }
-        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-
-
-
-        return true;
-    }
-
-    // fixme: halt cause dragon to takeoff
-    public static boolean setDragonHalt(MobEntity dragonIn) {
-        if (!IafHelperClass.isDragon(dragonIn)) {
-            return false;
-        }
-        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-        ICapTargetHolder capTargetHolder = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
-
-        capTargetHolder.setDestination(dragon.getPosition());
-        // If no command was issued, do as the vanilla way
-        if (capTargetHolder.getCommandStatus() != EnumCommandStatus.NONE) {
-            if (isDragonInAir(dragon)) {
-                capTargetHolder.setCommandStatus(EnumCommandStatus.HOVER);
-            } else {
-                capTargetHolder.setCommandStatus(EnumCommandStatus.STAY);
-            }
-        }
-        capTargetHolder.setBreathTarget(null);
-
-        dragon.setAttackTarget(null);
-//        dragon.flightManager.setFlightTarget(dragon.getPositionVec());
-        // fixme: doesn't really clears the flying navigator's path
-        dragon.getNavigator().clearPath();
-
-        return true;
-    }
-
     public static boolean keepDragonHover(MobEntity dragonIn, BlockPos hoverPos) {
+        // Flight logic should be done in flight manager update
         if (!IafHelperClass.isDragon(dragonIn)) {
             return false;
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
         ICapTargetHolder cap = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
 
+        if (cap.getCommandStatus() == EnumCommandStatus.STAY && IafDragonBehaviorHelper.isOverAir(dragon)) {
+            cap.setCommandStatus(EnumCommandStatus.HOVER);
+        }
+
         dragon.setMotion(0, 0, 0);
 
-        // fixme: setLookPosition took couple of seconds to take effect
+        // Look position is updated only if the dragon reaches her destination
         PlayerEntity playerEntity = dragon.world.getPlayerByUuid(dragon.getOwnerId());
         // Backoff looking control if the dragon is breathing
         if (playerEntity != null
@@ -122,11 +69,18 @@ public class IafDragonBehaviorHelper {
     }
 
     public static boolean keepDragonStay(MobEntity dragonIn) {
+        // Ground logic should be done in AI
         if (!IafHelperClass.isDragon(dragonIn)) {
             return false;
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-        ICapTargetHolder iCapTargetHolder = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
+        ICapTargetHolder cap = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
+
+        if (cap.getCommandStatus() == EnumCommandStatus.HOVER && !IafDragonBehaviorHelper.isDragonInAir(dragon)) {
+            dragon.setHovering(false);
+            dragon.setFlying(false);
+            cap.setCommandStatus(EnumCommandStatus.STAY);
+        }
 
         dragon.setHovering(false);
         dragon.setFlying(false);
@@ -136,21 +90,224 @@ public class IafDragonBehaviorHelper {
         return true;
     }
 
+    public static boolean keepDragonFlyTo(LivingEntity dragonIn, BlockPos targetPos) {
+        if (!IafHelperClass.isDragon(dragonIn)) {
+            return false;
+        }
+        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+        ICapTargetHolder cap = dragonIn.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragonIn));
+
+        cap.getDestination().ifPresent(blockPos -> {
+            if (util.hasArrived(dragon, blockPos, null)) {
+                dragon.getNavigator().clearPath();
+                dragon.setMotion(0, 0, 0);
+                if (!IafDragonBehaviorHelper.isDragonInAir(dragon) || !IafDragonBehaviorHelper.shouldHoverAt(dragon, blockPos)) {
+                    cap.setCommandStatus(EnumCommandStatus.STAY);
+                } else {
+                    cap.setCommandStatus(EnumCommandStatus.HOVER);
+                }
+            } else {
+                if (dragon.getCommand() != 0) {
+                    dragon.setCommand(0);
+                }
+                if (dragon.world.isAirBlock(targetPos)) {
+                    IafDragonBehaviorHelper.setDragonFlightTarget(dragon, Vector3d.copyCentered(targetPos));
+                } else if (dragon.world.isAirBlock(targetPos.add(0,1,0))) {
+                    IafDragonBehaviorHelper.setDragonFlightTarget(dragon, Vector3d.copyCentered(targetPos.add(0,1,0)));
+                } else {
+                    DragonTongue.LOGGER.warn("Dragon flight target set to non air block");
+                }
+            }
+        });
+
+        return true;
+    }
+
+    public static boolean keepDragonWalkTo(LivingEntity dragonIn, BlockPos targetPos) {
+        if (!IafHelperClass.isDragon(dragonIn)) {
+            return false;
+        }
+        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+        ICapTargetHolder cap = dragonIn.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
+
+        cap.getDestination().ifPresent(blockPos -> {
+            if (util.hasArrived(dragon, blockPos, null)) {
+                dragon.getNavigator().clearPath();
+                dragon.setMotion(0, 0, 0);
+                if (IafDragonBehaviorHelper.isDragonInAir(dragon)) {
+                    cap.setCommandStatus(EnumCommandStatus.HOVER);
+                } else {
+                    cap.setCommandStatus(EnumCommandStatus.STAY);
+                }
+            } else {
+                dragon.setQueuedToSit(false);
+                IafDragonBehaviorHelper.setDragonWalkTarget(dragon, targetPos);
+            }
+        });
+        return true;
+    }
+
+    public static boolean keepDragonBreathTarget(LivingEntity dragonIn, @Nullable BlockPos breathPos) {
+        if (!IafHelperClass.isDragon(dragonIn)) {
+            return false;
+        }
+        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+        ICapTargetHolder cap = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
+        EnumCommandSettingType.BreathType breathType = (EnumCommandSettingType.BreathType) cap.getObjectSetting(EnumCommandSettingType.BREATH_TYPE);
+
+//        dragon.groundAttack = IafDragonAttacks.GroundAttackType.FIRE;
+//        dragon.usingGroundAttack = true;
+
+        if (breathPos != null) {
+            dragon.burningTarget = breathPos;
+            dragon.getLookController().setLookPosition(breathPos.getX() + 0.5D, breathPos.getY() + 0.5D, breathPos.getZ() + 0.5D, 180F, 180F);
+            dragon.rotationYaw = dragon.renderYawOffset;
+            switch (breathType) {
+                case ANY:
+                    if (dragon.getDragonStage() >= 4 && dragon.getDragonStage() / 2.0f - 1.5 > dragon.getRNG().nextFloat()) {
+                        dragon.stimulateFire(breathPos.getX() + 0.5F, breathPos.getY() + 0.5F, breathPos.getZ() + 0.5F, 5);
+                    }
+                case WITHOUT_BLAST:
+                    if (dragon.getDragonStage() >= 2) {
+                        dragon.stimulateFire(breathPos.getX() + 0.5F, breathPos.getY() + 0.5F, breathPos.getZ() + 0.5F, 1);
+                        dragon.setBreathingFire(true);
+                    }
+                    break;
+                case NONE:
+                    cap.setBreathTarget(null);
+                    dragon.setBreathingFire(false);
+                    break;
+            }
+        } else {
+            dragon.setBreathingFire(false);
+        }
+        return true;
+    }
+
+    public static boolean setDragonTryReach(LivingEntity dragonIn, BlockPos blockPos) {
+        if (!IafHelperClass.isDragon(dragonIn)) {
+            return false;
+        }
+        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+        ICapTargetHolder cap = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
+        boolean canFly = cap.getObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE) != EnumCommandSettingType.MovementType.LAND;
+
+        if (blockPos != null) {
+            if (shouldFlyToTarget(dragon, blockPos)) {
+                setDragonTakeOff(dragon);
+            }
+            if (!isDragonInAir(dragon) || !shouldHoverAt(dragon, blockPos)) {
+                setDragonWalkTarget(dragon, blockPos);
+            }
+            if (isDragonInAir(dragon) || shouldHoverAt(dragon, blockPos)) {
+                setDragonFlightTarget(dragon, Vector3d.copyCentered(blockPos));
+            }
+        }
+        return true;
+    }
+
+    /**
+     * The took off dragon will switch its navigator type and use flight manager for movement control
+     *
+     * @param dragonIn
+     * @return
+     */
+    public static boolean setDragonTakeOff(LivingEntity dragonIn) {
+        if (!IafHelperClass.isDragon(dragonIn)) {
+            return false;
+        }
+        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+        ICapTargetHolder cap = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
+        if (cap.getObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE) == EnumCommandSettingType.MovementType.LAND) {
+            return false;
+        }
+
+        if (!IafDragonBehaviorHelper.isDragonInAir(dragon)) {
+            dragon.setMotion(dragon.getMotion().add(0, 0.02, 0));
+        }
+        dragon.setHovering(true);
+        dragon.setQueuedToSit(false);
+        dragon.setSitting(false);
+        dragon.flyTicks = 0;
+
+        return true;
+    }
+
+    public static boolean setDragonLand(LivingEntity dragonIn) {
+        if (!IafHelperClass.isDragon(dragonIn)) {
+            return false;
+        }
+        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+        ICapTargetHolder cap = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
+        if (cap.getObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE) == EnumCommandSettingType.MovementType.AIR) {
+            return false;
+        }
+
+        dragon.setMotion(dragon.getMotion().add(0.0, -0.25, 0.0));
+
+        if (util.getByteTag(dragon, "Flying").isPresent()) {
+            util.setByteTag(dragon, "Flying", (byte) 0);
+        }
+
+        return true;
+    }
+
+    public static boolean setDragonHalt(MobEntity dragonIn) {
+        if (!IafHelperClass.isDragon(dragonIn)) {
+            return false;
+        }
+        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+        ICapTargetHolder capTargetHolder = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
+
+        capTargetHolder.setDestination(dragon.getPosition());
+        // If no command was issued, do as the vanilla way
+        if (capTargetHolder.getCommandStatus() != EnumCommandStatus.NONE) {
+            if (isDragonInAir(dragon)) {
+                capTargetHolder.setCommandStatus(EnumCommandStatus.HOVER);
+            } else {
+                capTargetHolder.setCommandStatus(EnumCommandStatus.STAY);
+            }
+        }
+        capTargetHolder.setBreathTarget(null);
+
+        dragon.setAttackTarget(null);
+//        setDragonFlightTarget(dragon, null);
+        // Todo: invalidate flight manager path
+        dragon.getNavigator().clearPath();
+
+        return true;
+    }
+
+    public static boolean setDragonReach(LivingEntity dragonIn, BlockPos blockPos) {
+        if (!IafHelperClass.isDragon(dragonIn)) {
+            return false;
+        }
+        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+        ICapTargetHolder cap = dragonIn.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragonIn));
+
+        if (IafDragonBehaviorHelper.shouldFlyToTarget(dragon, blockPos)) {
+            IafDragonBehaviorHelper.setDragonTakeOff(dragon);
+        }
+        cap.setDestination(blockPos);
+        cap.setCommandStatus(EnumCommandStatus.REACH);
+
+        return true;
+    }
+
     public static boolean setDragonAttackTarget(LivingEntity dragonIn, @Nullable LivingEntity target) {
         if (!IafHelperClass.isDragon(dragonIn)) {
             return false;
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+        ICapTargetHolder cap = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
 
-        dragon.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-            if (target != null) {
-                dragon.setCommand(2);
-                iCapTargetHolder.setCommandStatus(EnumCommandStatus.ATTACK);
-                // One target at a time
-                iCapTargetHolder.setBreathTarget(null);
-            }
-            dragon.setAttackTarget(target);
-        });
+        if (target != null) {
+            dragon.setCommand(2);
+            cap.setCommandStatus(EnumCommandStatus.ATTACK);
+            // One target at a time
+            setDragonBreathTarget(dragon, null);
+        }
+        dragon.setAttackTarget(target);
 
         return true;
 
@@ -174,7 +331,7 @@ public class IafDragonBehaviorHelper {
                 }
             }
             // One target at a time
-            IafDragonBehaviorHelper.setDragonAttackTarget(dragon, null);
+            setDragonAttackTarget(dragon, null);
         } else {
             cap.setBreathTarget(null);
             dragon.burningTarget = null;
@@ -184,73 +341,17 @@ public class IafDragonBehaviorHelper {
         return true;
     }
 
-    public static boolean keepDragonBreathTarget(LivingEntity dragonIn, @Nullable BlockPos breathPos) {
+    // Todo: pass in null to invalidate flight manager target
+
+    public static boolean setDragonFlightTarget(LivingEntity dragonIn, Vector3d targetVec) {
         if (!IafHelperClass.isDragon(dragonIn)) {
             return false;
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-        ICapTargetHolder cap = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
-        EnumCommandSettingType.BreathType breathType = (EnumCommandSettingType.BreathType) cap.getObjectSetting(EnumCommandSettingType.BREATH_TYPE);
 
-//        dragon.groundAttack = IafDragonAttacks.GroundAttackType.FIRE;
-//        dragon.usingGroundAttack = true;
-
-        if (breathPos != null) {
-            dragon.burningTarget = breathPos;
-            dragon.getLookController().setLookPosition(breathPos.getX() + 0.5D, breathPos.getY() + 0.5D, breathPos.getZ() + 0.5D, 180F, 180F);
-            dragon.rotationYaw = dragon.renderYawOffset;
-            switch (breathType) {
-                case ANY:
-                    if (dragon.getDragonStage() >= 4 && dragon.getDragonStage() / 2.0f - 1.5 > dragon.getRNG().nextFloat() ) {
-                        dragon.stimulateFire(breathPos.getX() + 0.5F, breathPos.getY() + 0.5F, breathPos.getZ() + 0.5F, 5);
-                    }
-                case WITHOUT_BLAST:
-                    if (dragon.getDragonStage() >= 2) {
-                        dragon.stimulateFire(breathPos.getX() + 0.5F, breathPos.getY() + 0.5F, breathPos.getZ() + 0.5F, 1);
-                        dragon.setBreathingFire(true);
-                    }
-                    break;
-                case NONE:
-                    cap.setBreathTarget(null);
-                    dragon.setBreathingFire(false);
-                    break;
-            }
-        } else {
-            dragon.setBreathingFire(false);
+        if (targetVec != null) {
+            dragon.flightManager.setFlightTarget(targetVec);
         }
-        return true;
-    }
-
-    public static boolean keepDragonReach(LivingEntity dragonIn, BlockPos targetPos) {
-        if (!IafHelperClass.isDragon(dragonIn)) {
-            return false;
-        }
-        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-        ICapTargetHolder cap = dragonIn.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragonIn));
-
-        if (util.hasArrived(dragon, cap.getDestination())) {
-            dragon.getNavigator().clearPath();
-            dragon.setMotion(0, 0, 0);
-            // Determine if destination has support block
-            if (IafDragonBehaviorHelper.shouldHover(dragon)) {
-                cap.setCommandStatus(EnumCommandStatus.HOVER);
-            } else {
-                cap.setCommandStatus(EnumCommandStatus.STAY);
-            }
-        } else if (dragon.isFlying() || dragon.isHovering()) {
-            IafDragonBehaviorHelper.setDragonFlightTarget(dragon, targetPos);
-        } else {
-            IafDragonBehaviorHelper.setDragonWalkTarget(dragon, targetPos);
-        }
-        return true;
-    }
-
-    public static boolean setDragonFlightTarget(LivingEntity dragonIn, BlockPos blockPos) {
-        if (!IafHelperClass.isDragon(dragonIn)) {
-            return false;
-        }
-        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-        dragon.flightManager.setFlightTarget(Vector3d.copyCentered(blockPos));
 
         return true;
     }
@@ -261,11 +362,11 @@ public class IafDragonBehaviorHelper {
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
 
-        if (dragon.getCommand() != 0) {
-            dragon.setCommand(0);
+        if (blockPos != null) {
+            ((AdvancedPathNavigate) dragon.getNavigator()).tryMoveToBlockPos(blockPos, 1.0f);
+        } else {
+            dragon.getNavigator().clearPath();
         }
-        dragon.setQueuedToSit(false); // In case dragon is sleeping
-        dragon.getNavigator().tryMoveToXYZ(blockPos.getX(), blockPos.getY(), blockPos.getZ(), 1.0f);
 
         return true;
     }
@@ -284,26 +385,6 @@ public class IafDragonBehaviorHelper {
             return false;
         }
         dragonIn.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragonIn)).setCommandStatus(status);
-        return true;
-    }
-
-    public static boolean setDragonReach(LivingEntity dragonIn, BlockPos blockPos) {
-        if (!IafHelperClass.isDragon(dragonIn)) {
-            return false;
-        }
-        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-        ICapTargetHolder cap = dragonIn.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragonIn));
-
-        // If destination is too far, fly there
-        if (blockPos.distanceSq(dragon.getPosition()) > 30 * 30) {
-            IafDragonBehaviorHelper.setDragonTakeOff(dragon);
-        }
-        IafDragonBehaviorHelper.setDragonFlightTarget(dragon, blockPos);
-        IafDragonBehaviorHelper.setDragonWalkTarget(dragon, blockPos);
-
-        cap.setDestination(blockPos);
-        cap.setCommandStatus(EnumCommandStatus.REACH);
-
         return true;
     }
 
@@ -344,12 +425,14 @@ public class IafDragonBehaviorHelper {
             dragon.setDeathStage(0);
             dragon.setModelDead(false);
             dragon.setNoAI(false);
+            return true;
         } else if (deathStage > 0 && deathStage <= 2) {
 //            util.spawnParticleForce(dragon.world, ParticleTypes.HAPPY_VILLAGER, )
             dragon.world.setEntityState(dragon, (byte) 35);
             dragon.setDeathStage(deathStage - 1);
+            return true;
         }
-        return true;
+        return false;
     }
 
     /**
@@ -362,19 +445,75 @@ public class IafDragonBehaviorHelper {
         if (!IafHelperClass.isDragon(dragonIn)) {
             return false;
         }
-
+        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+        if (!(dragon.logic instanceof IafAdvancedDragonLogic)) {
+            IafAdvancedDragonLogic.applyDragonLogic(dragon);
+        }
+        if (!(dragon.flightManager instanceof IafAdvancedDragonFlightManager)) {
+            IafAdvancedDragonFlightManager.applyDragonFlightManager(dragon);
+        }
         return true;
     }
 
-    public static boolean shouldHover(EntityDragonBase dragon) {
-        ICapTargetHolder dragonCaps = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
-        BlockPos targetPos = dragonCaps.getDestination();
+    public static boolean shouldHoverAt(EntityDragonBase dragon, BlockPos blockPos) {
+        EnumCommandSettingType.MovementType movementType = (EnumCommandSettingType.MovementType) dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon)).getObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE);
+        if (movementType == EnumCommandSettingType.MovementType.LAND) {
+            return false;
+        }
+        if (movementType == EnumCommandSettingType.MovementType.AIR) {
+            return true;
+        }
+        for (int i = 0; i < dragon.getDragonStage(); i++) {
+            if (!dragon.world.isAirBlock(blockPos.add(0, -i, 0))) {
+                return false;
+            }
+        }
+        return true;
 
-        return (dragon.world.getBlockState(targetPos).isAir()
-                && dragon.world.getBlockState(targetPos.add(0, -1, 0)).isAir());
+    }
+
+    public static boolean shouldFlyToTarget(EntityDragonBase dragon, BlockPos blockPos) {
+        EnumCommandSettingType.MovementType movementType = (EnumCommandSettingType.MovementType) dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon)).getObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE);
+        if (movementType == EnumCommandSettingType.MovementType.LAND) {
+            return false;
+        }
+        if (movementType == EnumCommandSettingType.MovementType.AIR) {
+            return true;
+        }
+        return shouldHoverAt(dragon, blockPos);
+//        return shouldHoverAt(dragon, blockPos) || dragon.getDistanceSq(Vector3d.copyCentered(blockPos)) > 48 * 48;
+    }
+
+    public static boolean isDragonInAir(LivingEntity dragonIn) {
+        if (!IafHelperClass.isDragon(dragonIn)) {
+            return false;
+        }
+        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+
+        return dragon.isHovering() || dragon.isFlying();
     }
 
     public static boolean isOverAir(EntityDragonBase dragon) {
         return dragon.world.isAirBlock(new BlockPos(dragon.getPosX(), dragon.getBoundingBox().minY - 1, dragon.getPosZ()));
+    }
+
+    public static boolean shouldDestroy(LivingEntity dragonIn, BlockPos destroyPosition) {
+        if (!IafHelperClass.isDragon(dragonIn)) {
+            return false;
+        }
+        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+        ICapTargetHolder cap = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
+
+        if (cap.getObjectSetting(EnumCommandSettingType.DESTROY_TYPE) == EnumCommandSettingType.DestroyType.ANY) {
+            return true;
+        }
+        if (cap.getObjectSetting(EnumCommandSettingType.DESTROY_TYPE) == EnumCommandSettingType.DestroyType.CAREFUL_AROUND_ROOST) {
+            if (!cap.getHomePosition().isPresent()) {
+                return true;
+            } else if (util.getDistance(cap.getHomePosition().get(), destroyPosition) > IafServerEvent.TEMP_ROOST_PROTECTION_RANGE) {
+                return true;
+            }
+        }
+        return false;
     }
 }

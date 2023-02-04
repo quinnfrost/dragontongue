@@ -2,21 +2,15 @@ package com.github.quinnfrost.dragontongue.event;
 
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
-import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
-import com.github.quinnfrost.dragontongue.iceandfire.gui.ScreenDragon;
-import com.github.quinnfrost.dragontongue.item.RegistryItems;
+import com.github.quinnfrost.dragontongue.iceandfire.event.IafServerEvent;
 import com.github.quinnfrost.dragontongue.message.MessageClientDisplay;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Hand;
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -29,25 +23,15 @@ public class CommonEvents {
         // Using dragon staff right-click on a dragon will open gui
         if (DragonTongue.isIafPresent) {
             Entity targetEntity = event.getTarget();
-            if (IafHelperClass.isDragon(targetEntity) && event.getEntityLiving() instanceof PlayerEntity) {
-                LivingEntity dragon = (LivingEntity) targetEntity;
-                PlayerEntity playerEntity = (PlayerEntity) event.getEntityLiving();
-                Hand hand = event.getHand();
-                ItemStack itemStack = playerEntity.getHeldItem(hand);
+            IafServerEvent.onEntityInteract(event);
 
-                if (playerEntity.isSneaking()) {
-                    IafHelperClass.onEntityInteract(event);
-                    if (itemStack.isEmpty()
-                            && playerEntity.getDistance(dragon) < 5) {
-                        ScreenDragon.openGui(playerEntity, dragon);
-                        event.setCancellationResult(ActionResultType.SUCCESS);
-                        event.setCanceled(true);
-                    }
+        }
+    }
 
-                }
-
-
-            }
+    @SubscribeEvent
+    public static void onEntityUseItem(PlayerInteractEvent.RightClickItem event) {
+        if (DragonTongue.isIafPresent) {
+            IafServerEvent.onEntityUseItem(event);
         }
     }
 
@@ -66,6 +50,10 @@ public class CommonEvents {
                 );
             }
         }
+        if (DragonTongue.isIafPresent) {
+            IafServerEvent.onEntityHurt(event);
+        }
+
     }
 
     @SubscribeEvent
@@ -79,6 +67,11 @@ public class CommonEvents {
                     attacker
             );
         }
+    }
+
+    @SubscribeEvent
+    public static void onEntityDamage(LivingDamageEvent event) {
+
     }
 
 }

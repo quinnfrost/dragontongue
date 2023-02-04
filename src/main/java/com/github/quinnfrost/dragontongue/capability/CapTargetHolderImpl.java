@@ -21,10 +21,12 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
     private double selectDistance = 128;
     private BlockPos fallbackPosition = null;
     private int fallbackTimer = 0;
-    private BlockPos commandDestination = null;
+    private Optional<BlockPos> commandDestination = Optional.empty();
     private Optional<BlockPos> breathTarget = Optional.empty();
     private Optional<BlockPos> homePosition = Optional.empty();
+    private String homeDimension = "";
     private boolean shouldReturnHome = true;
+    private boolean shouldSleep = true;
     private Map<EnumCommandSettingType, Enum> commandMaps = new EnumMap<>(EnumCommandSettingType.class);
 //    private Map<EnumCommandSettingType.BooleanSettings, Boolean> settingMaps = new EnumMap<EnumCommandSettingType.BooleanSettings, Boolean>(EnumCommandSettingType.BooleanSettings.class);
 
@@ -35,12 +37,13 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
     public CapTargetHolderImpl(Entity entity) {
         this.entity = entity;
         if (entity != null) {
-            this.commandDestination = entity.getPosition();
+            this.commandDestination = Optional.of(entity.getPosition());
             this.fallbackPosition = entity.getPosition();
         }
         commandMaps.put(EnumCommandSettingType.COMMAND_STATUS, EnumCommandStatus.NONE);
         commandMaps.put(EnumCommandSettingType.GROUND_ATTACK_TYPE, EnumCommandSettingType.GroundAttackType.BITE);
         commandMaps.put(EnumCommandSettingType.AIR_ATTACK_TYPE, EnumCommandSettingType.AirAttackType.HOVER_BLAST);
+        commandMaps.put(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.DEFAULT);
 
         commandMaps.put(EnumCommandSettingType.MOVEMENT_TYPE, EnumCommandSettingType.MovementType.ANY);
         commandMaps.put(EnumCommandSettingType.DESTROY_TYPE, EnumCommandSettingType.DestroyType.ANY);
@@ -59,7 +62,12 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
         commandDestination = cap.getDestination();
         breathTarget = cap.getBreathTarget();
         homePosition = cap.getHomePosition();
+
+        homeDimension = "";
+        cap.getHomeDimension().ifPresent(s -> homeDimension = s);
+
         shouldReturnHome = cap.getReturnHome();
+        shouldSleep = cap.getShouldSleep();
         commandMaps = cap.getCommandMaps();
     }
 
@@ -165,12 +173,16 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
 
 
     @Override
-    public void setDestination(BlockPos blockPos) {
-        this.commandDestination = blockPos;
+    public void setDestination(@Nullable BlockPos blockPos) {
+        if (blockPos != null) {
+            this.commandDestination = Optional.of(blockPos);
+        } else {
+            this.commandDestination = Optional.empty();
+        }
     }
 
     @Override
-    public BlockPos getDestination() {
+    public Optional<BlockPos> getDestination() {
         return commandDestination;
     }
 
@@ -213,6 +225,21 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
     }
 
     @Override
+    public void setHomeDimension(String dimensionName) {
+        this.homeDimension = dimensionName != null ? dimensionName : "";
+    }
+
+    @Override
+    public Optional<String> getHomeDimension() {
+        if (homePosition.isPresent() || !homeDimension.isEmpty()) {
+            return Optional.of(homeDimension);
+        } else {
+            homeDimension = "";
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public void setReturnHome(boolean value) {
         this.shouldReturnHome = value;
     }
@@ -220,6 +247,16 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
     @Override
     public boolean getReturnHome() {
         return shouldReturnHome;
+    }
+
+    @Override
+    public void setShouldSleep(boolean value) {
+        this.shouldSleep = value;
+    }
+
+    @Override
+    public boolean getShouldSleep() {
+        return shouldSleep;
     }
 
     @Override

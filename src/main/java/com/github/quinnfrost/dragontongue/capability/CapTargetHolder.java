@@ -21,6 +21,7 @@ import net.minecraftforge.event.AttachCapabilitiesEvent;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class CapTargetHolder {
@@ -49,17 +50,20 @@ public class CapTargetHolder {
                 CompoundNBT dataNBT = new CompoundNBT();
                 dataNBT.putLong("FallbackPosL", instance.getFallbackPosition().toLong());
                 dataNBT.putInt("FallbackTimer", instance.getFallbackTimer());
-                dataNBT.putLong("Destination", instance.getDestination().toLong());
+                dataNBT.putLong("Destination", instance.getDestination().orElse(INVALID_POS).toLong());
                 dataNBT.putDouble("CommandDistance", instance.getCommandDistance());
                 dataNBT.putDouble("SelectDistance", instance.getSelectDistance());
 
-                dataNBT.putLong("BreathTarget", instance.getBreathTarget().orElse(new BlockPos(0, 0, 0)).toLong());
-                dataNBT.putLong("HomePosition", instance.getHomePosition().orElse(new BlockPos(0, 0, 0)).toLong());
+                dataNBT.putLong("BreathTarget", instance.getBreathTarget().orElse(INVALID_POS).toLong());
+                dataNBT.putLong("HomePosition", instance.getHomePosition().orElse(INVALID_POS).toLong());
+                dataNBT.putString("HomeDimension", instance.getHomeDimension().orElse(""));
                 dataNBT.putBoolean("ReturnRoost", instance.getReturnHome());
+                dataNBT.putBoolean("ShouldSleep", instance.getShouldSleep());
 
                 dataNBT.putInt("CommandStatus", instance.getObjectSetting(EnumCommandSettingType.COMMAND_STATUS).ordinal());
                 dataNBT.putInt("GroundAttack", instance.getObjectSetting(EnumCommandSettingType.GROUND_ATTACK_TYPE).ordinal());
                 dataNBT.putInt("AirAttack", instance.getObjectSetting(EnumCommandSettingType.AIR_ATTACK_TYPE).ordinal());
+                dataNBT.putInt("AttackDecision", instance.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE).ordinal());
                 dataNBT.putInt("Movement", instance.getObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE).ordinal());
                 dataNBT.putInt("Destroy", instance.getObjectSetting(EnumCommandSettingType.DESTROY_TYPE).ordinal());
                 dataNBT.putInt("Breath", instance.getObjectSetting(EnumCommandSettingType.BREATH_TYPE).ordinal());
@@ -93,7 +97,9 @@ public class CapTargetHolder {
                 instance.setFallbackPosition(BlockPos.fromLong(dataNBT.getLong("FallbackPosL")));
                 instance.setFallbackTimer(dataNBT.getInt("FallbackTimer"));
 //                instance.setCommandStatus(commandStatus);
-                instance.setDestination(BlockPos.fromLong(dataNBT.getLong("Destination")));
+
+                BlockPos destinationPos = BlockPos.fromLong(dataNBT.getLong("Destination"));
+                instance.setDestination(!destinationPos.equals(INVALID_POS) ? destinationPos : null);
                 instance.setCommandDistance(dataNBT.getDouble("CommandDistance"));
                 instance.setSelectDistance(dataNBT.getDouble("SelectDistance"));
 
@@ -101,15 +107,18 @@ public class CapTargetHolder {
                 instance.setBreathTarget(!breathTarget.equals(INVALID_POS) ? breathTarget : null);
                 BlockPos homePos = BlockPos.fromLong(dataNBT.getLong("HomePosition"));
                 instance.setHomePosition(!homePos.equals(INVALID_POS) ? homePos : null);
+                instance.setHomeDimension(!homePos.equals(INVALID_POS) ? dataNBT.getString("HomeDimension") : "");
                 instance.setReturnHome(dataNBT.getBoolean("ReturnRoost"));
+                instance.setShouldSleep(dataNBT.getBoolean("ShouldSleep"));
 
-                // Todo: serializer!
                 instance.setObjectSetting(
                         EnumCommandSettingType.COMMAND_STATUS, EnumCommandStatus.class.getEnumConstants()[dataNBT.getInt("CommandStatus")]);
                 instance.setObjectSetting(
                         EnumCommandSettingType.GROUND_ATTACK_TYPE, EnumCommandSettingType.GroundAttackType.class.getEnumConstants()[dataNBT.getInt("GroundAttack")]);
                 instance.setObjectSetting(
                         EnumCommandSettingType.AIR_ATTACK_TYPE, EnumCommandSettingType.AirAttackType.class.getEnumConstants()[dataNBT.getInt("AirAttack")]);
+                instance.setObjectSetting(
+                        EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.class.getEnumConstants()[dataNBT.getInt("AttackDecision")]);
                 instance.setObjectSetting(
                         EnumCommandSettingType.MOVEMENT_TYPE, EnumCommandSettingType.MovementType.class.getEnumConstants()[dataNBT.getInt("Movement")]);
                 instance.setObjectSetting(

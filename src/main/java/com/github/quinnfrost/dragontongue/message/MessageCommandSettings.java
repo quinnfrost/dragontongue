@@ -5,10 +5,7 @@ import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
-import com.github.quinnfrost.dragontongue.utils.util;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.fml.network.NetworkDirection;
@@ -72,7 +69,7 @@ public class MessageCommandSettings {
 
             if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
             } else if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_SERVER) {
-                MessageSyncCapability.syncCapability(entity);
+                MessageSyncCapability.syncCapabilityToClients(entity);
             }
 
 

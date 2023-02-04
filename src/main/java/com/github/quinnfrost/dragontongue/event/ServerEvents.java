@@ -1,22 +1,28 @@
 package com.github.quinnfrost.dragontongue.event;
 
+import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.entity.ai.RegistryAI;
 import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
+import com.github.quinnfrost.dragontongue.enums.EnumClientDraw;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCrowWand;
+import com.github.quinnfrost.dragontongue.iceandfire.IafAdvancedDragonFlightManager;
 import com.github.quinnfrost.dragontongue.iceandfire.IafAdvancedDragonLogic;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
+import com.github.quinnfrost.dragontongue.iceandfire.event.IafServerEvent;
 import com.github.quinnfrost.dragontongue.item.RegistryItems;
 import com.github.quinnfrost.dragontongue.message.*;
 import com.github.quinnfrost.dragontongue.utils.util;
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.effect.LightningBoltEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
@@ -29,15 +35,16 @@ import net.minecraft.particles.ParticleTypes;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.util.ActionResultType;
+import net.minecraft.util.DamageSource;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.entity.ProjectileImpactEvent;
+import net.minecraftforge.event.entity.*;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -46,6 +53,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -129,8 +137,39 @@ public class ServerEvents {
             return;
         }
         if (DragonTongue.isIafPresent) {
+            IafServerEvent.onLivingUpdate(event);
+
             if (IafHelperClass.isDragon(event.getEntityLiving())) {
                 IafDragonBehaviorHelper.updateDragonCommand(event.getEntityLiving());
+            }
+            if (event.getEntityLiving() instanceof PlayerEntity) {
+                PlayerEntity playerEntity = (PlayerEntity) event.getEntityLiving();
+                ICapTargetHolder cap = playerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(playerEntity));
+                for (UUID entityUUID :
+                        cap.getCommandEntities()) {
+                    MobEntity mobEntity = (MobEntity)((ServerWorld)playerEntity.world).getEntityByUuid(entityUUID);
+                    BlockPos pos = IafHelperClass.getReachTarget(mobEntity);
+                    if (pos != null && !IafDragonBehaviorHelper.isDragonInAir(mobEntity)) {
+                        RegistryMessages.sendToAll(new MessageClientDraw(
+                                mobEntity.getEntityId(), Vector3d.copyCentered(pos),
+                                mobEntity.getPositionVec()
+                        ));
+                    } else if (IafHelperClass.isDragon(mobEntity)){
+                        RegistryMessages.sendToAll(new MessageClientDraw(
+                                mobEntity.getEntityId(), ((EntityDragonBase)mobEntity).flightManager.getFlightTarget(),
+                                mobEntity.getPositionVec()
+                        ));
+                    }
+//                    RegistryMessages.sendToAll(new MessageClientDraw(
+//                            mobEntity.getEntityId(),
+//                            new Vector3d(
+//                                    (mobEntity.getPositionVec().x + mobEntity.getMotion().x * 10),
+//                                    (mobEntity.getPositionVec().y + mobEntity.getMotion().y * 10),
+//                                    (mobEntity.getPositionVec().z + mobEntity.getMotion().z * 10)
+//                                    ),
+//                            mobEntity.getPositionVec()
+//                    ));
+                }
             }
         }
         // Ask all client to display entity debug string
@@ -146,6 +185,8 @@ public class ServerEvents {
             Entity targetEntity = mobEntity.getAttackTarget();
             String targetString = targetEntity == null ? "" :
                     targetEntity.getEntityString() + " " + mobEntity.getAttackTarget().getPosition().getCoordinatesAsString();
+            String destinationString = capabilityInfoHolder.getDestination().isPresent() ?
+                    capabilityInfoHolder.getDestination().get().getCoordinatesAsString() + "(" + util.getDistance(capabilityInfoHolder.getDestination().get(), mobEntity.getPosition()) + ")" : "";
 
             List<String> debugMsg = Arrays.asList(
                     mobEntity.getEntityString() + "[" + mobEntity.getCustomName() + "]",
@@ -157,7 +198,9 @@ public class ServerEvents {
                     "Targets:" + targetString,
                     "Current dest:" + targetPosString,
                     "Command status:" + capabilityInfoHolder.getCommandStatus().toString(),
-                    "Command dest:" + capabilityInfoHolder.getDestination().getCoordinatesAsString() + "(" + util.getDistance(capabilityInfoHolder.getDestination(), mobEntity.getPosition()) + ")"
+                    "Command dest:" + destinationString,
+                    "HurtTick:" + mobEntity.hurtTime,
+                    "ResistanceTick:" + mobEntity.hurtResistantTime
             );
             if (DragonTongue.isIafPresent) {
                 List<String> additional = IafHelperClass.getAdditionalDragonDebugStrings(mobEntity);
@@ -186,6 +229,7 @@ public class ServerEvents {
             RegistryAI.registerAI(mobEntity);
             if (DragonTongue.isIafPresent && IafHelperClass.isDragon(mobEntity)) {
                 IafAdvancedDragonLogic.applyDragonLogic(mobEntity);
+                IafAdvancedDragonFlightManager.applyDragonFlightManager(mobEntity);
             }
         }
         // Initial capability update for the first time player logs in
@@ -236,6 +280,16 @@ public class ServerEvents {
                 event.setCanceled(true);
             }
         }
+    }
+
+//    @SubscribeEvent
+//    public static void onMobGriefing(EntityMobGriefingEvent event) {
+//        DragonTongue.LOGGER.info("Firing mobgriefing event: " + event.getEntity());
+//    }
+
+    @SubscribeEvent
+    public static void onLightningStrike(EntityStruckByLightningEvent event) {
+
     }
 
 }

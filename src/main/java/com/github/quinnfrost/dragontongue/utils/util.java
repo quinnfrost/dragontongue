@@ -84,6 +84,7 @@ public class util {
     /**
      * Get entity looking at
      * This will return the first block or entity the ray encounters, for entity ray trace this won't go through walls.
+     * Other ray trace methods: EntityDragonBase#1914
      *
      * @param entity
      * @param maxDistance
@@ -121,7 +122,7 @@ public class util {
     public static EntityRayTraceResult getTargetEntity(Entity entity, float maxDistance, float partialTicks,
                                                        @Nullable Predicate<? super Entity> excludeEntity) {
         if (excludeEntity == null) {
-            excludeEntity = (Predicate<Entity>) notExclude -> true;
+            excludeEntity = (Predicate<Entity>) notExclude -> notExclude instanceof LivingEntity;
         }
 
         Vector3d vector3d = entity.getEyePosition(partialTicks);
@@ -136,9 +137,8 @@ public class util {
         // 计算结束位置向量构成的区域(Bounding Box)
         AxisAlignedBB axisalignedbb = entity.getBoundingBox().expand(vector3d1.scale(d0)).grow(1.0D, 1.0D, 1.0D);
         EntityRayTraceResult entityraytraceresult = ProjectileHelper.rayTraceEntities(entity, vector3d, vector3d2,
-                axisalignedbb, ((Predicate<Entity>) entity1 -> !entity1.isSpectator()
-                        && entity1.canBeCollidedWith()
-                        && entity1 instanceof LivingEntity)
+                axisalignedbb, ((Predicate<Entity>) notExclude -> !notExclude.isSpectator()
+                        && notExclude.canBeCollidedWith())
                         .and(excludeEntity),
                 d1);
         return entityraytraceresult;
@@ -240,11 +240,12 @@ public class util {
      * @param pos
      * @return
      */
-    public static boolean hasArrived(LivingEntity entity, BlockPos pos) {
+    public static boolean hasArrived(LivingEntity entity, BlockPos pos, @Nullable Double accuracy) {
         double targetX = pos.getX();
         double targetY = pos.getY();
         double targetZ = pos.getZ();
-        AxisAlignedBB axisAlignedBB = new AxisAlignedBB(targetX,targetY,targetZ,targetX,targetY,targetZ).grow(entity.getBoundingBox().getAverageEdgeLength());
+
+        AxisAlignedBB axisAlignedBB = new AxisAlignedBB(targetX,targetY,targetZ,targetX,targetY,targetZ).grow(accuracy == null ? entity.getBoundingBox().getAverageEdgeLength() : accuracy);
         if (axisAlignedBB.intersects(entity.getBoundingBox())) {
             return true;
         } else {
@@ -258,7 +259,7 @@ public class util {
         return getDistance(Vector3d.copy(start), Vector3d.copy(end));
     }
     public static double getDistance(Vector3d start, Vector3d end) {
-        return Math.sqrt(start.distanceTo(end));
+        return start.distanceTo(end);
     }
 
     public static double getSpeed(MobEntity entity) {

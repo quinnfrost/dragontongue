@@ -64,13 +64,13 @@ public class MessageSyncCapability {
                         iCapTargetHolder.copy(cap);
                     });
                 }
-                syncCapability(entity);
+                syncCapabilityToClients(entity);
             }
         });
         return true;
     }
 
-    public static void syncCapability(Entity entity) {
+    public static void syncCapabilityToClients(Entity entity) {
         if (entity != null) {
             RegistryMessages.CHANNEL.send(
                     PacketDistributor.TRACKING_ENTITY.with(() -> entity),

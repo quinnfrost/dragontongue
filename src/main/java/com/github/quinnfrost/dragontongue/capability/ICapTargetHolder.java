@@ -29,15 +29,19 @@ public interface ICapTargetHolder {
 
 
     void setDestination(BlockPos blockPos);
-    BlockPos getDestination();
+    Optional<BlockPos> getDestination();
     void setCommandStatus(EnumCommandStatus status);
     EnumCommandStatus getCommandStatus();
     void setBreathTarget(BlockPos target);
     Optional<BlockPos> getBreathTarget();
     void setHomePosition(BlockPos blockPos);
     Optional<BlockPos> getHomePosition();
+    void setHomeDimension(String dimensionName);
+    Optional<String> getHomeDimension();
     void setReturnHome(boolean value);
     boolean getReturnHome();
+    void setShouldSleep(boolean value);
+    boolean getShouldSleep();
     Map<EnumCommandSettingType, Enum> getCommandMaps();
     void setObjectSetting(EnumCommandSettingType type, Enum setting);
     Enum getObjectSetting(EnumCommandSettingType type);

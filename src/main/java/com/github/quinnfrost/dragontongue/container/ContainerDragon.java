@@ -96,7 +96,8 @@ public class ContainerDragon extends Container {
 
     @Override
     public boolean canInteractWith(PlayerEntity playerIn) {
-        return this.dragonInventory.isUsableByPlayer(playerIn) && this.dragon.isAlive() && this.dragon.getDistance(playerIn) < 8.0F;
+//        return this.dragonInventory.isUsableByPlayer(playerIn) && this.dragon.isAlive() && this.dragon.getDistance(playerIn) < 8.0F;
+        return this.dragonInventory.isUsableByPlayer(playerIn) && this.dragon.isAlive();
     }
 
     @Override
