@@ -9,6 +9,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.ai.attributes.Attributes;
+import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.entity.ai.goal.GoalSelector;
 import net.minecraft.entity.monster.IMob;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -29,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class util {
     /**
@@ -295,6 +298,18 @@ public class util {
 //    public static <T extends Enum> T getNextEnum(T enumType) {
 //        return Enum.class.getEnumConstants()[(enumType.ordinal() + 1) % ]
 //    }
+
+    public static boolean resetGoals(GoalSelector goalSelectorIn) {
+        List<Goal> currentTargetGoalList = goalSelectorIn.getRunningGoals().map(goal -> goal.getGoal()).collect(Collectors.toList());
+        if (currentTargetGoalList.isEmpty()) {
+            return false;
+        }
+        for (Goal targetGoal :
+                currentTargetGoalList) {
+            targetGoal.resetTask();
+        }
+        return true;
+    }
 
     @OnlyIn(Dist.CLIENT)
     public static PlayerEntity getClientSidePlayer() {

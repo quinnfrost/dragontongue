@@ -1,7 +1,5 @@
 package com.github.quinnfrost.dragontongue.client.render;
 
-import com.github.alexthe666.iceandfire.client.render.pathfinding.RenderPath;
-import com.github.alexthe666.iceandfire.pathfinding.raycoms.Pathfinding;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RenderWorldLastEvent;

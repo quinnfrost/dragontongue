@@ -21,8 +21,8 @@ public class DragonAICalmLook extends Goal {
 
     @Override
     public boolean shouldExecute() {
-        return true;
-//        return capabilityInfoHolder.getCommandStatus() != EnumCommandStatus.NONE;
+        return capabilityInfoHolder.getCommandStatus() == EnumCommandStatus.STAY
+                || capabilityInfoHolder.getCommandStatus() == EnumCommandStatus.HOVER;
     }
     @Override
     public boolean shouldContinueExecuting() {

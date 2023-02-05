@@ -2,6 +2,7 @@ package com.github.quinnfrost.dragontongue.iceandfire;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.EntityDragonPart;
+import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.alexthe666.iceandfire.entity.util.IDeadMob;
 import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.DragonTongue;
@@ -17,14 +18,11 @@ import net.minecraft.entity.MobEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.gen.Heightmap;
-import net.minecraft.world.server.ServerWorld;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 
 public class IafHelperClass {
     public static boolean isDragon(Entity dragonIn) {
@@ -114,15 +112,29 @@ public class IafHelperClass {
                 "Pitch: " + dragon.getDragonPitch() + "|" + dragon.rotationPitch,
                 "Yaw: " + dragon.rotationYaw,
                 "PlaneDist:" + (double) MathHelper.sqrt(distX * distX + distZ * distZ),
-                "Dist:" + (double) MathHelper.sqrt(distX * distX + distZ * distZ + distY * distY),
-                "Down? " + dragon.isGoingDown()
+                "Distance:" + (double) MathHelper.sqrt(distX * distX + distZ * distZ + distY * distY),
+                "AirAttack:" + dragon.airAttack,
+                "GroundAttack:" + dragon.groundAttack,
+                "UseGroundAttack? " + dragon.usingGroundAttack
         );
 
 
     }
 
+    public static boolean drawDragonFlightDestination(LivingEntity dragonIn) {
+        if (!isDragon(dragonIn)) {
+            return false;
+        }
+        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+        RegistryMessages.sendToAll(new MessageClientDraw(
+                dragon.getEntityId(), dragon.flightManager.getFlightTarget(),
+                dragon.getPositionVec()
+        ));
+        return true;
+    }
+
     public static boolean isIafHostile(LivingEntity livingEntity) {
-        if (livingEntity instanceof IDeadMob) {
+        if (livingEntity instanceof IDeadMob || !DragonUtils.isAlive(livingEntity)) {
             return false;
         }
         if (livingEntity instanceof EntityDragonBase && ((EntityDragonBase)livingEntity).isModelDead()) {

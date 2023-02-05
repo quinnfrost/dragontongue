@@ -4,9 +4,8 @@ import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.api.event.DragonFireDamageWorldEvent;
 import com.github.alexthe666.iceandfire.api.event.DragonFireEvent;
 import com.github.alexthe666.iceandfire.api.event.GenericGriefEvent;
-import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
-import com.github.alexthe666.iceandfire.entity.EntityDragonPart;
-import com.github.alexthe666.iceandfire.entity.EntityIceDragon;
+import com.github.alexthe666.iceandfire.block.IafBlockRegistry;
+import com.github.alexthe666.iceandfire.entity.*;
 import com.github.alexthe666.iceandfire.entity.props.FrozenProperties;
 import com.github.alexthe666.iceandfire.entity.tile.TileEntityDragonforgeInput;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
@@ -20,7 +19,7 @@ import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import com.github.quinnfrost.dragontongue.iceandfire.gui.ScreenDragon;
-import com.github.quinnfrost.dragontongue.message.MessageClientSetReferenceDragon;
+import com.github.quinnfrost.dragontongue.iceandfire.message.MessageClientSetReferenceDragon;
 import com.github.quinnfrost.dragontongue.message.MessageSyncCapability;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
@@ -36,6 +35,7 @@ import net.minecraft.util.Util;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.EntityRayTraceResult;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
@@ -159,6 +159,9 @@ public class IafServerEvent {
         if (IafHelperClass.isDragon(IafHelperClass.getDragon(targetEntity)) && event.getEntityLiving() instanceof PlayerEntity) {
             EntityDragonBase dragon = IafHelperClass.getDragon(targetEntity);
             PlayerEntity playerEntity = (PlayerEntity) event.getEntityLiving();
+            if (!util.isOwner(dragon, playerEntity)) {
+                return false;
+            }
 
             Hand hand = event.getPlayer().getActiveHand();
             ItemStack itemStack = playerEntity.getHeldItem(event.getHand());
@@ -227,11 +230,13 @@ public class IafServerEvent {
 
                 playerEntity.sendMessage(ITextComponent.getTextComponentOrEmpty("Dragon staff used"), Util.DUMMY_UUID);
 
-                RegistryMessages.sendToClient(new MessageClientSetReferenceDragon(
-                        dragon.getEntityId()
-                ), (ServerPlayerEntity) playerEntity);
-                ScreenDragon.openGui(playerEntity, dragon);
-                event.setCanceled(true);
+                if (util.isOwner(dragon, playerEntity)) {
+                    RegistryMessages.sendToClient(new MessageClientSetReferenceDragon(
+                            dragon.getEntityId()
+                    ), (ServerPlayerEntity) playerEntity);
+                    ScreenDragon.openGui(playerEntity, dragon);
+                    event.setCanceled(true);
+                }
             }
         }
         return true;
@@ -251,10 +256,9 @@ public class IafServerEvent {
 
     public static boolean onLivingKnockBack(LivingKnockBackEvent event) {
         Entity entity = event.getEntity();
-        if (entity instanceof EntityIceDragon) {
-            EntityIceDragon iceDragon = (EntityIceDragon) entity;
-            if (iceDragon.getDragonStage() >= 2) {
-//                event.setStrength(0f);
+        if (entity instanceof EntityDragonBase) {
+            EntityDragonBase dragon = (EntityDragonBase) entity;
+            if (dragon.getDragonStage() >= 1) {
                 event.setCanceled(true);
             }
         }
@@ -274,21 +278,66 @@ public class IafServerEvent {
         }
         Entity entity = event.getEntity();
         DamageSource damageSource = event.getSource();
+        BlockPos blockPos = new BlockPos(entity.getPosition());
+
+        boolean minorDamages =
+                (damageSource == DamageSource.CACTUS
+                        && entity.world.getBlockState(blockPos).getBlock() != IafBlockRegistry.DRAGON_ICE_SPIKES
+                        && entity.world.getBlockState(blockPos.add(0, -1, 0)).getBlock() != IafBlockRegistry.DRAGON_ICE_SPIKES)
+                        || damageSource == DamageSource.SWEET_BERRY_BUSH;
+        boolean medianDamages =
+                damageSource == DamageSource.ANVIL
+                        || damageSource == DamageSource.HOT_FLOOR;
+        boolean greaterDamages =
+                damageSource == DamageSource.IN_FIRE
+                        || damageSource == DamageSource.ON_FIRE
+                        || damageSource == DamageSource.LAVA
+                        || damageSource == DamageSource.CACTUS;
 
         if (entity instanceof EntityIceDragon) {
             EntityIceDragon iceDragon = (EntityIceDragon) entity;
-            if (iceDragon.getDragonStage() >= 2 && event.getAmount() < 2f){
+            if (iceDragon.getDragonStage() >= 4 && event.getAmount() < 2f) {
                 event.setCanceled(true);
             }
-            if (iceDragon.getDragonStage() >= 2 &&
-                    (damageSource == DamageSource.CACTUS
-                            || damageSource == DamageSource.ANVIL
-                            || damageSource == DamageSource.IN_FIRE
-                            || damageSource == DamageSource.ON_FIRE
-                            || damageSource == DamageSource.LAVA
-                            || damageSource == DamageSource.SWEET_BERRY_BUSH)
-            ) {
+
+            if (iceDragon.getDragonStage() >= 4 && greaterDamages) {
                 iceDragon.forceFireTicks(0);
+                event.setCanceled(true);
+            } else if (iceDragon.getDragonStage() >= 3 && medianDamages) {
+                event.setCanceled(true);
+            } else if (iceDragon.getDragonStage() >= 2 && minorDamages) {
+                event.setCanceled(true);
+            }
+        }
+
+        if (entity instanceof EntityFireDragon) {
+            EntityFireDragon fireDragon = (EntityFireDragon) entity;
+            if (fireDragon.getDragonStage() >= 4 && event.getAmount() < 2f) {
+                event.setCanceled(true);
+            }
+            // Ice spike is also count as cactus damage
+            if (fireDragon.getDragonStage() >= 4 && greaterDamages) {
+                event.setCanceled(true);
+            } else if (fireDragon.getDragonStage() >= 3 && medianDamages) {
+                event.setCanceled(true);
+            } else if (fireDragon.getDragonStage() >= 2 && minorDamages) {
+                event.setCanceled(true);
+            }
+
+        }
+
+        if (entity instanceof EntityLightningDragon) {
+            EntityLightningDragon lightningDragon = (EntityLightningDragon) entity;
+            if (lightningDragon.getDragonStage() >= 4 && event.getAmount() < 2f) {
+                event.setCanceled(true);
+            }
+            // Ice spike is also count as cactus damage
+            if (lightningDragon.getDragonStage() >= 4 && greaterDamages) {
+                lightningDragon.forceFireTicks(0);
+                event.setCanceled(true);
+            } else if (lightningDragon.getDragonStage() >= 3 && medianDamages) {
+                event.setCanceled(true);
+            } else if (lightningDragon.getDragonStage() >= 2 && minorDamages) {
                 event.setCanceled(true);
             }
         }

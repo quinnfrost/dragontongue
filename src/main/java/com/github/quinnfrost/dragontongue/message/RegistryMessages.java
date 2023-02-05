@@ -1,6 +1,7 @@
 package com.github.quinnfrost.dragontongue.message;
 
 import com.github.quinnfrost.dragontongue.References;
+import com.github.quinnfrost.dragontongue.iceandfire.message.MessageClientSetReferenceDragon;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.network.NetworkDirection;

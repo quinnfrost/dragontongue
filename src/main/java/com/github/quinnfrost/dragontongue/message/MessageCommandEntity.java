@@ -1,13 +1,11 @@
 package com.github.quinnfrost.dragontongue.message;
 
-import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
-import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import com.github.quinnfrost.dragontongue.utils.util;
@@ -24,7 +22,6 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
-import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.fml.network.NetworkEvent;
 
@@ -170,7 +167,7 @@ public class MessageCommandEntity {
                     for (UUID entityUUID :
                             attackerUUIDs) {
                         commandAttack(commander,
-                                (LivingEntity) serverWorld.getEntityByUuid(entityUUID), target);
+                                (MobEntity) serverWorld.getEntityByUuid(entityUUID), target);
                     }
                 } else {
                     commandNearby(EnumCommandType.ATTACK, commander, target, pos, excludeEntity, (float) capTargetHolder.getSelectDistance());
@@ -216,7 +213,7 @@ public class MessageCommandEntity {
             case REACH:
                 for (UUID entityUUID :
                         capTargetHolder.getCommandEntities()) {
-                    commandReach(commander, (LivingEntity) serverWorld.getEntityByUuid(entityUUID), pos);
+                    commandReach(commander, (MobEntity) serverWorld.getEntityByUuid(entityUUID), pos);
                 }
                 break;
             case GUARD:
@@ -274,7 +271,7 @@ public class MessageCommandEntity {
                         case ATTACK:
                             // Attack friendly, exit
                             if (!util.isOwner(target, commander)) {
-                                commandAttack(commander, (LivingEntity) tamed, target);
+                                commandAttack(commander, (MobEntity) tamed, target);
                             }
                             break;
                         case BREATH:
@@ -297,7 +294,7 @@ public class MessageCommandEntity {
      * @param tamed
      * @param target
      */
-    public static void commandAttack(LivingEntity commander, @Nullable LivingEntity tamed,
+    public static void commandAttack(LivingEntity commander, @Nullable MobEntity tamed,
                                      LivingEntity target) {
         if (!util.isOwner(tamed, commander)) {
             return;
@@ -307,6 +304,8 @@ public class MessageCommandEntity {
                 && !util.isOwner(target, commander)
                 && !Objects.equals(tamed.getAttackingEntity(), target)
                 && !commander.isOnSameTeam(target)) {
+            util.resetGoals(tamed.targetSelector);
+            util.resetGoals(tamed.goalSelector);
             if (DragonTongue.isIafPresent && IafDragonBehaviorHelper.setDragonAttackTarget(tamed, target)) {
                 // For dragons
                 return;
@@ -315,7 +314,8 @@ public class MessageCommandEntity {
 //            tamed.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
 //                iCapTargetHolder.setCommandStatus(EnumCommandStatus.ATTACK);
 //            });
-            ((TameableEntity) tamed).setAttackTarget(target);
+
+            tamed.setAttackTarget(target);
         }
     }
 
@@ -324,8 +324,9 @@ public class MessageCommandEntity {
             return;
         }
 
-        IafDragonBehaviorHelper.setDragonBreathTarget(tamed, pos);
-
+        if (DragonTongue.isIafPresent) {
+            IafDragonBehaviorHelper.setDragonBreathTarget(tamed, pos);
+        }
     }
 
     /**
@@ -341,6 +342,8 @@ public class MessageCommandEntity {
         }
         AnimalEntity animalEntity = (AnimalEntity) tamed;
 
+        util.resetGoals(animalEntity.targetSelector);
+        util.resetGoals(animalEntity.goalSelector);
         if (DragonTongue.isIafPresent && IafHelperClass.isDragon(animalEntity)) {
             IafDragonBehaviorHelper.setDragonHalt(animalEntity);
         } else {
@@ -352,7 +355,6 @@ public class MessageCommandEntity {
                 }
 //            IafDragonBehaviorHelper.setDragonFlightTarget(animalEntity, animalEntity.getPosition());
             });
-//        animalEntity.getNavigator().tryMoveToXYZ(animalEntity.getPosX(), animalEntity.getPosY(), animalEntity.getPosZ(), 1.0f);
             animalEntity.getNavigator().clearPath();
             animalEntity.setAttackTarget(null);
         }
@@ -366,7 +368,7 @@ public class MessageCommandEntity {
      * @param tamed
      * @param pos
      */
-    public static void commandReach(LivingEntity commander, LivingEntity tamed, BlockPos pos) {
+    public static void commandReach(LivingEntity commander, MobEntity tamed, BlockPos pos) {
         if (!(tamed instanceof AnimalEntity) || !util.isOwner(tamed, commander)) {
             return;
         }
@@ -374,6 +376,8 @@ public class MessageCommandEntity {
         AnimalEntity animalEntity = (AnimalEntity) tamed;
         BlockPos blockPos = (pos != null ? pos : animalEntity.getPosition());
 
+        util.resetGoals(tamed.targetSelector);
+        util.resetGoals(tamed.goalSelector);
         if (DragonTongue.isIafPresent && IafHelperClass.isDragon(animalEntity)) {
 //            // If destination is too far, fly there
 //            if (blockPos.getY() > commander.getPosY() + 10 || blockPos.distanceSq(animalEntity.getPosition()) > 45 * 45) {

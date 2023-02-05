@@ -1,14 +1,11 @@
 package com.github.quinnfrost.dragontongue.event;
 
-import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.entity.ai.RegistryAI;
 import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
-import com.github.quinnfrost.dragontongue.enums.EnumClientDraw;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCrowWand;
 import com.github.quinnfrost.dragontongue.iceandfire.IafAdvancedDragonFlightManager;
 import com.github.quinnfrost.dragontongue.iceandfire.IafAdvancedDragonLogic;
@@ -18,11 +15,9 @@ import com.github.quinnfrost.dragontongue.iceandfire.event.IafServerEvent;
 import com.github.quinnfrost.dragontongue.item.RegistryItems;
 import com.github.quinnfrost.dragontongue.message.*;
 import com.github.quinnfrost.dragontongue.utils.util;
-import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.effect.LightningBoltEntity;
 import net.minecraft.entity.item.TNTEntity;
 import net.minecraft.entity.item.minecart.TNTMinecartEntity;
 import net.minecraft.entity.monster.CreeperEntity;
@@ -38,9 +33,7 @@ import net.minecraft.particles.ParticleTypes;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.util.ActionResultType;
-import net.minecraft.util.DamageSource;
 import net.minecraft.util.Hand;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
@@ -48,7 +41,10 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.*;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.EntityMobGriefingEvent;
+import net.minecraftforge.event.entity.EntityStruckByLightningEvent;
+import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingKnockBackEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -162,10 +158,7 @@ public class ServerEvents {
                                 mobEntity.getPositionVec()
                         ));
                     } else if (IafHelperClass.isDragon(mobEntity)) {
-                        RegistryMessages.sendToAll(new MessageClientDraw(
-                                mobEntity.getEntityId(), ((EntityDragonBase) mobEntity).flightManager.getFlightTarget(),
-                                mobEntity.getPositionVec()
-                        ));
+                        IafHelperClass.drawDragonFlightDestination(mobEntity);
                     }
 //                    RegistryMessages.sendToAll(new MessageClientDraw(
 //                            mobEntity.getEntityId(),
@@ -205,9 +198,7 @@ public class ServerEvents {
                     "Targets:" + targetString,
                     "Current dest:" + targetPosString,
                     "Command status:" + capabilityInfoHolder.getCommandStatus().toString(),
-                    "Command dest:" + destinationString,
-                    "HurtTick:" + mobEntity.hurtTime,
-                    "ResistanceTick:" + mobEntity.hurtResistantTime
+                    "Command dest:" + destinationString
             );
             if (DragonTongue.isIafPresent) {
                 List<String> additional = IafHelperClass.getAdditionalDragonDebugStrings(mobEntity);

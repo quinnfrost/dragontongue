@@ -8,6 +8,7 @@ import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.container.ContainerDragon;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import com.github.quinnfrost.dragontongue.message.MessageSyncCapability;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.mojang.blaze3d.matrix.MatrixStack;
@@ -46,7 +47,7 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
     private float relCentralXOffset = xSize / 2;
     private float relCentralYOffset = 75;
     private int relRightPanelXOffset = this.xSize + 10;
-    private int relRightPanelYOffset = 75;
+    private int relRightPanelYOffset = 65;
     private int buttonHeight = 20;
     private int buttonWidth = 40;
     private int stringLineSpacing = 9;
@@ -77,9 +78,33 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
 
         cap = referencedDragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(referencedDragon));
 
-        Button buttonSleep = new Button(
+        Button buttonReset = new Button(
                 relX + relRightPanelXOffset,
                 relY + relRightPanelYOffset,
+                buttonWidth,
+                buttonHeight,
+                new StringTextComponent("Reset"),
+                button -> {
+                    cap.setShouldSleep(true);
+                    cap.setReturnHome(true);
+                    cap.setObjectSetting(EnumCommandSettingType.COMMAND_STATUS, EnumCommandStatus.NONE);
+                    cap.setObjectSetting(EnumCommandSettingType.GROUND_ATTACK_TYPE, EnumCommandSettingType.GroundAttackType.ANY);
+                    cap.setObjectSetting(EnumCommandSettingType.AIR_ATTACK_TYPE, EnumCommandSettingType.AirAttackType.ANY);
+                    cap.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.DEFAULT);
+
+                    cap.setObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE, EnumCommandSettingType.MovementType.ANY);
+                    cap.setObjectSetting(EnumCommandSettingType.DESTROY_TYPE, EnumCommandSettingType.DestroyType.ANY);
+                    cap.setObjectSetting(EnumCommandSettingType.BREATH_TYPE, EnumCommandSettingType.BreathType.ANY);
+                    RegistryMessages.sendToServer(new MessageSyncCapability(referencedDragon));
+                    minecraft.player.sendStatusMessage(ITextComponent.getTextComponentOrEmpty("Reset"), true);
+//                    minecraft.displayGuiScreen(null);
+                });
+        buttonReset.setAlpha(0.9f);
+        buttons.add(buttonReset);
+
+        Button buttonSleep = new Button(
+                relX + relRightPanelXOffset,
+                relY + relRightPanelYOffset + buttonHeight,
                 buttonWidth,
                 buttonHeight,
                 new StringTextComponent(""),
@@ -97,7 +122,7 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
 
         Button buttonRoost = new Button(
                 relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight,
+                relY + relRightPanelYOffset + buttonHeight * 2,
                 buttonWidth,
                 buttonHeight,
                 new StringTextComponent(""),
@@ -114,7 +139,7 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
 
         Button buttonBreath = new Button(
                 relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight * 2,
+                relY + relRightPanelYOffset + buttonHeight * 3,
                 buttonWidth,
                 buttonHeight,
                 new StringTextComponent(""),
@@ -129,7 +154,7 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
 
         Button buttonDestroy = new Button(
                 relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight * 3,
+                relY + relRightPanelYOffset + buttonHeight * 4,
                 buttonWidth,
                 buttonHeight,
                 new StringTextComponent(""),
@@ -144,7 +169,7 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
 
         Button buttonMovement = new Button(
                 relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight * 4,
+                relY + relRightPanelYOffset + buttonHeight * 5,
                 buttonWidth,
                 buttonHeight,
                 new StringTextComponent(""),
@@ -159,7 +184,7 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
 
         Button buttonAttackDecision = new Button(
                 relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight * 5,
+                relY + relRightPanelYOffset + buttonHeight * 6,
                 buttonWidth,
                 buttonHeight,
                 new StringTextComponent(""),
@@ -172,35 +197,35 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
         buttonAttackDecision.setAlpha(0.9f);
         buttons.add(buttonAttackDecision);
 
-//        Button buttonGroundAttack = new Button(
-//        relX + relRightPanelXOffset,
-//                relY + relRightPanelYOffset + buttonHeight*6,
-//                buttonWidth,
-//                buttonHeight,
-//                new StringTextComponent(""),
-//                button -> {
-//                    groundAttackType = groundAttackType.next();
-//                    cap.setObjectSetting(EnumCommandSettingType.GROUND_ATTACK_TYPE, groundAttackType);
-//                    RegistryMessages.sendToServer(new MessageSyncCapability(referencedDragon));
-//                    minecraft.player.sendStatusMessage(ITextComponent.getTextComponentOrEmpty(cap.getObjectSetting(EnumCommandSettingType.GROUND_ATTACK_TYPE).toString()), true);
-//                });
-//        buttonGroundAttack.setAlpha(0.9f);
-//        buttons.add(buttonGroundAttack);
-//
-//        Button buttonAirAttack = new Button(
-//        relX + relRightPanelXOffset,
-//                relY + relRightPanelYOffset + buttonHeight*7,
-//                buttonWidth,
-//                buttonHeight,
-//                new StringTextComponent(""),
-//                button -> {
-//                    airAttackType = airAttackType.next();
-//                    cap.setObjectSetting(EnumCommandSettingType.AIR_ATTACK_TYPE, airAttackType);
-//                    RegistryMessages.sendToServer(new MessageSyncCapability(referencedDragon));
-//                    minecraft.player.sendStatusMessage(ITextComponent.getTextComponentOrEmpty(cap.getObjectSetting(EnumCommandSettingType.AIR_ATTACK_TYPE).toString()), true);
-//                });
-//        buttonAirAttack.setAlpha(0.9f);
-//        buttons.add(buttonAirAttack);
+        Button buttonGroundAttack = new Button(
+        relX + relRightPanelXOffset,
+                relY + relRightPanelYOffset + buttonHeight * 7,
+                buttonWidth,
+                buttonHeight,
+                new StringTextComponent(""),
+                button -> {
+                    groundAttackType = groundAttackType.next();
+                    cap.setObjectSetting(EnumCommandSettingType.GROUND_ATTACK_TYPE, groundAttackType);
+                    RegistryMessages.sendToServer(new MessageSyncCapability(referencedDragon));
+                    minecraft.player.sendStatusMessage(ITextComponent.getTextComponentOrEmpty(cap.getObjectSetting(EnumCommandSettingType.GROUND_ATTACK_TYPE).toString()), true);
+                });
+        buttonGroundAttack.setAlpha(0.9f);
+        buttons.add(buttonGroundAttack);
+
+        Button buttonAirAttack = new Button(
+        relX + relRightPanelXOffset,
+                relY + relRightPanelYOffset + buttonHeight * 8,
+                buttonWidth,
+                buttonHeight,
+                new StringTextComponent(""),
+                button -> {
+                    airAttackType = airAttackType.next();
+                    cap.setObjectSetting(EnumCommandSettingType.AIR_ATTACK_TYPE, airAttackType);
+                    RegistryMessages.sendToServer(new MessageSyncCapability(referencedDragon));
+                    minecraft.player.sendStatusMessage(ITextComponent.getTextComponentOrEmpty(cap.getObjectSetting(EnumCommandSettingType.AIR_ATTACK_TYPE).toString()), true);
+                });
+        buttonAirAttack.setAlpha(0.9f);
+        buttons.add(buttonAirAttack);
 
         for (Button button :
                 buttons) {
@@ -268,12 +293,15 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
 
         stringList = new ArrayList<>();
 
+        stringList.add("Reset");
         stringList.add("Sleep");
         stringList.add("ReturnRoost");
         stringList.add("Breath");
         stringList.add("Destroy");
         stringList.add("Movement");
         stringList.add("AttackDecision");
+        stringList.add("GroundAttack");
+        stringList.add("AirAttack");
 
         offset = 0;
         for (String displayString :
@@ -291,30 +319,30 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
         groundAttackType = (EnumCommandSettingType.GroundAttackType) cap.getObjectSetting(EnumCommandSettingType.GROUND_ATTACK_TYPE);
         airAttackType = (EnumCommandSettingType.AirAttackType) cap.getObjectSetting(EnumCommandSettingType.AIR_ATTACK_TYPE);
 
-        buttons.get(0).setMessage(ITextComponent.getTextComponentOrEmpty(
+        buttons.get(1).setMessage(ITextComponent.getTextComponentOrEmpty(
                 String.valueOf(shouldSleep)
         ));
-        buttons.get(1).setMessage(ITextComponent.getTextComponentOrEmpty(
+        buttons.get(2).setMessage(ITextComponent.getTextComponentOrEmpty(
                 String.valueOf(shouldReturnRoost)
         ));
-        buttons.get(2).setMessage(ITextComponent.getTextComponentOrEmpty(
+        buttons.get(3).setMessage(ITextComponent.getTextComponentOrEmpty(
                 String.valueOf(breathType)
         ));
-        buttons.get(3).setMessage(ITextComponent.getTextComponentOrEmpty(
+        buttons.get(4).setMessage(ITextComponent.getTextComponentOrEmpty(
                 String.valueOf(destroyType)
         ));
-        buttons.get(4).setMessage(ITextComponent.getTextComponentOrEmpty(
+        buttons.get(5).setMessage(ITextComponent.getTextComponentOrEmpty(
                 String.valueOf(movementType)
         ));
-        buttons.get(5).setMessage(ITextComponent.getTextComponentOrEmpty(
+        buttons.get(6).setMessage(ITextComponent.getTextComponentOrEmpty(
                 String.valueOf(attackDecisionType)
         ));
-//        buttons.get(6).setMessage(ITextComponent.getTextComponentOrEmpty(
-//                String.valueOf(groundAttackType)
-//        ));
-//        buttons.get(7).setMessage(ITextComponent.getTextComponentOrEmpty(
-//                String.valueOf(airAttackType)
-//        ));
+        buttons.get(7).setMessage(ITextComponent.getTextComponentOrEmpty(
+                String.valueOf(groundAttackType)
+        ));
+        buttons.get(8).setMessage(ITextComponent.getTextComponentOrEmpty(
+                String.valueOf(airAttackType)
+        ));
 
 
     }

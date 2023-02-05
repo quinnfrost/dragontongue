@@ -17,7 +17,8 @@ public enum EnumCommandSettingType {
         SHAKE_PREY,
         TAIL_WHIP,
         WING_BLAST,
-        FIRE
+        FIRE,
+        NONE
         ;
         private static final GroundAttackType[] vals = values();
 
@@ -30,7 +31,8 @@ public enum EnumCommandSettingType {
         ANY,
         SCORCH_STREAM,
         HOVER_BLAST,
-        TACKLE
+        TACKLE,
+        NONE
         ;
         private static final AirAttackType[] vals = values();
 

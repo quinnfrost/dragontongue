@@ -3,6 +3,7 @@ package com.github.quinnfrost.dragontongue.iceandfire;
 import com.github.alexthe666.citadel.animation.IAnimatedEntity;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.EntityDragonCharge;
+import com.github.alexthe666.iceandfire.entity.IafDragonAttacks;
 import com.github.alexthe666.iceandfire.entity.IafDragonLogic;
 import com.github.alexthe666.iceandfire.entity.util.HomePosition;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
@@ -48,6 +49,48 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         EnumCommandStatus commandStatus = cap.getCommandStatus();
         EnumCommandSettingType.MovementType movementType = (EnumCommandSettingType.MovementType) cap.getObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE);
         EnumCommandSettingType.AttackDecisionType attackDecision = (EnumCommandSettingType.AttackDecisionType) cap.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE);
+        EnumCommandSettingType.GroundAttackType groundAttackType = (EnumCommandSettingType.GroundAttackType) cap.getObjectSetting(EnumCommandSettingType.GROUND_ATTACK_TYPE);
+        EnumCommandSettingType.AirAttackType airAttackType = (EnumCommandSettingType.AirAttackType) cap.getObjectSetting(EnumCommandSettingType.AIR_ATTACK_TYPE);
+
+        // Attack type changing
+        switch (groundAttackType) {
+            case ANY:
+                break;
+            case BITE:
+                dragon.groundAttack = IafDragonAttacks.Ground.BITE;
+                break;
+            case SHAKE_PREY:
+                dragon.groundAttack = IafDragonAttacks.Ground.SHAKE_PREY;
+                break;
+            case TAIL_WHIP:
+                dragon.groundAttack = IafDragonAttacks.Ground.TAIL_WHIP;
+                break;
+            case WING_BLAST:
+                dragon.groundAttack = IafDragonAttacks.Ground.WING_BLAST;
+                break;
+            case FIRE:
+                dragon.groundAttack = IafDragonAttacks.Ground.FIRE;
+                break;
+            case NONE:
+                dragon.usingGroundAttack = false;
+                break;
+        }
+        switch (airAttackType) {
+            case ANY:
+                break;
+            case SCORCH_STREAM:
+                dragon.airAttack = IafDragonAttacks.Air.SCORCH_STREAM;
+                break;
+            case HOVER_BLAST:
+                dragon.airAttack = IafDragonAttacks.Air.HOVER_BLAST;
+                break;
+            case TACKLE:
+                dragon.airAttack = IafDragonAttacks.Air.TACKLE;
+                break;
+            case NONE:
+                dragon.usingGroundAttack = true;
+                break;
+        }
 
         super.updateDragonServer();
 
@@ -58,7 +101,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             dragon.setFlying(false);
         }
         // At IafDragonLogic#227, dragon's target is reset if she can't move, cause issue when commanding sit dragons to attack
-        if (cap.getCommandStatus() == EnumCommandStatus.ATTACK && dragon.getAttackTarget() != null) {
+        if (cap.getCommandStatus() == EnumCommandStatus.ATTACK && dragon.getAttackTarget() != null && dragon.getAttackTarget() != attackTarget) {
             dragon.setAttackTarget(attackTarget);
         }
 
@@ -142,6 +185,11 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         }
 
         // Do not attack
+        if (attackDecision == EnumCommandSettingType.AttackDecisionType.DEFAULT
+                && (commandStatus != EnumCommandStatus.NONE && commandStatus != EnumCommandStatus.ATTACK )
+                && dragon.getAttackTarget() != null) {
+            dragon.setAttackTarget(null);
+        }
         if (attackDecision == EnumCommandSettingType.AttackDecisionType.NONE && dragon.getAttackTarget() != null) {
             dragon.setAttackTarget(null);
         }
@@ -172,19 +220,19 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         }
         // Bug#4718: Stage 1 dragon can still trigger wander
         if (dragon.getDragonStage() == 1 && dragon.isPassenger() && dragon.getCommand() == 0) {
-            dragon.getNavigator().clearPath();
             dragon.setCommand(1);
+            dragon.getNavigator().clearPath();
         }
         // Release control if the owner climbs up
         if (dragon.getControllingPassenger() != null) {
-            if (cap.getCommandStatus() != EnumCommandStatus.NONE) {
-                dragon.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                    iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
-                });
-            }
-            if (dragon.getCommand() == 0) {
+            if (cap.getCommandStatus() == EnumCommandStatus.STAY || cap.getCommandStatus() == EnumCommandStatus.HOVER) {
+                dragon.setCommand(1);
+            } else if (dragon.getCommand() == 0) {
                 dragon.setCommand(2);
             }
+            dragon.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
+            });
             return;
         }
         // Vanilla takes over
@@ -197,12 +245,15 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         // Resets attack target if the target is dead, vanilla behavior did this in the entity AI resetTask
         if ((dragon.getAttackTarget() != null && !dragon.getAttackTarget().isAlive())
                 || (dragon.getAttackTarget() == null && cap.getCommandStatus() == EnumCommandStatus.ATTACK)) {
-            cap.setDestination(dragon.getPosition());
-            if (IafDragonBehaviorHelper.isDragonInAir(dragon)) {
-                cap.setCommandStatus(EnumCommandStatus.HOVER);
-            } else {
-                cap.setCommandStatus(EnumCommandStatus.STAY);
+            if (!cap.getDestination().isPresent()) {
+                cap.setDestination(dragon.getPosition());
             }
+//            if (IafDragonBehaviorHelper.isDragonInAir(dragon)) {
+//                cap.setCommandStatus(EnumCommandStatus.HOVER);
+//            } else {
+//                cap.setCommandStatus(EnumCommandStatus.STAY);
+//            }
+            cap.setCommandStatus(EnumCommandStatus.REACH);
             dragon.setAttackTarget(null);
             if (dragon.getAnimation() == EntityDragonBase.ANIMATION_SHAKEPREY) {
                 dragon.setAnimation(IAnimatedEntity.NO_ANIMATION);

@@ -17,6 +17,7 @@ import com.github.quinnfrost.dragontongue.utils.util;
 import com.google.common.base.Predicate;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
@@ -24,6 +25,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
 
 import javax.annotation.Nullable;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class IafDragonBehaviorHelper {
     public static boolean registerDragonAI(MobEntity mobEntity) {
@@ -56,8 +59,11 @@ public class IafDragonBehaviorHelper {
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
         ICapTargetHolder cap = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
 
-        if (cap.getCommandStatus() == EnumCommandStatus.STAY && IafDragonBehaviorHelper.isOverAir(dragon)) {
-            cap.setCommandStatus(EnumCommandStatus.HOVER);
+        if (cap.getObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE) != EnumCommandSettingType.MovementType.AIR
+                && cap.getCommandStatus() == EnumCommandStatus.HOVER && !IafDragonBehaviorHelper.isOverAir(dragon)) {
+            dragon.setHovering(false);
+            dragon.setFlying(false);
+            cap.setCommandStatus(EnumCommandStatus.STAY);
         }
 
         dragon.setMotion(0, 0, 0);
@@ -90,10 +96,9 @@ public class IafDragonBehaviorHelper {
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
         ICapTargetHolder cap = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
 
-        if (cap.getCommandStatus() == EnumCommandStatus.HOVER && !IafDragonBehaviorHelper.isDragonInAir(dragon)) {
-            dragon.setHovering(false);
-            dragon.setFlying(false);
-            cap.setCommandStatus(EnumCommandStatus.STAY);
+        if (cap.getObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE) != EnumCommandSettingType.MovementType.LAND
+                && cap.getCommandStatus() == EnumCommandStatus.STAY && IafDragonBehaviorHelper.isOverAir(dragon)) {
+            cap.setCommandStatus(EnumCommandStatus.HOVER);
         }
 
         dragon.setHovering(false);
@@ -340,6 +345,7 @@ public class IafDragonBehaviorHelper {
         ICapTargetHolder cap = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
 
         if (breathPos != null) {
+            dragon.getLookController().setLookPosition(Vector3d.copyCentered(breathPos));
             cap.setBreathTarget(breathPos);
             cap.setDestination(dragon.getPosition());
             if (cap.getCommandStatus() == EnumCommandStatus.NONE) {
@@ -425,12 +431,16 @@ public class IafDragonBehaviorHelper {
             return false;
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+        ICapTargetHolder cap = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
         int deathStage = dragon.getDeathStage();
 
         if (!dragon.isModelDead() || dragon.isSkeletal()) {
             return false;
         }
         if (deathStage == 0) {
+            cap.setCommandStatus(EnumCommandStatus.NONE);
+            cap.setDestination(null);
+
             dragon.setHealth((float) Math.ceil(dragon.getMaxHealth() / 20.0f));
             dragon.clearActivePotions();
             dragon.addPotionEffect(new EffectInstance(Effects.REGENERATION, 900, 1));
@@ -480,7 +490,7 @@ public class IafDragonBehaviorHelper {
         if (movementType == EnumCommandSettingType.MovementType.AIR) {
             return true;
         }
-        for (int i = 0; i < dragon.getDragonStage(); i++) {
+        for (int i = 0; i < dragon.getDragonStage() + 1; i++) {
             if (!dragon.world.isAirBlock(blockPos.add(0, -i, 0))) {
                 return false;
             }

@@ -1,7 +1,5 @@
-package com.github.quinnfrost.dragontongue.iceandfire.ai;
+package com.github.quinnfrost.dragontongue.entity.ai;
 
-import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
-import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
@@ -13,6 +11,7 @@ import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.attributes.ModifiableAttributeInstance;
 import net.minecraft.entity.ai.goal.NearestAttackableTargetGoal;
+import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -21,72 +20,42 @@ import javax.annotation.Nullable;
 import java.util.EnumSet;
 import java.util.function.Predicate;
 
-public class DragonAIGuard <T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
-    private EntityDragonBase dragon;
+public class GuardGoal<T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
+    private TameableEntity tameableEntity;
     private ICapTargetHolder cap;
-    public DragonAIGuard(EntityDragonBase entityIn, Class<T> targetClassIn, int targetChanceIn, boolean checkSight, boolean nearbyOnlyIn, @Nullable Predicate<LivingEntity> targetPredicate) {
+    public GuardGoal(TameableEntity entityIn, Class<T> targetClassIn, int targetChanceIn, boolean checkSight, boolean nearbyOnlyIn, @Nullable Predicate<LivingEntity> targetPredicate) {
         super(entityIn, targetClassIn, targetChanceIn, checkSight, nearbyOnlyIn, targetPredicate);
         this.setMutexFlags(EnumSet.of(Flag.TARGET));
-        this.dragon = entityIn;
-        this.cap = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
+        this.tameableEntity = entityIn;
+        this.cap = tameableEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(tameableEntity));
     }
 
-    public DragonAIGuard(EntityDragonBase entityIn, Class<T> targetClassIn, boolean checkSight, @Nullable Predicate<LivingEntity> targetPredicate) {
+    public GuardGoal(TameableEntity entityIn, Class<T> targetClassIn, boolean checkSight, @Nullable Predicate<LivingEntity> targetPredicate) {
         super(entityIn, targetClassIn, 1, checkSight, false, null);
         this.setMutexFlags(EnumSet.of(Flag.TARGET));
-        this.dragon = entityIn;
-        this.cap = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
+        this.tameableEntity = entityIn;
+        this.cap = tameableEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(tameableEntity));
     }
 
     @Override
     public boolean shouldExecute() {
-        if (!dragon.isTamed() || dragon.getOwner() == null || dragon.getControllingPassenger() != null) {
+        if (!tameableEntity.isTamed() || tameableEntity.getOwner() == null) {
             return false;
         }
         if (cap.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE) != EnumCommandSettingType.AttackDecisionType.GUARD) {
             return false;
         }
-        if (super.shouldExecute() && !nearestTarget.getClass().equals(this.dragon.getClass())) {
-
-            final float dragonSize = Math.max(this.dragon.getWidth(), this.dragon.getWidth() * dragon.getRenderSize());
-            if (dragonSize >= nearestTarget.getWidth()) {
-                if (!dragon.isOwner(nearestTarget) && util.isHostile(nearestTarget)) {
-
-                    if (nearestTarget instanceof EntityDragonBase) {
-                        EntityDragonBase dragon = (EntityDragonBase) nearestTarget;
-                        if (dragon.getOwner() == null) {
-                            // Only attack wild dragons
-                            return !dragon.isModelDead();
-                        }
-                    }
-
-                    return DragonUtils.canTameDragonAttack(dragon, nearestTarget);
-                }
-                if (nearestTarget instanceof PlayerEntity && dragon.isTamed()) {
-                    return false;
-                }
-            }
+        if (super.shouldExecute() && !nearestTarget.getClass().equals(this.tameableEntity.getClass())) {
+            return util.isHostile(nearestTarget);
         }
         return false;
     }
 
-    @Override
-    protected AxisAlignedBB getTargetableArea(double targetDistance) {
-        return this.dragon.getBoundingBox().grow(targetDistance, targetDistance, targetDistance);
-    }
-
-    @Override
-    protected double getTargetDistance() {
-        ModifiableAttributeInstance iattributeinstance = this.goalOwner.getAttribute(Attributes.FOLLOW_RANGE);
-        return iattributeinstance == null ? 128.0D : iattributeinstance.getValue();
-    }
-
     public static double getTargetDistance(MobEntity mobEntity) {
-        ModifiableAttributeInstance iattributeinstance = mobEntity.getAttribute(Attributes.FOLLOW_RANGE);
-        return iattributeinstance == null ? 128.0D : iattributeinstance.getValue();
+        return mobEntity.getAttributeValue(Attributes.FOLLOW_RANGE);
     }
     public static AxisAlignedBB getTargetableArea(MobEntity mobEntity, double targetDistance) {
-        return mobEntity.getBoundingBox().grow(targetDistance, targetDistance, targetDistance);
+        return mobEntity.getBoundingBox().grow(targetDistance, 4.0D, targetDistance);
     }
     public static LivingEntity findNearestTarget(MobEntity mobEntity) {
         LivingEntity nearestTarget;
@@ -94,7 +63,6 @@ public class DragonAIGuard <T extends LivingEntity> extends NearestAttackableTar
             @Override
             public boolean test(@Nullable LivingEntity entity) {
                 return (!(entity instanceof PlayerEntity) || !((PlayerEntity) entity).isCreative())
-                        && DragonUtils.canHostilesTarget(entity)
                         && util.isHostile(entity);
             }
         };

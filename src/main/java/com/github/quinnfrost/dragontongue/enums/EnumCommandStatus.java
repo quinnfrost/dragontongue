@@ -5,6 +5,5 @@ public enum EnumCommandStatus {
     REACH,
     STAY,
     HOVER,
-    ATTACK,
-    BREATH
+    ATTACK
 }
