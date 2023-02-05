@@ -39,9 +39,10 @@ import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.living.LivingKnockBackEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -240,8 +241,7 @@ public class IafServerEvent {
         Entity entity = event.getEntity();
         if (entity instanceof EntityIceDragon) {
             EntityIceDragon iceDragon = (EntityIceDragon) entity;
-            if (iceDragon.getDragonStage() >= 2 && iceDragon.getFireTimer() > 0) {
-                iceDragon.forceFireTicks(0);
+            if (iceDragon.getDragonStage() >= 2) {
 
             }
         }
@@ -249,12 +249,37 @@ public class IafServerEvent {
         return true;
     }
 
-    public static boolean onEntityHurt(LivingHurtEvent event) {
+    public static boolean onLivingKnockBack(LivingKnockBackEvent event) {
+        Entity entity = event.getEntity();
+        if (entity instanceof EntityIceDragon) {
+            EntityIceDragon iceDragon = (EntityIceDragon) entity;
+            if (iceDragon.getDragonStage() >= 2) {
+//                event.setStrength(0f);
+                event.setCanceled(true);
+            }
+        }
+        return true;
+    }
+
+    public static void onEntityDamage(LivingDamageEvent event) {
+        if (event.getEntity().world.isRemote) {
+            return;
+        }
+
+    }
+
+    public static boolean onEntityAttacked(LivingAttackEvent event) {
+        if (event.getEntity().world.isRemote) {
+            return false;
+        }
         Entity entity = event.getEntity();
         DamageSource damageSource = event.getSource();
 
         if (entity instanceof EntityIceDragon) {
             EntityIceDragon iceDragon = (EntityIceDragon) entity;
+            if (iceDragon.getDragonStage() >= 2 && event.getAmount() < 2f){
+                event.setCanceled(true);
+            }
             if (iceDragon.getDragonStage() >= 2 &&
                     (damageSource == DamageSource.CACTUS
                             || damageSource == DamageSource.ANVIL
@@ -263,6 +288,7 @@ public class IafServerEvent {
                             || damageSource == DamageSource.LAVA
                             || damageSource == DamageSource.SWEET_BERRY_BUSH)
             ) {
+                iceDragon.forceFireTicks(0);
                 event.setCanceled(true);
             }
         }

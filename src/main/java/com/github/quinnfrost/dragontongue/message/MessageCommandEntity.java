@@ -426,6 +426,8 @@ public class MessageCommandEntity {
                 util.setByteTag(target, "Command", (byte) 0);
             } else {
             }
+            // Dragons will have to finish its path before command actual changes, so remove the path
+            ((TameableEntity) target).getNavigator().tryMoveToXYZ(target.getPosX(), target.getPosY(), target.getPosZ(), 1.0f);
             target.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                 iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
             });

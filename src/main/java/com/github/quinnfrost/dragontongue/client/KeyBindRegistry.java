@@ -1,5 +1,6 @@
 package com.github.quinnfrost.dragontongue.client;
 
+import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
@@ -38,6 +39,7 @@ public class KeyBindRegistry {
     public static KeyBinding select_tamed = new KeyBinding("key.select_tamed", 71, "key.categories.gameplay");
     public static KeyBinding set_tamed_status = new KeyBinding("key.set_tamed_status", 72, "key.categories.gameplay");
     public static KeyBinding debug = new KeyBinding("key.debug", -1, "key.categories.gameplay");
+    public static long last_command_press = 0;
 
     public static EnumMouseScroll getScrollStatus() {
         EnumMouseScroll status = scroll_status;

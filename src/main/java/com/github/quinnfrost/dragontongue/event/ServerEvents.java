@@ -23,6 +23,9 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.effect.LightningBoltEntity;
+import net.minecraft.entity.item.TNTEntity;
+import net.minecraft.entity.item.minecart.TNTMinecartEntity;
+import net.minecraft.entity.monster.CreeperEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
@@ -42,12 +45,16 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.Explosion;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.*;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.living.LivingKnockBackEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.world.ExplosionEvent;
+import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import java.util.ArrayList;
@@ -147,16 +154,16 @@ public class ServerEvents {
                 ICapTargetHolder cap = playerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(playerEntity));
                 for (UUID entityUUID :
                         cap.getCommandEntities()) {
-                    MobEntity mobEntity = (MobEntity)((ServerWorld)playerEntity.world).getEntityByUuid(entityUUID);
+                    MobEntity mobEntity = (MobEntity) ((ServerWorld) playerEntity.world).getEntityByUuid(entityUUID);
                     BlockPos pos = IafHelperClass.getReachTarget(mobEntity);
                     if (pos != null && !IafDragonBehaviorHelper.isDragonInAir(mobEntity)) {
                         RegistryMessages.sendToAll(new MessageClientDraw(
                                 mobEntity.getEntityId(), Vector3d.copyCentered(pos),
                                 mobEntity.getPositionVec()
                         ));
-                    } else if (IafHelperClass.isDragon(mobEntity)){
+                    } else if (IafHelperClass.isDragon(mobEntity)) {
                         RegistryMessages.sendToAll(new MessageClientDraw(
-                                mobEntity.getEntityId(), ((EntityDragonBase)mobEntity).flightManager.getFlightTarget(),
+                                mobEntity.getEntityId(), ((EntityDragonBase) mobEntity).flightManager.getFlightTarget(),
                                 mobEntity.getPositionVec()
                         ));
                     }
@@ -282,14 +289,52 @@ public class ServerEvents {
         }
     }
 
-//    @SubscribeEvent
-//    public static void onMobGriefing(EntityMobGriefingEvent event) {
-//        DragonTongue.LOGGER.info("Firing mobgriefing event: " + event.getEntity());
-//    }
+    @SubscribeEvent
+    public static void onMobGriefing(EntityMobGriefingEvent event) {
+        if (event.getEntity().world.isRemote) {
+            return;
+        }
+        Entity entity = event.getEntity();
+        if (entity instanceof CreeperEntity) {
+            event.setResult(Event.Result.DENY);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onExplosion(ExplosionEvent.Start event) {
+        if (event.getWorld().isRemote) {
+            return;
+        }
+
+    }
+
+    @SubscribeEvent
+    public static void onExplosionDetonate(ExplosionEvent.Detonate event) {
+        if (event.getWorld().isRemote) {
+            return;
+        }
+        Explosion explosion = event.getExplosion();
+        Entity exploder = event.getExplosion().getExploder();
+        Entity placer = event.getExplosion().getExplosivePlacedBy();
+        if ((exploder instanceof TNTEntity)
+        || (exploder instanceof TNTMinecartEntity)) {
+            explosion.clearAffectedBlockPositions();
+        }
+    }
 
     @SubscribeEvent
     public static void onLightningStrike(EntityStruckByLightningEvent event) {
 
+    }
+
+    @SubscribeEvent
+    public static void onLivingKnockBack(LivingKnockBackEvent event) {
+        if (event.getEntity().world.isRemote) {
+            return;
+        }
+        if (DragonTongue.isIafPresent) {
+            IafServerEvent.onLivingKnockBack(event);
+        }
     }
 
 }

@@ -41,7 +41,7 @@ public enum EnumCommandSettingType {
 
     public enum AttackDecisionType {
         DEFAULT,
-        OPEN_FIRE,
+        GUARD,
         ALWAYS_HELP,
         NONE
         ;

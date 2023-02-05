@@ -1,6 +1,7 @@
 package com.github.quinnfrost.dragontongue.iceandfire;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
+import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
@@ -10,8 +11,10 @@ import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAIAsYouWish;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAICalmLook;
+import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAIGuard;
 import com.github.quinnfrost.dragontongue.iceandfire.event.IafServerEvent;
 import com.github.quinnfrost.dragontongue.utils.util;
+import com.google.common.base.Predicate;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -29,6 +32,17 @@ public class IafDragonBehaviorHelper {
 
             dragon.goalSelector.addGoal(0, new DragonAIAsYouWish(dragon));
             dragon.goalSelector.addGoal(0, new DragonAICalmLook(dragon));
+
+            dragon.targetSelector.addGoal(3, new DragonAIGuard<>(dragon, LivingEntity.class, false, new Predicate<LivingEntity>() {
+                @Override
+                public boolean apply(@Nullable LivingEntity entity) {
+                    return (!(entity instanceof PlayerEntity) || !((PlayerEntity) entity).isCreative())
+                            && DragonUtils.canHostilesTarget(entity)
+                            && DragonUtils.isAlive(entity)
+                            && util.isHostile(entity);
+                }
+            }));
+
             return true;
         }
         return false;
@@ -112,8 +126,8 @@ public class IafDragonBehaviorHelper {
                 }
                 if (dragon.world.isAirBlock(targetPos)) {
                     IafDragonBehaviorHelper.setDragonFlightTarget(dragon, Vector3d.copyCentered(targetPos));
-                } else if (dragon.world.isAirBlock(targetPos.add(0,1,0))) {
-                    IafDragonBehaviorHelper.setDragonFlightTarget(dragon, Vector3d.copyCentered(targetPos.add(0,1,0)));
+                } else if (dragon.world.isAirBlock(targetPos.add(0, 1, 0))) {
+                    IafDragonBehaviorHelper.setDragonFlightTarget(dragon, Vector3d.copyCentered(targetPos.add(0, 1, 0)));
                 } else {
                     DragonTongue.LOGGER.warn("Dragon flight target set to non air block");
                 }
@@ -242,8 +256,9 @@ public class IafDragonBehaviorHelper {
         if (cap.getObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE) == EnumCommandSettingType.MovementType.AIR) {
             return false;
         }
-
-        dragon.setMotion(dragon.getMotion().add(0.0, -0.25, 0.0));
+        if (IafDragonBehaviorHelper.isDragonInAir(dragon)) {
+            dragon.setMotion(dragon.getMotion().add(0.0, -0.25, 0.0));
+        }
 
         if (util.getByteTag(dragon, "Flying").isPresent()) {
             util.setByteTag(dragon, "Flying", (byte) 0);
@@ -272,7 +287,6 @@ public class IafDragonBehaviorHelper {
 
         dragon.setAttackTarget(null);
 //        setDragonFlightTarget(dragon, null);
-        // Todo: invalidate flight manager path
         dragon.getNavigator().clearPath();
 
         return true;
@@ -285,9 +299,14 @@ public class IafDragonBehaviorHelper {
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
         ICapTargetHolder cap = dragonIn.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragonIn));
 
+        if (dragon.getCommand() == 1) {
+            dragon.setCommand(2);
+        }
         if (IafDragonBehaviorHelper.shouldFlyToTarget(dragon, blockPos)) {
             IafDragonBehaviorHelper.setDragonTakeOff(dragon);
         }
+
+        dragon.setAttackTarget(null);
         cap.setDestination(blockPos);
         cap.setCommandStatus(EnumCommandStatus.REACH);
 
@@ -340,8 +359,6 @@ public class IafDragonBehaviorHelper {
 
         return true;
     }
-
-    // Todo: pass in null to invalidate flight manager target
 
     public static boolean setDragonFlightTarget(LivingEntity dragonIn, Vector3d targetVec) {
         if (!IafHelperClass.isDragon(dragonIn)) {

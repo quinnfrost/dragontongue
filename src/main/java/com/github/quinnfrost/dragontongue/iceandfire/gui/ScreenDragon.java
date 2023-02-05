@@ -8,14 +8,12 @@ import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.container.ContainerDragon;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
-import com.github.quinnfrost.dragontongue.message.MessageCommandEntity;
-import com.github.quinnfrost.dragontongue.message.MessageCommandSettings;
 import com.github.quinnfrost.dragontongue.message.MessageSyncCapability;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
@@ -31,7 +29,6 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.Util;
 import net.minecraft.util.math.vector.Quaternion;
 import net.minecraft.util.math.vector.Vector3f;
 import net.minecraft.util.text.ITextComponent;
@@ -44,6 +41,17 @@ import java.util.List;
 public class ScreenDragon extends ContainerScreen<ContainerDragon> {
     private static final ResourceLocation textureGuiDragon = new ResourceLocation(References.MOD_ID, "textures/gui/dragon.png");
     public static EntityDragonBase referencedDragon;
+    private static GameSettings gameSettings = Minecraft.getInstance().gameSettings;
+    private List<Button> buttons = new ArrayList<>();
+    private float relCentralXOffset = xSize / 2;
+    private float relCentralYOffset = 75;
+    private int relRightPanelXOffset = this.xSize + 10;
+    private int relRightPanelYOffset = 75;
+    private int buttonHeight = 20;
+    private int buttonWidth = 40;
+    private int stringLineSpacing = 9;
+    private float mousePosX;
+    private float mousePosY;
     private ICapTargetHolder cap;
     private Boolean shouldReturnRoost;
     private Boolean shouldSleep;
@@ -54,15 +62,10 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
     private EnumCommandSettingType.GroundAttackType groundAttackType;
     private EnumCommandSettingType.AirAttackType airAttackType;
 
-    private List<Button> buttons = new ArrayList<>();
-    int startYOffset = 75;
-    int lineSpacing = 9;
-    private float mousePosX;
-    private float mousePosY;
-
 
     public ScreenDragon(ContainerDragon screenContainer, PlayerInventory inv, ITextComponent titleIn) {
         super(screenContainer, inv, titleIn);
+//        this.xSize = 176;
         this.ySize = 214;
     }
 
@@ -75,10 +78,10 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
         cap = referencedDragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(referencedDragon));
 
         Button buttonSleep = new Button(
-                relX + this.xSize + 10,
-                relY + startYOffset + 20 * 0,
-                40,
-                20,
+                relX + relRightPanelXOffset,
+                relY + relRightPanelYOffset,
+                buttonWidth,
+                buttonHeight,
                 new StringTextComponent(""),
                 button -> {
 //                    minecraft.player.sendMessage(ITextComponent.getTextComponentOrEmpty("Test button"), Util.DUMMY_UUID);
@@ -93,10 +96,10 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
 
 
         Button buttonRoost = new Button(
-                relX + this.xSize + 10,
-                relY + startYOffset + 20 * 1,
-                40,
-                20,
+                relX + relRightPanelXOffset,
+                relY + relRightPanelYOffset + buttonHeight,
+                buttonWidth,
+                buttonHeight,
                 new StringTextComponent(""),
                 button -> {
 //                    minecraft.player.sendMessage(ITextComponent.getTextComponentOrEmpty("Test button"), Util.DUMMY_UUID);
@@ -110,10 +113,10 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
         buttons.add(buttonRoost);
 
         Button buttonBreath = new Button(
-                relX + this.xSize + 10,
-                relY + startYOffset + 20 * 2,
-                40,
-                20,
+                relX + relRightPanelXOffset,
+                relY + relRightPanelYOffset + buttonHeight * 2,
+                buttonWidth,
+                buttonHeight,
                 new StringTextComponent(""),
                 button -> {
                     breathType = breathType.next();
@@ -125,10 +128,10 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
         buttons.add(buttonBreath);
 
         Button buttonDestroy = new Button(
-                relX + this.xSize + 10,
-                relY + startYOffset + 20 * 3,
-                40,
-                20,
+                relX + relRightPanelXOffset,
+                relY + relRightPanelYOffset + buttonHeight * 3,
+                buttonWidth,
+                buttonHeight,
                 new StringTextComponent(""),
                 button -> {
                     destroyType = destroyType.next();
@@ -140,10 +143,10 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
         buttons.add(buttonDestroy);
 
         Button buttonMovement = new Button(
-                relX + this.xSize + 10,
-                relY + startYOffset + 20 * 4,
-                40,
-                20,
+                relX + relRightPanelXOffset,
+                relY + relRightPanelYOffset + buttonHeight * 4,
+                buttonWidth,
+                buttonHeight,
                 new StringTextComponent(""),
                 button -> {
                     movementType = movementType.next();
@@ -155,10 +158,10 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
         buttons.add(buttonMovement);
 
         Button buttonAttackDecision = new Button(
-                relX + this.xSize + 10,
-                relY + startYOffset + 20 * 5,
-                40,
-                20,
+                relX + relRightPanelXOffset,
+                relY + relRightPanelYOffset + buttonHeight * 5,
+                buttonWidth,
+                buttonHeight,
                 new StringTextComponent(""),
                 button -> {
                     attackDecisionType = attackDecisionType.next();
@@ -170,10 +173,10 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
         buttons.add(buttonAttackDecision);
 
 //        Button buttonGroundAttack = new Button(
-//                relX + this.xSize + 10,
-//                relY + startYOffset + 20 * 6,
-//                40,
-//                20,
+//        relX + relRightPanelXOffset,
+//                relY + relRightPanelYOffset + buttonHeight*6,
+//                buttonWidth,
+//                buttonHeight,
 //                new StringTextComponent(""),
 //                button -> {
 //                    groundAttackType = groundAttackType.next();
@@ -185,10 +188,10 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
 //        buttons.add(buttonGroundAttack);
 //
 //        Button buttonAirAttack = new Button(
-//                relX + this.xSize + 10,
-//                relY + startYOffset + 20 * 7,
-//                40,
-//                20,
+//        relX + relRightPanelXOffset,
+//                relY + relRightPanelYOffset + buttonHeight*7,
+//                buttonWidth,
+//                buttonHeight,
 //                new StringTextComponent(""),
 //                button -> {
 //                    airAttackType = airAttackType.next();
@@ -204,6 +207,16 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
             addButton(button);
         }
 
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        return super.mouseScrolled(mouseX, mouseY, delta);
     }
 
     @Override
@@ -249,8 +262,24 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
         int offset = 0;
         for (String displayString :
                 stringList) {
-            font.drawString(matrixStack, displayString, relX + xSize / 2 - font.getStringWidth(displayString) / 2, relY + startYOffset + offset, 0XFFFFFF);
-            offset += lineSpacing;
+            font.drawString(matrixStack, displayString, relX + relCentralXOffset - font.getStringWidth(displayString) / 2, relY + relCentralYOffset + offset, 0XFFFFFF);
+            offset += stringLineSpacing;
+        }
+
+        stringList = new ArrayList<>();
+
+        stringList.add("Sleep");
+        stringList.add("ReturnRoost");
+        stringList.add("Breath");
+        stringList.add("Destroy");
+        stringList.add("Movement");
+        stringList.add("AttackDecision");
+
+        offset = 0;
+        for (String displayString :
+                stringList) {
+            font.drawString(matrixStack, displayString, relX + relRightPanelXOffset + 40, relY + relRightPanelYOffset + offset, 0XFFFFFF);
+            offset += buttonHeight;
         }
 
         shouldSleep = cap.getShouldSleep();
@@ -338,6 +367,7 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
     /**
      * Open the dragon gui
      * This should be called on both server and client side
+     *
      * @param player
      * @param referencedDragon
      */
@@ -367,7 +397,7 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
                 MessageSyncCapability.syncCapabilityToClients(dragon);
 
             } else {
-                ScreenDragon.referencedDragon = dragon;
+//                ScreenDragon.referencedDragon = dragon;
 //                RegistryMessages.sendToServer(new MessageCommandEntity(
 //                        EnumCommandType.GUI,
 //                        playerEntity.getUniqueID(),

@@ -8,6 +8,7 @@ import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
@@ -36,27 +37,6 @@ public class CommonEvents {
     }
 
     @SubscribeEvent
-    public static void onEntityHurt(LivingHurtEvent event) {
-        // Display hit mark
-        Entity source = event.getSource().getTrueSource();
-        LivingEntity hurtEntity = event.getEntityLiving();
-        if (source instanceof ServerPlayerEntity) {
-            ServerPlayerEntity playerEntity = (ServerPlayerEntity) source;
-            float damageAmount = event.getAmount();
-            if (hurtEntity.isAlive()) {
-                RegistryMessages.sendToClient(new MessageClientDisplay(
-                                EnumClientDisplay.DAMAGE, 1, Collections.singletonList(String.valueOf(damageAmount))),
-                        playerEntity
-                );
-            }
-        }
-        if (DragonTongue.isIafPresent) {
-            IafServerEvent.onEntityHurt(event);
-        }
-
-    }
-
-    @SubscribeEvent
     public static void onEntityDeath(LivingDeathEvent event) {
         // Display critical hit mark
         Entity source = event.getSource().getTrueSource();
@@ -70,8 +50,36 @@ public class CommonEvents {
     }
 
     @SubscribeEvent
-    public static void onEntityDamage(LivingDamageEvent event) {
+    public static void onEntityHurt(LivingHurtEvent event) {
 
+
+    }
+
+    @SubscribeEvent
+    public static void onEntityDamage(LivingDamageEvent event) {
+        if (DragonTongue.isIafPresent) {
+            IafServerEvent.onEntityDamage(event);
+        }
+        // Display hit mark
+        Entity source = event.getSource().getTrueSource();
+        LivingEntity hurtEntity = event.getEntityLiving();
+        if (source instanceof ServerPlayerEntity) {
+            ServerPlayerEntity playerEntity = (ServerPlayerEntity) source;
+            float damageAmount = event.getAmount();
+            if (hurtEntity.isAlive()) {
+                RegistryMessages.sendToClient(new MessageClientDisplay(
+                                EnumClientDisplay.DAMAGE, 1, Collections.singletonList(String.valueOf(damageAmount))),
+                        playerEntity
+                );
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onEntityAttack(LivingAttackEvent event) {
+        if (DragonTongue.isIafPresent) {
+            IafServerEvent.onEntityAttacked(event);
+        }
     }
 
 }

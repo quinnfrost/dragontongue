@@ -1,12 +1,15 @@
 package com.github.quinnfrost.dragontongue.utils;
 
+import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.config.Config;
+import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import com.google.common.collect.Sets;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.ai.attributes.Attributes;
+import net.minecraft.entity.monster.IMob;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
@@ -277,6 +280,16 @@ public class util {
         }
 
         return i;
+    }
+
+    public static boolean isHostile(LivingEntity livingEntity) {
+        if (livingEntity instanceof IMob) {
+            return true;
+        }
+        if (DragonTongue.isIafPresent && IafHelperClass.isIafHostile(livingEntity)) {
+            return true;
+        }
+        return false;
     }
 
 //    public static <T extends Enum> T getNextEnum(T enumType) {

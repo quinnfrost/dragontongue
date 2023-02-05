@@ -2,6 +2,7 @@ package com.github.quinnfrost.dragontongue.iceandfire;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.EntityDragonPart;
+import com.github.alexthe666.iceandfire.entity.util.IDeadMob;
 import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
@@ -118,6 +119,18 @@ public class IafHelperClass {
         );
 
 
+    }
+
+    public static boolean isIafHostile(LivingEntity livingEntity) {
+        if (livingEntity instanceof IDeadMob) {
+            return false;
+        }
+        if (livingEntity instanceof EntityDragonBase && ((EntityDragonBase)livingEntity).isModelDead()) {
+            return false;
+        }
+        // Todo: what hostiles does iaf have?
+        return livingEntity instanceof EntityDragonBase
+                ;
     }
 
 }
