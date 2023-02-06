@@ -51,7 +51,7 @@ public class DragonTongue
     // Directly reference a log4j logger.
     public static final Logger LOGGER = LogManager.getLogger();
     public static IEventBus eventBus;
-    public static CommonProxy PROXY = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> CommonProxy::new);
+//    public static CommonProxy PROXY = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> CommonProxy::new);
     public static boolean isIafPresent = false;
     public static MobEntity debugTarget;
     public DragonTongue() {

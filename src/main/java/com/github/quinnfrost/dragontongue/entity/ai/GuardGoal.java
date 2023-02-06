@@ -4,6 +4,7 @@ import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.EntityPredicate;
 import net.minecraft.entity.LivingEntity;
@@ -49,6 +50,21 @@ public class GuardGoal<T extends LivingEntity> extends NearestAttackableTargetGo
             return util.isHostile(nearestTarget);
         }
         return false;
+    }
+
+    @Override
+    public void resetTask() {
+        super.resetTask();
+        if (cap.getDestination().isPresent()) {
+            cap.setCommandStatus(EnumCommandStatus.REACH);
+        } else {
+            cap.setCommandStatus(EnumCommandStatus.NONE);
+        }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
     }
 
     public static double getTargetDistance(MobEntity mobEntity) {

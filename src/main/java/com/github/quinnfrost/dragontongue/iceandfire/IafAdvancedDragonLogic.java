@@ -16,11 +16,9 @@ import com.github.quinnfrost.dragontongue.message.MessageSyncCapability;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
 
 import java.util.List;
 
@@ -185,7 +183,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         }
 
         // Do not attack
-        if (attackDecision == EnumCommandSettingType.AttackDecisionType.DEFAULT
+        if (attackDecision == EnumCommandSettingType.AttackDecisionType.DONT_HELP
                 && (commandStatus != EnumCommandStatus.NONE && commandStatus != EnumCommandStatus.ATTACK )
                 && dragon.getAttackTarget() != null) {
             dragon.setAttackTarget(null);

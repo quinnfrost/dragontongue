@@ -42,9 +42,9 @@ public enum EnumCommandSettingType {
     }
 
     public enum AttackDecisionType {
-        DEFAULT,
         GUARD,
         ALWAYS_HELP,
+        DONT_HELP,
         NONE
         ;
         private static final AttackDecisionType[] vals = values();

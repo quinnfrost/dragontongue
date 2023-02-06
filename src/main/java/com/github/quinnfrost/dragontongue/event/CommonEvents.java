@@ -1,17 +1,21 @@
 package com.github.quinnfrost.dragontongue.event;
 
 import com.github.quinnfrost.dragontongue.DragonTongue;
+import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.iceandfire.event.IafServerEvent;
 import com.github.quinnfrost.dragontongue.message.MessageClientDisplay;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.passive.TameableEntity;
+import net.minecraft.entity.passive.WolfEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraft.util.ActionResultType;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -22,10 +26,26 @@ public class CommonEvents {
     @SubscribeEvent(priority = EventPriority.NORMAL)
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
         // Using dragon staff right-click on a dragon will open gui
+        Entity targetEntity = event.getTarget();
+        PlayerEntity playerEntity = event.getPlayer();
         if (DragonTongue.isIafPresent) {
-            Entity targetEntity = event.getTarget();
             IafServerEvent.onEntityInteract(event);
-
+        }
+        if (targetEntity instanceof TameableEntity) {
+            TameableEntity tameableEntity = (TameableEntity) targetEntity;
+            if (tameableEntity instanceof WolfEntity && playerEntity.isSneaking() && tameableEntity.isOwner(playerEntity)) {
+                tameableEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                    if (iCapTargetHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE) != EnumCommandSettingType.AttackDecisionType.GUARD) {
+//                        playerEntity.sendStatusMessage(ITextComponent.getTextComponentOrEmpty("Attack decision set to guard"), true);
+                        iCapTargetHolder.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.GUARD);
+                    } else {
+//                        playerEntity.sendStatusMessage(ITextComponent.getTextComponentOrEmpty("Attack decision set to default"), true);
+                        iCapTargetHolder.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP);
+                    }
+                    event.setCancellationResult(ActionResultType.SUCCESS);
+                    event.setCanceled(true);
+                });
+            }
         }
     }
 
@@ -82,4 +102,11 @@ public class CommonEvents {
         }
     }
 
+    @SubscribeEvent
+    public static void onLivingKnockBack(LivingKnockBackEvent event) {
+        // This seems to be a client only event
+        if (DragonTongue.isIafPresent) {
+            IafServerEvent.onLivingKnockBack(event);
+        }
+    }
 }

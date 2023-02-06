@@ -305,7 +305,7 @@ public class MessageCommandEntity {
                 && !Objects.equals(tamed.getAttackingEntity(), target)
                 && !commander.isOnSameTeam(target)) {
             util.resetGoals(tamed.targetSelector);
-            util.resetGoals(tamed.goalSelector);
+//            util.resetGoals(tamed.goalSelector);
             if (DragonTongue.isIafPresent && IafDragonBehaviorHelper.setDragonAttackTarget(tamed, target)) {
                 // For dragons
                 return;
@@ -343,7 +343,7 @@ public class MessageCommandEntity {
         AnimalEntity animalEntity = (AnimalEntity) tamed;
 
         util.resetGoals(animalEntity.targetSelector);
-        util.resetGoals(animalEntity.goalSelector);
+//        util.resetGoals(animalEntity.goalSelector);
         if (DragonTongue.isIafPresent && IafHelperClass.isDragon(animalEntity)) {
             IafDragonBehaviorHelper.setDragonHalt(animalEntity);
         } else {
@@ -353,7 +353,6 @@ public class MessageCommandEntity {
                 if (iCapTargetHolder.getCommandStatus() != EnumCommandStatus.NONE) {
                     iCapTargetHolder.setCommandStatus(EnumCommandStatus.REACH);
                 }
-//            IafDragonBehaviorHelper.setDragonFlightTarget(animalEntity, animalEntity.getPosition());
             });
             animalEntity.getNavigator().clearPath();
             animalEntity.setAttackTarget(null);
@@ -377,7 +376,7 @@ public class MessageCommandEntity {
         BlockPos blockPos = (pos != null ? pos : animalEntity.getPosition());
 
         util.resetGoals(tamed.targetSelector);
-        util.resetGoals(tamed.goalSelector);
+//        util.resetGoals(tamed.goalSelector);
         if (DragonTongue.isIafPresent && IafHelperClass.isDragon(animalEntity)) {
 //            // If destination is too far, fly there
 //            if (blockPos.getY() > commander.getPosY() + 10 || blockPos.distanceSq(animalEntity.getPosition()) > 45 * 45) {
@@ -390,11 +389,11 @@ public class MessageCommandEntity {
             IafDragonBehaviorHelper.setDragonReach(animalEntity, blockPos);
         } else {
             animalEntity.getNavigator().tryMoveToXYZ(pos.getX(), pos.getY(), pos.getZ(), 1.0f);
+            animalEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                iCapTargetHolder.setDestination(pos);
+                iCapTargetHolder.setCommandStatus(EnumCommandStatus.REACH);
+            });
         }
-//        animalEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-//            iCapTargetHolder.setDestination(pos);
-//            iCapTargetHolder.setCommandStatus(EnumCommandStatus.REACH);
-//        });
     }
 
 

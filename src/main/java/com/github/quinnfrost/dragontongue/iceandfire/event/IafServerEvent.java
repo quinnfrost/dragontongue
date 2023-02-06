@@ -11,6 +11,9 @@ import com.github.alexthe666.iceandfire.entity.tile.TileEntityDragonforgeInput;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.alexthe666.iceandfire.entity.util.HomePosition;
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
+import com.github.alexthe666.iceandfire.item.ItemDragonsteelArmor;
+import com.github.alexthe666.iceandfire.item.ItemScaleArmor;
+import com.github.alexthe666.iceandfire.item.ItemTrollArmor;
 import com.github.alexthe666.iceandfire.misc.IafDamageRegistry;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
@@ -27,6 +30,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.DamageSource;
@@ -39,10 +44,7 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.event.entity.living.LivingKnockBackEvent;
+import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -235,6 +237,7 @@ public class IafServerEvent {
                             dragon.getEntityId()
                     ), (ServerPlayerEntity) playerEntity);
                     ScreenDragon.openGui(playerEntity, dragon);
+                    event.setCancellationResult(ActionResultType.SUCCESS);
                     event.setCanceled(true);
                 }
             }
@@ -254,6 +257,49 @@ public class IafServerEvent {
         return true;
     }
 
+    public static boolean onLivingHurt(LivingHurtEvent event) {
+        String damageType = event.getSource().getDamageType();
+        if (event.getSource().isProjectile()) {
+//            float multi = 1;
+//            if (event.getEntityLiving().getItemStackFromSlot(EquipmentSlotType.HEAD).getItem() instanceof ItemTrollArmor) {
+//                multi -= 0.1;
+//            }
+//            if (event.getEntityLiving().getItemStackFromSlot(EquipmentSlotType.CHEST).getItem() instanceof ItemTrollArmor) {
+//                multi -= 0.3;
+//            }
+//            if (event.getEntityLiving().getItemStackFromSlot(EquipmentSlotType.LEGS).getItem() instanceof ItemTrollArmor) {
+//                multi -= 0.2;
+//            }
+//            if (event.getEntityLiving().getItemStackFromSlot(EquipmentSlotType.FEET).getItem() instanceof ItemTrollArmor) {
+//                multi -= 0.1;
+//            }
+//            event.setAmount(event.getAmount() * multi);
+        }
+//        if (IafDamageRegistry.DRAGON_FIRE_TYPE.equals(damageType) || IafDamageRegistry.DRAGON_ICE_TYPE.equals(damageType) ||
+//                IafDamageRegistry.DRAGON_LIGHTNING_TYPE.equals(damageType)) {
+//            float multi = 1;
+//            if (event.getEntityLiving().getItemStackFromSlot(EquipmentSlotType.HEAD).getItem() instanceof ItemScaleArmor ||
+//                    event.getEntityLiving().getItemStackFromSlot(EquipmentSlotType.HEAD).getItem() instanceof ItemDragonsteelArmor) {
+//                multi -= 0.1;
+//            }
+//            if (event.getEntityLiving().getItemStackFromSlot(EquipmentSlotType.CHEST).getItem() instanceof ItemScaleArmor ||
+//                    event.getEntityLiving().getItemStackFromSlot(EquipmentSlotType.CHEST).getItem() instanceof ItemDragonsteelArmor) {
+//                multi -= 0.3;
+//            }
+//            if (event.getEntityLiving().getItemStackFromSlot(EquipmentSlotType.LEGS).getItem() instanceof ItemScaleArmor ||
+//                    event.getEntityLiving().getItemStackFromSlot(EquipmentSlotType.LEGS).getItem() instanceof ItemDragonsteelArmor) {
+//                multi -= 0.2;
+//            }
+//            if (event.getEntityLiving().getItemStackFromSlot(EquipmentSlotType.FEET).getItem() instanceof ItemScaleArmor ||
+//                    event.getEntityLiving().getItemStackFromSlot(EquipmentSlotType.FEET).getItem() instanceof ItemDragonsteelArmor) {
+//                multi -= 0.1;
+//            }
+//            event.setAmount(event.getAmount() * multi);
+//        }
+
+        return true;
+    }
+
     public static boolean onLivingKnockBack(LivingKnockBackEvent event) {
         Entity entity = event.getEntity();
         if (entity instanceof EntityDragonBase) {
@@ -262,6 +308,28 @@ public class IafServerEvent {
                 event.setCanceled(true);
             }
         }
+
+        if (entity instanceof PlayerEntity) {
+            PlayerEntity playerEntity = (PlayerEntity) entity;
+
+            String setName = IafHelperClass.isFullSetOf(playerEntity);
+            if (setName != null) {
+                switch (setName) {
+                    case "ice":
+                    case "dragonsteel_ice":
+                        event.setCanceled(true);
+                        break;
+                    case "fire":
+                    case "dragonsteel_fire":
+                        break;
+                    case "dragonsteel_lightning":
+                    case "lightning":
+                        break;
+                }
+            }
+
+        }
+
         return true;
     }
 
@@ -280,67 +348,109 @@ public class IafServerEvent {
         DamageSource damageSource = event.getSource();
         BlockPos blockPos = new BlockPos(entity.getPosition());
 
-        boolean minorDamages =
-                (damageSource == DamageSource.CACTUS
-                        && entity.world.getBlockState(blockPos).getBlock() != IafBlockRegistry.DRAGON_ICE_SPIKES
-                        && entity.world.getBlockState(blockPos.add(0, -1, 0)).getBlock() != IafBlockRegistry.DRAGON_ICE_SPIKES)
-                        || damageSource == DamageSource.SWEET_BERRY_BUSH;
-        boolean medianDamages =
-                damageSource == DamageSource.ANVIL
-                        || damageSource == DamageSource.HOT_FLOOR;
-        boolean greaterDamages =
-                damageSource == DamageSource.IN_FIRE
-                        || damageSource == DamageSource.ON_FIRE
-                        || damageSource == DamageSource.LAVA
-                        || damageSource == DamageSource.CACTUS;
+        if (entity instanceof EntityDragonBase) {
+            boolean minorDamages =
+                    (damageSource == DamageSource.CACTUS
+                            && entity.world.getBlockState(blockPos).getBlock() != IafBlockRegistry.DRAGON_ICE_SPIKES
+                            && entity.world.getBlockState(blockPos.add(0, -1, 0)).getBlock() != IafBlockRegistry.DRAGON_ICE_SPIKES)
+                            || damageSource == DamageSource.SWEET_BERRY_BUSH;
+            boolean medianDamages =
+                    damageSource == DamageSource.ANVIL
+                            || damageSource == DamageSource.HOT_FLOOR;
+            boolean greaterDamages =
+                    damageSource == DamageSource.IN_FIRE
+                            || damageSource == DamageSource.ON_FIRE
+                            || damageSource == DamageSource.LAVA
+                            || damageSource == DamageSource.CACTUS;
 
-        if (entity instanceof EntityIceDragon) {
-            EntityIceDragon iceDragon = (EntityIceDragon) entity;
-            if (iceDragon.getDragonStage() >= 4 && event.getAmount() < 2f) {
-                event.setCanceled(true);
+            if (entity instanceof EntityIceDragon) {
+                EntityIceDragon iceDragon = (EntityIceDragon) entity;
+                if (iceDragon.getDragonStage() >= 4 && event.getAmount() < 2f) {
+                    event.setCanceled(true);
+                }
+
+                if (iceDragon.getDragonStage() >= 4 && greaterDamages) {
+                    iceDragon.forceFireTicks(0);
+                    event.setCanceled(true);
+                } else if (iceDragon.getDragonStage() >= 3 && medianDamages) {
+                    event.setCanceled(true);
+                } else if (iceDragon.getDragonStage() >= 2 && minorDamages) {
+                    event.setCanceled(true);
+                }
             }
 
-            if (iceDragon.getDragonStage() >= 4 && greaterDamages) {
-                iceDragon.forceFireTicks(0);
-                event.setCanceled(true);
-            } else if (iceDragon.getDragonStage() >= 3 && medianDamages) {
-                event.setCanceled(true);
-            } else if (iceDragon.getDragonStage() >= 2 && minorDamages) {
-                event.setCanceled(true);
+            if (entity instanceof EntityFireDragon) {
+                EntityFireDragon fireDragon = (EntityFireDragon) entity;
+                if (fireDragon.getDragonStage() >= 4 && event.getAmount() < 2f) {
+                    event.setCanceled(true);
+                }
+                // Ice spike is also count as cactus damage
+                if (fireDragon.getDragonStage() >= 4 && greaterDamages) {
+                    event.setCanceled(true);
+                } else if (fireDragon.getDragonStage() >= 3 && medianDamages) {
+                    event.setCanceled(true);
+                } else if (fireDragon.getDragonStage() >= 2 && minorDamages) {
+                    event.setCanceled(true);
+                }
+
+            }
+
+            if (entity instanceof EntityLightningDragon) {
+                EntityLightningDragon lightningDragon = (EntityLightningDragon) entity;
+                if (lightningDragon.getDragonStage() >= 4 && event.getAmount() < 2f) {
+                    event.setCanceled(true);
+                }
+                // Ice spike is also count as cactus damage
+                if (lightningDragon.getDragonStage() >= 4 && greaterDamages) {
+                    lightningDragon.forceFireTicks(0);
+                    event.setCanceled(true);
+                } else if (lightningDragon.getDragonStage() >= 3 && medianDamages) {
+                    event.setCanceled(true);
+                } else if (lightningDragon.getDragonStage() >= 2 && minorDamages) {
+                    event.setCanceled(true);
+                }
             }
         }
 
-        if (entity instanceof EntityFireDragon) {
-            EntityFireDragon fireDragon = (EntityFireDragon) entity;
-            if (fireDragon.getDragonStage() >= 4 && event.getAmount() < 2f) {
-                event.setCanceled(true);
-            }
-            // Ice spike is also count as cactus damage
-            if (fireDragon.getDragonStage() >= 4 && greaterDamages) {
-                event.setCanceled(true);
-            } else if (fireDragon.getDragonStage() >= 3 && medianDamages) {
-                event.setCanceled(true);
-            } else if (fireDragon.getDragonStage() >= 2 && minorDamages) {
-                event.setCanceled(true);
+        boolean iceDamage = (damageSource == DamageSource.CACTUS
+                && (entity.world.getBlockState(blockPos).getBlock() == IafBlockRegistry.DRAGON_ICE_SPIKES || entity.world.getBlockState(blockPos.add(0, -1, 0)).getBlock() == IafBlockRegistry.DRAGON_ICE_SPIKES)
+        );
+        boolean fireDamage = damageSource == DamageSource.HOT_FLOOR
+                || damageSource == DamageSource.IN_FIRE
+                || damageSource == DamageSource.ON_FIRE
+                || damageSource == DamageSource.LAVA;
+        boolean lightningDamage = damageSource == DamageSource.LIGHTNING_BOLT;
+
+
+        if (entity instanceof PlayerEntity) {
+            PlayerEntity playerEntity = (PlayerEntity) entity;
+            String setName = IafHelperClass.isFullSetOf(playerEntity);
+            if (setName != null) {
+                switch (setName) {
+                    case "ice":
+                    case "dragonsteel_ice":
+                        if (iceDamage) {
+                            event.setCanceled(true);
+                        }
+                        break;
+                    case "fire":
+                    case "dragonsteel_fire":
+                        if (fireDamage) {
+                            event.setCanceled(true);
+                        }
+                        break;
+                    case "dragonsteel_lightning":
+                    case "lightning":
+                        if (lightningDamage) {
+                            event.setCanceled(true);
+                        }
+                        break;
+                }
             }
 
         }
 
-        if (entity instanceof EntityLightningDragon) {
-            EntityLightningDragon lightningDragon = (EntityLightningDragon) entity;
-            if (lightningDragon.getDragonStage() >= 4 && event.getAmount() < 2f) {
-                event.setCanceled(true);
-            }
-            // Ice spike is also count as cactus damage
-            if (lightningDragon.getDragonStage() >= 4 && greaterDamages) {
-                lightningDragon.forceFireTicks(0);
-                event.setCanceled(true);
-            } else if (lightningDragon.getDragonStage() >= 3 && medianDamages) {
-                event.setCanceled(true);
-            } else if (lightningDragon.getDragonStage() >= 2 && minorDamages) {
-                event.setCanceled(true);
-            }
-        }
+
         return true;
     }
 }

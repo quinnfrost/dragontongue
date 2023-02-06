@@ -4,6 +4,8 @@ import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.EntityDragonPart;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.alexthe666.iceandfire.entity.util.IDeadMob;
+import com.github.alexthe666.iceandfire.item.ItemDragonsteelArmor;
+import com.github.alexthe666.iceandfire.item.ItemScaleArmor;
 import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
@@ -15,11 +17,15 @@ import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.Item;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.gen.Heightmap;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -59,9 +65,8 @@ public class IafHelperClass {
      */
     public static BlockPos getReachTarget(MobEntity entity) {
         try {
-            if (isDragon(entity)) {
-                EntityDragonBase dragon = (EntityDragonBase) entity;
-                AdvancedPathNavigate navigate = (AdvancedPathNavigate) dragon.getNavigator();
+            if (entity.getNavigator() instanceof AdvancedPathNavigate) {
+                AdvancedPathNavigate navigate = (AdvancedPathNavigate) entity.getNavigator();
 
                 if (navigate.getTargetPos() != null) {
                     return navigate.getTargetPos();
@@ -143,6 +148,51 @@ public class IafHelperClass {
         // Todo: what hostiles does iaf have?
         return livingEntity instanceof EntityDragonBase
                 ;
+    }
+
+    @Nullable
+    public static String isFullSetOf(PlayerEntity playerEntity) {
+        Item headItem = playerEntity.getItemStackFromSlot(EquipmentSlotType.HEAD).getItem();
+        Item chestItem = playerEntity.getItemStackFromSlot(EquipmentSlotType.CHEST).getItem();
+        Item legItem = playerEntity.getItemStackFromSlot(EquipmentSlotType.LEGS).getItem();
+        Item feetItem = playerEntity.getItemStackFromSlot(EquipmentSlotType.FEET).getItem();
+
+        if (!(headItem instanceof ItemScaleArmor) && !(headItem instanceof ItemDragonsteelArmor)) {
+            return null;
+        }
+        if (!(chestItem instanceof ItemScaleArmor) && !(chestItem instanceof ItemDragonsteelArmor)) {
+            return null;
+        }
+        if (!(legItem instanceof ItemScaleArmor) && !(legItem instanceof ItemDragonsteelArmor)) {
+            return null;
+        }
+        if (!(feetItem instanceof ItemScaleArmor) && !(feetItem instanceof ItemDragonsteelArmor)) {
+            return null;
+        }
+
+        if (headItem instanceof ItemScaleArmor && chestItem instanceof ItemScaleArmor && legItem instanceof ItemScaleArmor && feetItem instanceof ItemScaleArmor) {
+            ItemScaleArmor headScaleArmor = (ItemScaleArmor) headItem;
+            ItemScaleArmor chestScaleArmor = (ItemScaleArmor) chestItem;
+            ItemScaleArmor legScaleArmor = (ItemScaleArmor) legItem;
+            ItemScaleArmor feetScaleArmor = (ItemScaleArmor) feetItem;
+
+            if (headScaleArmor.eggType == chestScaleArmor.eggType && chestScaleArmor.eggType == legScaleArmor.eggType && legScaleArmor.eggType == feetScaleArmor.eggType) {
+                return headScaleArmor.eggType.dragonType.getName();
+            }
+        }
+
+        if (headItem instanceof ItemDragonsteelArmor && chestItem instanceof ItemDragonsteelArmor && legItem instanceof ItemDragonsteelArmor && feetItem instanceof ItemDragonsteelArmor) {
+            ItemDragonsteelArmor headSteelArmor = (ItemDragonsteelArmor) headItem;
+            ItemDragonsteelArmor chestSteelArmor = (ItemDragonsteelArmor) chestItem;
+            ItemDragonsteelArmor legSteelArmor = (ItemDragonsteelArmor) legItem;
+            ItemDragonsteelArmor feetSteelArmor = (ItemDragonsteelArmor) feetItem;
+
+            if (headSteelArmor.getArmorMaterial().getName() == chestSteelArmor.getArmorMaterial().getName() && chestSteelArmor.getArmorMaterial().getName() == legSteelArmor.getArmorMaterial().getName() && legSteelArmor.getArmorMaterial().getName() == feetSteelArmor.getArmorMaterial().getName()) {
+                return headSteelArmor.getArmorMaterial().getName();
+            }
+        }
+
+        return null;
     }
 
 }

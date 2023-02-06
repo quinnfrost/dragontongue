@@ -1,14 +1,10 @@
 package com.github.quinnfrost.dragontongue.capability;
 
-import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
-import com.github.quinnfrost.dragontongue.message.MessageSyncCapability;
-import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fml.common.thread.SidedThreadGroups;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -43,7 +39,7 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
         commandMaps.put(EnumCommandSettingType.COMMAND_STATUS, EnumCommandStatus.NONE);
         commandMaps.put(EnumCommandSettingType.GROUND_ATTACK_TYPE, EnumCommandSettingType.GroundAttackType.ANY);
         commandMaps.put(EnumCommandSettingType.AIR_ATTACK_TYPE, EnumCommandSettingType.AirAttackType.ANY);
-        commandMaps.put(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.DEFAULT);
+        commandMaps.put(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP);
 
         commandMaps.put(EnumCommandSettingType.MOVEMENT_TYPE, EnumCommandSettingType.MovementType.ANY);
         commandMaps.put(EnumCommandSettingType.DESTROY_TYPE, EnumCommandSettingType.DestroyType.ANY);

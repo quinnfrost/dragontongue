@@ -3,9 +3,12 @@ package com.github.quinnfrost.dragontongue.entity.ai;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.utils.util;
+import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.passive.ParrotEntity;
 import net.minecraft.entity.passive.TameableEntity;
+import net.minecraft.entity.passive.WolfEntity;
 import net.minecraft.entity.player.PlayerEntity;
 
 import javax.annotation.Nullable;
@@ -16,7 +19,11 @@ public class RegistryAI {
         try {
             if (!(DragonTongue.isIafPresent && IafDragonBehaviorHelper.registerDragonAI(mobEntity))) {
 
-                mobEntity.goalSelector.addGoal(0, new FollowCommandGoal(mobEntity));
+                if (mobEntity instanceof TameableEntity && !(mobEntity instanceof ParrotEntity)) {
+                    mobEntity.goalSelector.addGoal(5, new FollowCommandAndAttackGoal((TameableEntity) mobEntity, 1.0D, true));
+                } else {
+                    mobEntity.goalSelector.addGoal(0, new FollowCommandGoal(mobEntity));
+                }
 
                 if (mobEntity instanceof TameableEntity) {
                     TameableEntity tameableEntity = (TameableEntity) mobEntity;

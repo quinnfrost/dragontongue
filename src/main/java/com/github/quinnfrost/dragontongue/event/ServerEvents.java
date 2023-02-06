@@ -6,6 +6,7 @@ import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.entity.ai.RegistryAI;
 import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCrowWand;
 import com.github.quinnfrost.dragontongue.iceandfire.IafAdvancedDragonFlightManager;
 import com.github.quinnfrost.dragontongue.iceandfire.IafAdvancedDragonLogic;
@@ -46,7 +47,6 @@ import net.minecraftforge.event.entity.EntityMobGriefingEvent;
 import net.minecraftforge.event.entity.EntityStruckByLightningEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.event.entity.living.LivingKnockBackEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.ExplosionEvent;
@@ -152,7 +152,7 @@ public class ServerEvents {
                         cap.getCommandEntities()) {
                     MobEntity mobEntity = (MobEntity) ((ServerWorld) playerEntity.world).getEntityByUuid(entityUUID);
                     BlockPos pos = IafHelperClass.getReachTarget(mobEntity);
-                    if (pos != null && !IafDragonBehaviorHelper.isDragonInAir(mobEntity)) {
+                    if (pos != null) {
                         RegistryMessages.sendToAll(new MessageClientDraw(
                                 mobEntity.getEntityId(), Vector3d.copyCentered(pos),
                                 mobEntity.getPositionVec()
@@ -198,7 +198,8 @@ public class ServerEvents {
                     "Targets:" + targetString,
                     "Current dest:" + targetPosString,
                     "Command status:" + capabilityInfoHolder.getCommandStatus().toString(),
-                    "Command dest:" + destinationString
+                    "Command dest:" + destinationString,
+                    "AttackDecision:" + capabilityInfoHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE)
             );
             if (DragonTongue.isIafPresent) {
                 List<String> additional = IafHelperClass.getAdditionalDragonDebugStrings(mobEntity);
@@ -316,16 +317,6 @@ public class ServerEvents {
     @SubscribeEvent
     public static void onLightningStrike(EntityStruckByLightningEvent event) {
 
-    }
-
-    @SubscribeEvent
-    public static void onLivingKnockBack(LivingKnockBackEvent event) {
-        if (event.getEntity().world.isRemote) {
-            return;
-        }
-        if (DragonTongue.isIafPresent) {
-            IafServerEvent.onLivingKnockBack(event);
-        }
     }
 
 }
