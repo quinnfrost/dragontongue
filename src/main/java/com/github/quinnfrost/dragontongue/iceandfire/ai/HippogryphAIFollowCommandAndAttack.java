@@ -1,22 +1,19 @@
 package com.github.quinnfrost.dragontongue.iceandfire.ai;
 
 import com.github.alexthe666.iceandfire.entity.EntityHippogryph;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
-import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
-import com.github.quinnfrost.dragontongue.entity.ai.FollowCommandAndAttackGoal;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
+import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
-import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.ai.goal.MeleeAttackGoal;
 
 public class HippogryphAIFollowCommandAndAttack extends MeleeAttackGoal {
     EntityHippogryph hippogryph;
-    ICapTargetHolder capabilityInfoHolder;
+    ICapabilityInfoHolder capabilityInfoHolder;
     public HippogryphAIFollowCommandAndAttack(EntityHippogryph creature, double speedIn, boolean useLongMemory) {
         super(creature, speedIn, useLongMemory);
         this.hippogryph = creature;
-        this.capabilityInfoHolder = creature.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(creature));
+        this.capabilityInfoHolder = creature.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(creature));
     }
 
     // Todo: cleanup what's happening below
@@ -26,7 +23,7 @@ public class HippogryphAIFollowCommandAndAttack extends MeleeAttackGoal {
             return true;
         }
         if (capabilityInfoHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE) == EnumCommandSettingType.AttackDecisionType.GUARD
-                || capabilityInfoHolder.getCommandStatus() != EnumCommandStatus.NONE)
+                || capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE)
         {
             return true;
         }
@@ -38,7 +35,7 @@ public class HippogryphAIFollowCommandAndAttack extends MeleeAttackGoal {
             return true;
         }
         if (capabilityInfoHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE) == EnumCommandSettingType.AttackDecisionType.GUARD
-                || capabilityInfoHolder.getCommandStatus() != EnumCommandStatus.NONE)
+                || capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE)
         {
             return true;
         }
@@ -53,7 +50,7 @@ public class HippogryphAIFollowCommandAndAttack extends MeleeAttackGoal {
 
     @Override
     public void tick() {
-        if (capabilityInfoHolder.getCommandStatus() != EnumCommandStatus.NONE
+        if (capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE
                 && hippogryph.getAttackTarget() == null) {
 
             capabilityInfoHolder.getDestination().ifPresent(blockPos -> {

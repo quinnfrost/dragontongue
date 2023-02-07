@@ -90,4 +90,17 @@ public enum EnumCommandSettingType {
         }
     }
 
+    public enum CommandStatus {
+        NONE, // The vanilla behavior: wander, sit, escort
+        REACH,
+        STAY,
+        HOVER,
+        ATTACK
+        ;
+        private static final CommandStatus[] vals = values();
+
+        public CommandStatus next() {
+            return vals[(this.ordinal() + 1) % vals.length];
+        }
+    }
 }

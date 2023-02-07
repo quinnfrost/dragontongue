@@ -1,29 +1,26 @@
 package com.github.quinnfrost.dragontongue.iceandfire.ai;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
-import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
-import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
-import com.github.quinnfrost.dragontongue.utils.util;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
+import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
 
 import java.util.EnumSet;
 
 public class DragonAIAsYouWish extends Goal {
     private final EntityDragonBase dragon;
-    private final ICapTargetHolder capabilityInfoHolder;
+    private final ICapabilityInfoHolder capabilityInfoHolder;
     private LivingEntity attackTarget;
     private boolean isTargetAir;
     private BlockPos shouldStay;
 
     public DragonAIAsYouWish(EntityDragonBase dragonIn) {
         this.dragon = dragonIn;
-        this.capabilityInfoHolder = dragonIn.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragonIn));
+        this.capabilityInfoHolder = dragonIn.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragonIn));
         this.isTargetAir = (dragon.isFlying() || dragon.isHovering());
         this.setMutexFlags(EnumSet.of(Flag.MOVE));
     }
@@ -31,7 +28,7 @@ public class DragonAIAsYouWish extends Goal {
     @Override
     public boolean shouldExecute() {
         return (
-                capabilityInfoHolder.getCommandStatus() != EnumCommandStatus.NONE
+                capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE
                         && dragon.getAttackTarget() == null
         );
     }

@@ -1,11 +1,10 @@
 package com.github.quinnfrost.dragontongue.message;
 
 import com.github.quinnfrost.dragontongue.DragonTongue;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
-import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
+import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
@@ -17,8 +16,6 @@ import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.potion.EffectInstance;
-import net.minecraft.potion.Effects;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -138,7 +135,7 @@ public class MessageCommandEntity {
         if (excludeEntity == null) {
             excludeEntity = (Predicate<Entity>) entity -> true;
         }
-        ICapTargetHolder capTargetHolder = commander.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(commander));
+        ICapabilityInfoHolder capTargetHolder = commander.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(commander));
 
         switch (action) {
             case ADD:
@@ -159,14 +156,14 @@ public class MessageCommandEntity {
             case REMOVE:
                 if (util.isOwner(target, commander)) {
                     capTargetHolder.removeCommandEntity(target.getUniqueID());
-                    target.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                        iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
+                    target.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                        iCapTargetHolder.setCommandStatus(EnumCommandSettingType.CommandStatus.NONE);
                     });
                 }
                 MessageSyncCapability.syncCapabilityToClients(commander);
                 break;
             case ATTACK:
-                List<UUID> attackerUUIDs = commander.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(commander)).getCommandEntities();
+                List<UUID> attackerUUIDs = commander.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(commander)).getCommandEntities();
                 if (!attackerUUIDs.isEmpty()) {
                     for (UUID entityUUID :
                             attackerUUIDs) {
@@ -178,7 +175,7 @@ public class MessageCommandEntity {
                 }
                 break;
             case BREATH:
-                List<UUID> breathUUIDs = commander.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(commander)).getCommandEntities();
+                List<UUID> breathUUIDs = commander.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(commander)).getCommandEntities();
                 if (!breathUUIDs.isEmpty()) {
                     for (UUID entityUUID :
                             breathUUIDs) {
@@ -318,8 +315,8 @@ public class MessageCommandEntity {
                 return;
             }
             // For vanilla creatures
-//            tamed.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-//                iCapTargetHolder.setCommandStatus(EnumCommandStatus.ATTACK);
+//            tamed.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+//                iCapTargetHolder.setCommandStatus(CommandStatus.ATTACK);
 //            });
 
             tamed.setAttackTarget(target);
@@ -354,11 +351,11 @@ public class MessageCommandEntity {
         if (DragonTongue.isIafPresent && IafHelperClass.isDragon(animalEntity)) {
             IafDragonBehaviorHelper.setDragonHalt(animalEntity);
         } else {
-            animalEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+            animalEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                 iCapTargetHolder.setDestination(animalEntity.getPosition());
                 // If no command was issued, do as the vanilla way
-                if (iCapTargetHolder.getCommandStatus() != EnumCommandStatus.NONE) {
-                    iCapTargetHolder.setCommandStatus(EnumCommandStatus.REACH);
+                if (iCapTargetHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE) {
+                    iCapTargetHolder.setCommandStatus(EnumCommandSettingType.CommandStatus.REACH);
                 }
             });
             animalEntity.getNavigator().clearPath();
@@ -396,9 +393,9 @@ public class MessageCommandEntity {
             IafDragonBehaviorHelper.setDragonReach(animalEntity, blockPos);
         } else {
             animalEntity.getNavigator().tryMoveToXYZ(pos.getX(), pos.getY(), pos.getZ(), 1.0f);
-            animalEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+            animalEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                 iCapTargetHolder.setDestination(pos);
-                iCapTargetHolder.setCommandStatus(EnumCommandStatus.REACH);
+                iCapTargetHolder.setCommandStatus(EnumCommandSettingType.CommandStatus.REACH);
             });
         }
     }
@@ -410,7 +407,7 @@ public class MessageCommandEntity {
         if (!(commander instanceof PlayerEntity)) {
             return;
         }
-        ICapTargetHolder capTargetHolder = tamed.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(tamed));
+        ICapabilityInfoHolder capTargetHolder = tamed.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(tamed));
         EnumCommandSettingType.AttackDecisionType attackDecisionType = (EnumCommandSettingType.AttackDecisionType) capTargetHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE);
         PlayerEntity playerEntity = (PlayerEntity) commander;
         if (attackDecisionType == EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP) {
@@ -429,8 +426,8 @@ public class MessageCommandEntity {
             } else {
                 util.setByteTag(target, "Sitting", (byte) 1);
             }
-            target.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
+            target.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                iCapTargetHolder.setCommandStatus(EnumCommandSettingType.CommandStatus.NONE);
             });
         }
     }
@@ -442,8 +439,8 @@ public class MessageCommandEntity {
             } else {
                 util.setByteTag(target, "Sitting", (byte) 0);
             }
-            target.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
+            target.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                iCapTargetHolder.setCommandStatus(EnumCommandSettingType.CommandStatus.NONE);
             });
         }
     }
@@ -456,8 +453,8 @@ public class MessageCommandEntity {
             }
             // Dragons will have to finish its path before command actual changes, so remove the path
             ((TameableEntity) target).getNavigator().tryMoveToXYZ(target.getPosX(), target.getPosY(), target.getPosZ(), 1.0f);
-            target.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
+            target.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                iCapTargetHolder.setCommandStatus(EnumCommandSettingType.CommandStatus.NONE);
             });
         }
     }

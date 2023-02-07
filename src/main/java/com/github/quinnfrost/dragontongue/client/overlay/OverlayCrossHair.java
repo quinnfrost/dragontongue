@@ -136,7 +136,7 @@ public class OverlayCrossHair extends AbstractGui {
         int width = event.getWindow().getScaledWidth();
         int height = event.getWindow().getScaledHeight();
 
-//        player.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+//        player.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
 //            if (bufferCrossHair.isEmpty()) {
 //                bufferCrossHair = String.valueOf(iCapTargetHolder.getCommandDistance());
 //            }

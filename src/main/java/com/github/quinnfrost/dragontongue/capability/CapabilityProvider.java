@@ -1,6 +1,5 @@
 package com.github.quinnfrost.dragontongue.capability;
 
-import com.github.quinnfrost.dragontongue.DragonTongue;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.Direction;
@@ -12,28 +11,28 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class CapabilityProvider implements ICapabilitySerializable<ListNBT> {
-    private final CapTargetHolderImpl data;
-    private final LazyOptional<ICapTargetHolder> dataOptional;
+    private final CapabilityInfoHolderImpl data;
+    private final LazyOptional<ICapabilityInfoHolder> dataOptional;
 
     public void invalidate(){
         dataOptional.invalidate();
     }
 
 //    public CapabilityProvider() {
-//        this.data = new CapTargetHolderImpl();
+//        this.data = new CapabilityInfoHolderImpl();
 //        this.dataOptional = LazyOptional.of(()->data);
 //        DragonTongue.LOGGER.warn("CapabilityProvider with no arg called");
 //    }
 
     public CapabilityProvider(Entity entity) {
-        this.data = new CapTargetHolderImpl(entity);
+        this.data = new CapabilityInfoHolderImpl(entity);
         this.dataOptional = LazyOptional.of(()->data);
     }
 
     @Nonnull
     @Override
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-        if (cap == CapTargetHolder.TARGET_HOLDER) {
+        if (cap == CapabilityInfoHolder.TARGET_HOLDER) {
             return dataOptional.cast();
         } else {
             return LazyOptional.empty();
@@ -42,17 +41,17 @@ public class CapabilityProvider implements ICapabilitySerializable<ListNBT> {
 
     @Override
     public ListNBT serializeNBT() {
-        if (CapTargetHolder.TARGET_HOLDER == null){
+        if (CapabilityInfoHolder.TARGET_HOLDER == null){
             return new ListNBT();
         }else {
-            return (ListNBT) CapTargetHolder.TARGET_HOLDER.writeNBT(data,null);
+            return (ListNBT) CapabilityInfoHolder.TARGET_HOLDER.writeNBT(data,null);
         }
     }
 
     @Override
     public void deserializeNBT(ListNBT nbt) {
-        if (CapTargetHolder.TARGET_HOLDER != null){
-            CapTargetHolder.TARGET_HOLDER.readNBT(data,null,nbt);
+        if (CapabilityInfoHolder.TARGET_HOLDER != null){
+            CapabilityInfoHolder.TARGET_HOLDER.readNBT(data,null,nbt);
         }
     }
 

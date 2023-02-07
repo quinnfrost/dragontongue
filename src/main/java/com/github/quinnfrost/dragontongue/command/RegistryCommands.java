@@ -2,9 +2,9 @@ package com.github.quinnfrost.dragontongue.command;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.References;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
-import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
+import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.container.ContainerDragon;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
@@ -15,7 +15,6 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.ISuggestionProvider;
-import net.minecraft.command.arguments.ComponentArgument;
 import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -100,7 +99,7 @@ public class RegistryCommands {
                                 .then(Commands.argument("bool", BoolArgumentType.bool())
                                         .executes(context -> {
                                             Entity entity = EntityArgument.getEntity(context, "target");
-                                            ICapTargetHolder cap = entity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(entity));
+                                            ICapabilityInfoHolder cap = entity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(entity));
                                             String str = StringArgumentType.getString(context, "setting");
                                             boolean value = BoolArgumentType.getBool(context, "bool");
                                             cap.setReturnHome(value);
@@ -110,7 +109,7 @@ public class RegistryCommands {
                                         .suggests((context, builder) -> ISuggestionProvider.suggest(Arrays.asList("none", "without_blast", "any"), builder))
                                         .executes(context -> {
                                             Entity entity = EntityArgument.getEntity(context, "target");
-                                            ICapTargetHolder cap = entity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(entity));
+                                            ICapabilityInfoHolder cap = entity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(entity));
                                             String str = StringArgumentType.getString(context, "setting");
                                             String value = StringArgumentType.getString(context, "value");
                                             if (str.equals("breath")) {

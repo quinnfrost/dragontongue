@@ -1,16 +1,14 @@
 package com.github.quinnfrost.dragontongue.entity.ai;
 
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
-import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
+import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.EntityPredicate;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.attributes.ModifiableAttributeInstance;
 import net.minecraft.entity.ai.goal.NearestAttackableTargetGoal;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -23,19 +21,19 @@ import java.util.function.Predicate;
 
 public class GuardGoal<T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
     private TameableEntity tameableEntity;
-    private ICapTargetHolder cap;
+    private ICapabilityInfoHolder cap;
     public GuardGoal(TameableEntity entityIn, Class<T> targetClassIn, int targetChanceIn, boolean checkSight, boolean nearbyOnlyIn, @Nullable Predicate<LivingEntity> targetPredicate) {
         super(entityIn, targetClassIn, targetChanceIn, checkSight, nearbyOnlyIn, targetPredicate);
         this.setMutexFlags(EnumSet.of(Flag.TARGET));
         this.tameableEntity = entityIn;
-        this.cap = tameableEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(tameableEntity));
+        this.cap = tameableEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(tameableEntity));
     }
 
     public GuardGoal(TameableEntity entityIn, Class<T> targetClassIn, boolean checkSight, @Nullable Predicate<LivingEntity> targetPredicate) {
         super(entityIn, targetClassIn, 1, checkSight, false, null);
         this.setMutexFlags(EnumSet.of(Flag.TARGET));
         this.tameableEntity = entityIn;
-        this.cap = tameableEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(tameableEntity));
+        this.cap = tameableEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(tameableEntity));
     }
 
     @Override
@@ -56,9 +54,9 @@ public class GuardGoal<T extends LivingEntity> extends NearestAttackableTargetGo
     public void resetTask() {
         super.resetTask();
         if (cap.getDestination().isPresent()) {
-            cap.setCommandStatus(EnumCommandStatus.REACH);
+            cap.setCommandStatus(EnumCommandSettingType.CommandStatus.REACH);
         } else {
-            cap.setCommandStatus(EnumCommandStatus.NONE);
+            cap.setCommandStatus(EnumCommandSettingType.CommandStatus.NONE);
         }
     }
 

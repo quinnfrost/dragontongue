@@ -1,10 +1,9 @@
 package com.github.quinnfrost.dragontongue.entity.ai;
 
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
-import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
+import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.ai.goal.Goal;
 
@@ -12,16 +11,16 @@ import java.util.EnumSet;
 
 public class FollowCommandGoal extends Goal {
     MobEntity mobEntity;
-    ICapTargetHolder capabilityInfoHolder;
+    ICapabilityInfoHolder capabilityInfoHolder;
     public FollowCommandGoal(MobEntity entity) {
         this.mobEntity = entity;
-        this.capabilityInfoHolder = entity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(entity));
+        this.capabilityInfoHolder = entity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(entity));
         this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE));
     }
 
     @Override
     public boolean shouldExecute() {
-        return capabilityInfoHolder.getCommandStatus() != EnumCommandStatus.NONE
+        return capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE
                 && mobEntity.getAttackTarget() == null;
     }
     @Override
@@ -35,7 +34,7 @@ public class FollowCommandGoal extends Goal {
 
     @Override
     public void tick() {
-        if (capabilityInfoHolder.getCommandStatus() != EnumCommandStatus.NONE
+        if (capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE
                 && mobEntity.getAttackTarget() == null) {
             capabilityInfoHolder.getDestination().ifPresent(blockPos -> {
                 mobEntity.getNavigator().tryMoveToXYZ(

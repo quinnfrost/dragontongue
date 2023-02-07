@@ -6,11 +6,10 @@ import com.github.alexthe666.iceandfire.entity.EntityDragonCharge;
 import com.github.alexthe666.iceandfire.entity.IafDragonAttacks;
 import com.github.alexthe666.iceandfire.entity.IafDragonLogic;
 import com.github.alexthe666.iceandfire.entity.util.HomePosition;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
-import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
+import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAIGuard;
 import com.github.quinnfrost.dragontongue.message.MessageSyncCapability;
 import com.github.quinnfrost.dragontongue.utils.util;
@@ -41,10 +40,10 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
 
     @Override
     public void updateDragonServer() {
-        ICapTargetHolder cap = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
+        ICapabilityInfoHolder cap = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
         LivingEntity attackTarget = dragon.getAttackTarget();
         boolean isFlying = IafDragonBehaviorHelper.isDragonInAir(dragon);
-        EnumCommandStatus commandStatus = cap.getCommandStatus();
+        EnumCommandSettingType.CommandStatus commandStatus = cap.getCommandStatus();
         EnumCommandSettingType.MovementType movementType = (EnumCommandSettingType.MovementType) cap.getObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE);
         EnumCommandSettingType.AttackDecisionType attackDecision = (EnumCommandSettingType.AttackDecisionType) cap.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE);
         EnumCommandSettingType.GroundAttackType groundAttackType = (EnumCommandSettingType.GroundAttackType) cap.getObjectSetting(EnumCommandSettingType.GROUND_ATTACK_TYPE);
@@ -70,7 +69,10 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
                 dragon.groundAttack = IafDragonAttacks.Ground.FIRE;
                 break;
             case NONE:
-                dragon.usingGroundAttack = false;
+                // You need at least one attack type
+                if (airAttackType != EnumCommandSettingType.AirAttackType.NONE) {
+                    dragon.usingGroundAttack = false;
+                }
                 break;
         }
         switch (airAttackType) {
@@ -93,22 +95,30 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         super.updateDragonServer();
 
         // At IafDragonLogic#320, dragon takes random chance to flight if she is idle on ground
-        if (movementType != EnumCommandSettingType.MovementType.AIR && cap.getCommandStatus() == EnumCommandStatus.STAY) {
+        if (movementType != EnumCommandSettingType.MovementType.AIR && cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.STAY) {
             // Prevent flying
             dragon.setHovering(false);
             dragon.setFlying(false);
         }
         // At IafDragonLogic#227, dragon's target is reset if she can't move, cause issue when commanding sit dragons to attack
-        if (cap.getCommandStatus() == EnumCommandStatus.ATTACK && dragon.getAttackTarget() != null && dragon.getAttackTarget() != attackTarget) {
+        if (cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.ATTACK && dragon.getAttackTarget() != null && dragon.getAttackTarget() != attackTarget) {
             dragon.setAttackTarget(attackTarget);
         }
 
         // At IafDragonLogic#230, dragon's path is reset if she can't move
-//        if (cap.getCommandStatus() == EnumCommandStatus.REACH && !dragon.canMove()) {
+//        if (cap.getCommandStatus() == CommandStatus.REACH && !dragon.canMove()) {
 //            cap.getDestination().ifPresent(blockPos -> {
 //                IafDragonBehaviorHelper.setDragonWalkTarget(dragon, blockPos);
 //            });
 //        }
+        // Todo: dragon flying over a mountain issue
+        // At IafDragonFlightManager$FlightMoveHelper#237, dragons will instantly turn around if she hit the wall
+        // However this doesn't really help to solve the issue that she is behind a montain, so try to make her fly a little higher
+        if (dragon.collidedHorizontally) {
+            // This doesn't help
+//            dragon.setMotion(dragon.getMotion().add(0,0.25,0));
+        }
+
 
         // Do not sleep logic
         if (!cap.getShouldSleep()) {
@@ -184,7 +194,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
 
         // Do not attack
         if (attackDecision == EnumCommandSettingType.AttackDecisionType.DONT_HELP
-                && (commandStatus != EnumCommandStatus.NONE && commandStatus != EnumCommandStatus.ATTACK )
+                && (commandStatus != EnumCommandSettingType.CommandStatus.NONE && commandStatus != EnumCommandSettingType.CommandStatus.ATTACK )
                 && dragon.getAttackTarget() != null) {
             dragon.setAttackTarget(null);
         }
@@ -192,13 +202,13 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             dragon.setAttackTarget(null);
         }
         if (attackDecision == EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP && dragon.getAttackTarget() != null) {
-            cap.setCommandStatus(EnumCommandStatus.ATTACK);
+            cap.setCommandStatus(EnumCommandSettingType.CommandStatus.ATTACK);
         }
-        if (attackDecision == EnumCommandSettingType.AttackDecisionType.GUARD && commandStatus != EnumCommandStatus.NONE) {
+        if (attackDecision == EnumCommandSettingType.AttackDecisionType.GUARD && commandStatus != EnumCommandSettingType.CommandStatus.NONE) {
             if (dragon.getAttackTarget() == null) {
-                cap.setCommandStatus(EnumCommandStatus.REACH);
+                cap.setCommandStatus(EnumCommandSettingType.CommandStatus.REACH);
             } else {
-                cap.setCommandStatus(EnumCommandStatus.ATTACK);
+                cap.setCommandStatus(EnumCommandSettingType.CommandStatus.ATTACK);
             }
         }
         if (attackDecision == EnumCommandSettingType.AttackDecisionType.GUARD && dragon.isMovementBlocked() ) {
@@ -206,7 +216,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
                 dragon.setQueuedToSit(false);
                 if (dragon.getCommand() == 1) {
                     cap.setDestination(dragon.getPosition());
-                    cap.setCommandStatus(EnumCommandStatus.REACH);
+                    cap.setCommandStatus(EnumCommandSettingType.CommandStatus.REACH);
                     dragon.setCommand(0);
                 }
             }
@@ -223,18 +233,18 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         }
         // Release control if the owner climbs up
         if (dragon.getControllingPassenger() != null) {
-            if (cap.getCommandStatus() == EnumCommandStatus.STAY || cap.getCommandStatus() == EnumCommandStatus.HOVER) {
+            if (cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.STAY || cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.HOVER) {
                 dragon.setCommand(1);
             } else if (dragon.getCommand() == 0) {
                 dragon.setCommand(2);
             }
-            dragon.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
+            dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                iCapTargetHolder.setCommandStatus(EnumCommandSettingType.CommandStatus.NONE);
             });
             return;
         }
         // Vanilla takes over
-        if (cap.getCommandStatus() == EnumCommandStatus.NONE) {
+        if (cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.NONE) {
             cap.setBreathTarget(null);
             return;
         }
@@ -242,16 +252,16 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
 
         // Resets attack target if the target is dead, vanilla behavior did this in the entity AI resetTask
         if ((dragon.getAttackTarget() != null && !dragon.getAttackTarget().isAlive())
-                || (dragon.getAttackTarget() == null && cap.getCommandStatus() == EnumCommandStatus.ATTACK)) {
+                || (dragon.getAttackTarget() == null && cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.ATTACK)) {
             if (!cap.getDestination().isPresent()) {
                 cap.setDestination(dragon.getPosition());
             }
 //            if (IafDragonBehaviorHelper.isDragonInAir(dragon)) {
-//                cap.setCommandStatus(EnumCommandStatus.HOVER);
+//                cap.setCommandStatus(CommandStatus.HOVER);
 //            } else {
-//                cap.setCommandStatus(EnumCommandStatus.STAY);
+//                cap.setCommandStatus(CommandStatus.STAY);
 //            }
-            cap.setCommandStatus(EnumCommandStatus.REACH);
+            cap.setCommandStatus(EnumCommandSettingType.CommandStatus.REACH);
             dragon.setAttackTarget(null);
             if (dragon.getAnimation() == EntityDragonBase.ANIMATION_SHAKEPREY) {
                 dragon.setAnimation(IAnimatedEntity.NO_ANIMATION);

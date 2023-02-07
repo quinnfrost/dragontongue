@@ -1,25 +1,22 @@
 package com.github.quinnfrost.dragontongue.iceandfire;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
-import com.github.alexthe666.iceandfire.entity.IafDragonAttacks;
 import com.github.alexthe666.iceandfire.entity.IafDragonFlightManager;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
-import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
+import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.math.vector.Vector3d;
 
 public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
     private EntityDragonBase dragon;
-    private ICapTargetHolder cap;
+    private ICapabilityInfoHolder cap;
     private Vector3d actualTarget;
 
     public IafAdvancedDragonFlightManager(EntityDragonBase dragon) {
         super(dragon);
         this.dragon = dragon;
-        this.cap = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
+        this.cap = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
     }
 
     public static boolean applyDragonFlightManager(LivingEntity dragonIn) {

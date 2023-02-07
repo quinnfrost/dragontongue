@@ -1,5 +1,59 @@
 {
   "itemGroup.dragontongue": "龙语",
   "item.dragontongue.crow_wand": "乌鸦魔杖",
-  "item.dragontongue.dragon_staff": "驯龙杖 仿品"
+  "item.dragontongue.dragon_staff": "驯龙杖 仿品",
+
+  "key.command_tamed": "龙语：设置指令",
+  "key.select_tamed": "龙语：选择随从",
+  "key.set_tamed_status": "龙语：设置状态",
+
+  "dragontongue.gui.reset": "重置",
+  "dragontongue.gui.command": "命令",
+  "dragontongue.gui.sleep": "睡觉",
+  "dragontongue.gui.return_roost": "回巢",
+  "dragontongue.gui.breath": "龙息",
+  "dragontongue.gui.destroy": "破坏",
+  "dragontongue.gui.movement": "行动",
+  "dragontongue.gui.attack_decision": "攻击",
+  "dragontongue.gui.ground_attack": "地面攻击方式",
+  "dragontongue.gui.air_attack": "空中攻击方式",
+
+  "dragontongue.gui.command.0": "游荡",
+  "dragontongue.gui.command.1": "坐下",
+  "dragontongue.gui.command.2": "跟随",
+
+  "dragontongue.gui.boolean.true": "对的",
+  "dragontongue.gui.boolean.false": "不对",
+
+  "dragontongue.gui.breath_type.ANY": "猛烈",
+  "dragontongue.gui.breath_type.WITHOUT_BLAST": "温和",
+  "dragontongue.gui.breath_type.NONE": "无",
+
+  "dragontongue.gui.destroy_type.ANY": "任意",
+  "dragontongue.gui.destroy_type.CAREFUL_AROUND_ROOST": "巢穴外",
+  "dragontongue.gui.destroy_type.NONE": "无",
+
+  "dragontongue.gui.movement_type.ANY": "任意",
+  "dragontongue.gui.movement_type.LAND": "走路",
+  "dragontongue.gui.movement_type.AIR": "飞行",
+
+  "dragontongue.gui.attack_decision.GUARD": "守备",
+  "dragontongue.gui.attack_decision.ALWAYS_HELP": "总会帮忙",
+  "dragontongue.gui.attack_decision.DONT_HELP": "不会帮忙",
+  "dragontongue.gui.attack_decision.NONE": "无",
+
+  "dragontongue.gui.ground_attack.ANY": "任意",
+  "dragontongue.gui.ground_attack.BITE": "咬",
+  "dragontongue.gui.ground_attack.SHAKE_PREY": "撕咬",
+  "dragontongue.gui.ground_attack.TAIL_WHIP": "甩尾",
+  "dragontongue.gui.ground_attack.WING_BLAST": "扑翼",
+  "dragontongue.gui.ground_attack.FIRE": "吐息",
+  "dragontongue.gui.ground_attack.NONE": "无",
+
+  "dragontongue.gui.air_attack.ANY": "任意",
+  "dragontongue.gui.air_attack.SCORCH_STREAM": "Scorch stream?",
+  "dragontongue.gui.air_attack.HOVER_BLAST": "悬停吐息",
+  "dragontongue.gui.air_attack.TACKLE": "Tackle?",
+  "dragontongue.gui.air_attack.NONE": "无"
+
 }

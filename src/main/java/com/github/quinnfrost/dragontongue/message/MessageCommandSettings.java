@@ -1,10 +1,9 @@
 package com.github.quinnfrost.dragontongue.message;
 
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
-import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
+import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.world.server.ServerWorld;
@@ -44,11 +43,11 @@ public class MessageCommandSettings {
             boolean response = contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_SERVER;
             ServerWorld serverWorld = contextSupplier.get().getSender().getServerWorld();
             Entity entity = serverWorld.getEntityByUuid(entityUUID);
-            ICapTargetHolder cap = entity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(entity));
+            ICapabilityInfoHolder cap = entity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(entity));
 
             switch (objectSettings) {
                 case COMMAND_STATUS:
-                    cap.setObjectSetting(EnumCommandSettingType.COMMAND_STATUS, EnumCommandStatus.class.getEnumConstants()[objectValue]);
+                    cap.setObjectSetting(EnumCommandSettingType.COMMAND_STATUS, EnumCommandSettingType.CommandStatus.class.getEnumConstants()[objectValue]);
                     break;
                 case GROUND_ATTACK_TYPE:
                     cap.setObjectSetting(EnumCommandSettingType.GROUND_ATTACK_TYPE, EnumCommandSettingType.GroundAttackType.class.getEnumConstants()[objectValue]);

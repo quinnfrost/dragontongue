@@ -1,6 +1,6 @@
 package com.github.quinnfrost.dragontongue.message;
 
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -42,12 +42,12 @@ public class MessageClientCommandDistance {
                 case COMMAND:
                     if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
                         ClientPlayerEntity clientPlayerEntity = (ClientPlayerEntity) util.getClientSidePlayer();
-                        clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                        clientPlayerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                             iCapTargetHolder.setCommandDistance(distance);
                         });
                     } else if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_SERVER) {
                         ServerPlayerEntity serverPlayerEntity = contextSupplier.get().getSender();
-                        serverPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                        serverPlayerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                             iCapTargetHolder.setCommandDistance(distance);
                         });
                     }
@@ -55,12 +55,12 @@ public class MessageClientCommandDistance {
                 case SELECT:
                     if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
                         ClientPlayerEntity clientPlayerEntity = (ClientPlayerEntity) util.getClientSidePlayer();
-                        clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                        clientPlayerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                             iCapTargetHolder.setSelectDistance(distance);
                         });
                     } else if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_SERVER) {
                         ServerPlayerEntity serverPlayerEntity = contextSupplier.get().getSender();
-                        serverPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                        serverPlayerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                             iCapTargetHolder.setSelectDistance(distance);
                         });
                     }

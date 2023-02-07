@@ -2,14 +2,13 @@ package com.github.quinnfrost.dragontongue.capability;
 
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 
 import javax.annotation.Nullable;
 import java.util.*;
 
-public class CapTargetHolderImpl implements ICapTargetHolder {
+public class CapabilityInfoHolderImpl implements ICapabilityInfoHolder {
     public static BlockPos INVALID_POS = new BlockPos(0, 0.5, 0);
     private Entity entity;
     private List<UUID> commandEntitiesUUIDs = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
@@ -26,17 +25,17 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
     private Map<EnumCommandSettingType, Enum> commandMaps = new EnumMap<>(EnumCommandSettingType.class);
 //    private Map<EnumCommandSettingType.BooleanSettings, Boolean> settingMaps = new EnumMap<EnumCommandSettingType.BooleanSettings, Boolean>(EnumCommandSettingType.BooleanSettings.class);
 
-    public CapTargetHolderImpl() {
-        new CapTargetHolderImpl(null);
+    public CapabilityInfoHolderImpl() {
+        new CapabilityInfoHolderImpl(null);
     }
 
-    public CapTargetHolderImpl(Entity entity) {
+    public CapabilityInfoHolderImpl(Entity entity) {
         this.entity = entity;
         if (entity != null) {
             this.commandDestination = Optional.of(entity.getPosition());
             this.fallbackPosition = entity.getPosition();
         }
-        commandMaps.put(EnumCommandSettingType.COMMAND_STATUS, EnumCommandStatus.NONE);
+        commandMaps.put(EnumCommandSettingType.COMMAND_STATUS, EnumCommandSettingType.CommandStatus.NONE);
         commandMaps.put(EnumCommandSettingType.GROUND_ATTACK_TYPE, EnumCommandSettingType.GroundAttackType.ANY);
         commandMaps.put(EnumCommandSettingType.AIR_ATTACK_TYPE, EnumCommandSettingType.AirAttackType.ANY);
         commandMaps.put(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP);
@@ -49,7 +48,7 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
     }
 
     @Override
-    public void copy(ICapTargetHolder cap) {
+    public void copy(ICapabilityInfoHolder cap) {
         commandEntitiesUUIDs = cap.getCommandEntities();
         commandDistance = cap.getCommandDistance();
         selectDistance = cap.getSelectDistance();
@@ -183,13 +182,13 @@ public class CapTargetHolderImpl implements ICapTargetHolder {
     }
 
     @Override
-    public void setCommandStatus(EnumCommandStatus status) {
+    public void setCommandStatus(EnumCommandSettingType.CommandStatus status) {
         commandMaps.put(EnumCommandSettingType.COMMAND_STATUS, status);
     }
 
     @Override
-    public EnumCommandStatus getCommandStatus() {
-        return (EnumCommandStatus) commandMaps.get(EnumCommandSettingType.COMMAND_STATUS);
+    public EnumCommandSettingType.CommandStatus getCommandStatus() {
+        return (EnumCommandSettingType.CommandStatus) commandMaps.get(EnumCommandSettingType.COMMAND_STATUS);
     }
 
     @Override

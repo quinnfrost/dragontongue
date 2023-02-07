@@ -1,8 +1,8 @@
 package com.github.quinnfrost.dragontongue.client;
 
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
-import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
+import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.client.overlay.OverlayCrossHair;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
@@ -14,7 +14,6 @@ import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
@@ -46,7 +45,7 @@ public class KeyBindRegistry {
     @OnlyIn(Dist.CLIENT)
     public static void scanScrollAction(ClientPlayerEntity clientPlayerEntity) {
         if (KeyBindRegistry.command_tamed.isKeyDown()) {
-            ICapTargetHolder cap = clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(clientPlayerEntity));
+            ICapabilityInfoHolder cap = clientPlayerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(clientPlayerEntity));
             RayTraceResult rayTraceResult = util.getTargetBlockOrEntity(Minecraft.getInstance().player, (float) cap.getCommandDistance(), null);
             if (rayTraceResult.getType() == RayTraceResult.Type.MISS) {
                 OverlayCrossHair.setCrossHairDisplay(null, 0, 2, OverlayCrossHair.IconType.WARN, true);
@@ -58,7 +57,7 @@ public class KeyBindRegistry {
                 case NONE:
                     break;
                 case UP:
-                    clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                    clientPlayerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                         RegistryMessages.sendToServer(
                                 new MessageClientCommandDistance(MessageClientCommandDistance.DistanceType.COMMAND, iCapTargetHolder.modifyCommandDistance(1))
                         );
@@ -66,7 +65,7 @@ public class KeyBindRegistry {
                     });
                     break;
                 case DOWN:
-                    clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                    clientPlayerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                         RegistryMessages.sendToServer(
                                 new MessageClientCommandDistance(MessageClientCommandDistance.DistanceType.COMMAND, iCapTargetHolder.modifyCommandDistance(-1))
                         );
@@ -80,7 +79,7 @@ public class KeyBindRegistry {
                 case NONE:
                     break;
                 case UP:
-                    clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                    clientPlayerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                         RegistryMessages.sendToServer(
                                 new MessageClientCommandDistance(MessageClientCommandDistance.DistanceType.SELECT, iCapTargetHolder.modifySelectDistance(1))
                         );
@@ -88,7 +87,7 @@ public class KeyBindRegistry {
                     });
                     break;
                 case DOWN:
-                    clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                    clientPlayerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                         RegistryMessages.sendToServer(
                                 new MessageClientCommandDistance(MessageClientCommandDistance.DistanceType.SELECT, iCapTargetHolder.modifySelectDistance(-1))
                         );
@@ -151,7 +150,7 @@ public class KeyBindRegistry {
 
         if (KeyBindRegistry.set_tamed_status.isKeyDown()) {
             GameSettings gameSettings = Minecraft.getInstance().gameSettings;
-            double commandDistance = clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(clientPlayerEntity)).getCommandDistance();
+            double commandDistance = clientPlayerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(clientPlayerEntity)).getCommandDistance();
             RayTraceResult rayTraceResult = util.getTargetBlockOrEntity(clientPlayerEntity,
                     Config.COMMAND_DISTANCE_MAX.get().floatValue(), null);
 
@@ -189,13 +188,13 @@ public class KeyBindRegistry {
         }
         if (KeyBindRegistry.command_tamed.isKeyDown()) {
             GameSettings gameSettings = Minecraft.getInstance().gameSettings;
-            double commandDistance = clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(clientPlayerEntity)).getCommandDistance();
+            double commandDistance = clientPlayerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(clientPlayerEntity)).getCommandDistance();
 //            EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(clientPlayerEntity,
 //                    Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f, null);
             BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(clientPlayerEntity, (float) commandDistance, 1.0f);
             RayTraceResult rayTraceResult = util.getTargetBlockOrEntity(clientPlayerEntity,
                     (float) commandDistance, null);
-            ICapTargetHolder capTargetHolder = clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(clientPlayerEntity));
+            ICapabilityInfoHolder capTargetHolder = clientPlayerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(clientPlayerEntity));
 
             // G + LB
             if (gameSettings.keyBindAttack.isKeyDown()) {
@@ -243,7 +242,7 @@ public class KeyBindRegistry {
 
         if (KeyBindRegistry.select_tamed.isKeyDown()) {
             GameSettings gameSettings = Minecraft.getInstance().gameSettings;
-            double commandDistance = clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(clientPlayerEntity)).getCommandDistance();
+            double commandDistance = clientPlayerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(clientPlayerEntity)).getCommandDistance();
             EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(clientPlayerEntity,
                     Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f, null);
             RayTraceResult rayTraceResult = util.getTargetBlockOrEntity(clientPlayerEntity,

@@ -4,7 +4,6 @@ import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.References;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.nbt.CompoundNBT;
@@ -21,16 +20,15 @@ import net.minecraftforge.event.AttachCapabilitiesEvent;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
-public class CapTargetHolder {
+public class CapabilityInfoHolder {
     public static final BlockPos INVALID_POS = new BlockPos(0, 0, 0);
-    @CapabilityInject(ICapTargetHolder.class)
-    public static Capability<ICapTargetHolder> TARGET_HOLDER = null;
+    @CapabilityInject(ICapabilityInfoHolder.class)
+    public static Capability<ICapabilityInfoHolder> TARGET_HOLDER = null;
 
     public static void register() {
-        CapabilityManager.INSTANCE.register(ICapTargetHolder.class, new Storage(), CapTargetHolderImpl::new);
+        CapabilityManager.INSTANCE.register(ICapabilityInfoHolder.class, new Storage(), CapabilityInfoHolderImpl::new);
     }
 
     public static void onAttachCapabilitiesEvent(AttachCapabilitiesEvent<Entity> event) {
@@ -41,10 +39,10 @@ public class CapTargetHolder {
         }
     }
 
-    public static class Storage implements Capability.IStorage<ICapTargetHolder> {
+    public static class Storage implements Capability.IStorage<ICapabilityInfoHolder> {
         @Nullable
         @Override
-        public INBT writeNBT(Capability<ICapTargetHolder> capability, ICapTargetHolder instance, Direction side) {
+        public INBT writeNBT(Capability<ICapabilityInfoHolder> capability, ICapabilityInfoHolder instance, Direction side) {
             ListNBT listNBT = new ListNBT();
             try {
                 CompoundNBT dataNBT = new CompoundNBT();
@@ -84,13 +82,13 @@ public class CapTargetHolder {
         }
 
         @Override
-        public void readNBT(Capability<ICapTargetHolder> capability, ICapTargetHolder instance, Direction side, INBT nbt) {
+        public void readNBT(Capability<ICapabilityInfoHolder> capability, ICapabilityInfoHolder instance, Direction side, INBT nbt) {
             ListNBT listNBT = (ListNBT) nbt;
             try {
                 CompoundNBT dataNBT = listNBT.getCompound(0);
 //                BlockPos blockPos = ;
 //                int fallbackTimer = ;
-////                EnumCommandStatus commandStatus = EnumCommandStatus.valueOf(dataNBT.getString("CommandStatus"));
+////                CommandStatus commandStatus = CommandStatus.valueOf(dataNBT.getString("CommandStatus"));
 //                BlockPos destination = ;
 //                double commandDistance = ;
 
@@ -112,7 +110,7 @@ public class CapTargetHolder {
                 instance.setShouldSleep(dataNBT.getBoolean("ShouldSleep"));
 
                 instance.setObjectSetting(
-                        EnumCommandSettingType.COMMAND_STATUS, EnumCommandStatus.class.getEnumConstants()[dataNBT.getInt("CommandStatus")]);
+                        EnumCommandSettingType.COMMAND_STATUS, EnumCommandSettingType.CommandStatus.class.getEnumConstants()[dataNBT.getInt("CommandStatus")]);
                 instance.setObjectSetting(
                         EnumCommandSettingType.GROUND_ATTACK_TYPE, EnumCommandSettingType.GroundAttackType.class.getEnumConstants()[dataNBT.getInt("GroundAttack")]);
                 instance.setObjectSetting(

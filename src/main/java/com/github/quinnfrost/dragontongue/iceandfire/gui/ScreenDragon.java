@@ -3,12 +3,13 @@ package com.github.quinnfrost.dragontongue.iceandfire.gui;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.References;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
-import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
+import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.container.ContainerDragon;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
+import com.github.quinnfrost.dragontongue.message.MessageCommandEntity;
 import com.github.quinnfrost.dragontongue.message.MessageSyncCapability;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.mojang.blaze3d.matrix.MatrixStack;
@@ -38,22 +39,23 @@ import net.minecraft.util.text.StringTextComponent;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class ScreenDragon extends ContainerScreen<ContainerDragon> {
     private static final ResourceLocation textureGuiDragon = new ResourceLocation(References.MOD_ID, "textures/gui/dragon.png");
     public static EntityDragonBase referencedDragon;
-    private static GameSettings gameSettings = Minecraft.getInstance().gameSettings;
-    private List<Button> buttons = new ArrayList<>();
-    private float relCentralXOffset = xSize / 2;
-    private float relCentralYOffset = 75;
-    private int relRightPanelXOffset = this.xSize + 10;
-    private int relRightPanelYOffset = 65;
-    private int buttonHeight = 20;
-    private int buttonWidth = 40;
-    private int stringLineSpacing = 9;
+    private static final GameSettings gameSettings = Minecraft.getInstance().gameSettings;
+    private final List<Button> buttons = new ArrayList<>();
+    private final float relCentralXOffset = xSize / 2;
+    private final float relCentralYOffset = 75;
+    private final int relRightPanelXOffset = this.xSize + 10;
+    private final int relRightPanelYOffset = 5;
+    private final int buttonHeight = 20;
+    private final int buttonWidth = 40;
+    private final int stringLineSpacing = 9;
     private float mousePosX;
     private float mousePosY;
-    private ICapTargetHolder cap;
+    private ICapabilityInfoHolder cap;
     private Boolean shouldReturnRoost;
     private Boolean shouldSleep;
     private EnumCommandSettingType.BreathType breathType;
@@ -76,21 +78,21 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
         int relX = (this.width - this.xSize) / 2;
         int relY = (this.height - this.ySize) / 2;
 
-        cap = referencedDragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(referencedDragon));
+        cap = referencedDragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(referencedDragon));
 
         Button buttonReset = new Button(
                 relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset,
+                relY + relRightPanelYOffset - 5,
                 buttonWidth,
                 buttonHeight,
-                new StringTextComponent("Reset"),
+                new StringTextComponent(translateToLocal("dragontongue.gui.reset")),
                 button -> {
                     cap.setShouldSleep(true);
                     cap.setReturnHome(true);
-                    cap.setObjectSetting(EnumCommandSettingType.COMMAND_STATUS, EnumCommandStatus.NONE);
+                    cap.setObjectSetting(EnumCommandSettingType.COMMAND_STATUS, EnumCommandSettingType.CommandStatus.NONE);
                     cap.setObjectSetting(EnumCommandSettingType.GROUND_ATTACK_TYPE, EnumCommandSettingType.GroundAttackType.ANY);
                     cap.setObjectSetting(EnumCommandSettingType.AIR_ATTACK_TYPE, EnumCommandSettingType.AirAttackType.ANY);
-                    cap.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.DONT_HELP);
+                    cap.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP);
 
                     cap.setObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE, EnumCommandSettingType.MovementType.ANY);
                     cap.setObjectSetting(EnumCommandSettingType.DESTROY_TYPE, EnumCommandSettingType.DestroyType.ANY);
@@ -102,9 +104,28 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
         buttonReset.setAlpha(0.9f);
         buttons.add(buttonReset);
 
-        Button buttonSleep = new Button(
+        Button buttonStatus = new Button(
                 relX + relRightPanelXOffset,
                 relY + relRightPanelYOffset + buttonHeight,
+                buttonWidth,
+                buttonHeight,
+                new StringTextComponent(translateToLocal("")),
+                button -> {
+                    cap.setCommandStatus(EnumCommandSettingType.CommandStatus.NONE);
+                    RegistryMessages.sendToServer(new MessageCommandEntity(
+                            EnumCommandType.LOOP_STATUS, minecraft.player.getUniqueID(), referencedDragon.getUniqueID()
+                    ));
+
+                    RegistryMessages.sendToServer(new MessageSyncCapability(referencedDragon));
+                    minecraft.player.sendStatusMessage(ITextComponent.getTextComponentOrEmpty(String.valueOf(referencedDragon.getCommand())), true);
+//                    minecraft.displayGuiScreen(null);
+                });
+        buttonStatus.setAlpha(0.9f);
+        buttons.add(buttonStatus);
+
+        Button buttonSleep = new Button(
+                relX + relRightPanelXOffset,
+                relY + relRightPanelYOffset + buttonHeight * 2,
                 buttonWidth,
                 buttonHeight,
                 new StringTextComponent(""),
@@ -122,7 +143,7 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
 
         Button buttonRoost = new Button(
                 relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight * 2,
+                relY + relRightPanelYOffset + buttonHeight * 3,
                 buttonWidth,
                 buttonHeight,
                 new StringTextComponent(""),
@@ -139,7 +160,7 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
 
         Button buttonBreath = new Button(
                 relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight * 3,
+                relY + relRightPanelYOffset + buttonHeight * 4,
                 buttonWidth,
                 buttonHeight,
                 new StringTextComponent(""),
@@ -154,7 +175,7 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
 
         Button buttonDestroy = new Button(
                 relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight * 4,
+                relY + relRightPanelYOffset + buttonHeight * 5,
                 buttonWidth,
                 buttonHeight,
                 new StringTextComponent(""),
@@ -169,7 +190,7 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
 
         Button buttonMovement = new Button(
                 relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight * 5,
+                relY + relRightPanelYOffset + buttonHeight * 6,
                 buttonWidth,
                 buttonHeight,
                 new StringTextComponent(""),
@@ -184,7 +205,7 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
 
         Button buttonAttackDecision = new Button(
                 relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight * 6,
+                relY + relRightPanelYOffset + buttonHeight * 7,
                 buttonWidth,
                 buttonHeight,
                 new StringTextComponent(""),
@@ -199,7 +220,7 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
 
         Button buttonGroundAttack = new Button(
         relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight * 7,
+                relY + relRightPanelYOffset + buttonHeight * 8,
                 buttonWidth,
                 buttonHeight,
                 new StringTextComponent(""),
@@ -214,7 +235,7 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
 
         Button buttonAirAttack = new Button(
         relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight * 8,
+                relY + relRightPanelYOffset + buttonHeight * 9,
                 buttonWidth,
                 buttonHeight,
                 new StringTextComponent(""),
@@ -293,15 +314,16 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
 
         stringList = new ArrayList<>();
 
-        stringList.add("Reset");
-        stringList.add("Sleep");
-        stringList.add("ReturnRoost");
-        stringList.add("Breath");
-        stringList.add("Destroy");
-        stringList.add("Movement");
-        stringList.add("AttackDecision");
-        stringList.add("GroundAttack");
-        stringList.add("AirAttack");
+        stringList.add(translateToLocal(""));
+        stringList.add(translateToLocal("dragontongue.gui.command"));
+        stringList.add(translateToLocal("dragontongue.gui.sleep"));
+        stringList.add(translateToLocal("dragontongue.gui.return_roost"));
+        stringList.add(translateToLocal("dragontongue.gui.breath"));
+        stringList.add(translateToLocal("dragontongue.gui.destroy"));
+        stringList.add(translateToLocal("dragontongue.gui.movement"));
+        stringList.add(translateToLocal("dragontongue.gui.attack_decision"));
+        stringList.add(translateToLocal("dragontongue.gui.ground_attack"));
+        stringList.add(translateToLocal("dragontongue.gui.air_attack"));
 
         offset = 0;
         for (String displayString :
@@ -320,33 +342,37 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
         airAttackType = (EnumCommandSettingType.AirAttackType) cap.getObjectSetting(EnumCommandSettingType.AIR_ATTACK_TYPE);
 
         buttons.get(1).setMessage(ITextComponent.getTextComponentOrEmpty(
-                String.valueOf(shouldSleep)
+                translateToLocal("dragontongue.gui.command." + referencedDragon.getCommand())
         ));
         buttons.get(2).setMessage(ITextComponent.getTextComponentOrEmpty(
-                String.valueOf(shouldReturnRoost)
+                translateToLocal("dragontongue.gui.boolean." + shouldSleep)
         ));
         buttons.get(3).setMessage(ITextComponent.getTextComponentOrEmpty(
-                String.valueOf(breathType)
+                translateToLocal("dragontongue.gui.boolean." + shouldReturnRoost)
         ));
         buttons.get(4).setMessage(ITextComponent.getTextComponentOrEmpty(
-                String.valueOf(destroyType)
+                translateToLocal("dragontongue.gui.breath_type." + breathType)
         ));
         buttons.get(5).setMessage(ITextComponent.getTextComponentOrEmpty(
-                String.valueOf(movementType)
+                translateToLocal("dragontongue.gui.destroy_type." + destroyType)
         ));
         buttons.get(6).setMessage(ITextComponent.getTextComponentOrEmpty(
-                String.valueOf(attackDecisionType)
+                translateToLocal("dragontongue.gui.movement_type." + movementType)
         ));
         buttons.get(7).setMessage(ITextComponent.getTextComponentOrEmpty(
-                String.valueOf(groundAttackType)
+                translateToLocal("dragontongue.gui.attack_decision." + attackDecisionType)
         ));
         buttons.get(8).setMessage(ITextComponent.getTextComponentOrEmpty(
-                String.valueOf(airAttackType)
+                translateToLocal("dragontongue.gui.ground_attack." + groundAttackType)
+        ));
+        buttons.get(9).setMessage(ITextComponent.getTextComponentOrEmpty(
+                translateToLocal("dragontongue.gui.air_attack." + airAttackType)
         ));
 
 
     }
 
+    // from GuiDragon#33
     public static void drawEntityOnScreen(int posX, int posY, float scale, float mouseX, float mouseY, LivingEntity livingEntity) {
         float f = (float) Math.atan(mouseX / 40.0F);
         float f1 = (float) Math.atan(mouseY / 40.0F);
@@ -389,7 +415,7 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
     }
 
     public static String translateToLocal(String s) {
-        return I18n.format(s, new Object[0]);
+        return I18n.format(s);
     }
 
     /**

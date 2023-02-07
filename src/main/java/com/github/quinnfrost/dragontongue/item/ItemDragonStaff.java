@@ -1,9 +1,8 @@
 package com.github.quinnfrost.dragontongue.item;
 
-import com.github.quinnfrost.dragontongue.Registration;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
-import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
+import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
 import com.github.quinnfrost.dragontongue.message.MessageCommandEntity;
@@ -49,7 +48,7 @@ public class ItemDragonStaff extends Item {
         if (!worldIn.isRemote) {
             return super.onItemRightClick(worldIn, playerIn, handIn);
         }
-        ICapTargetHolder capabilityInfoHolder = playerIn.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(playerIn));
+        ICapabilityInfoHolder capabilityInfoHolder = playerIn.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(playerIn));
         ItemStack itemStack = playerIn.getHeldItem(Hand.MAIN_HAND);
 
         // Get target entity

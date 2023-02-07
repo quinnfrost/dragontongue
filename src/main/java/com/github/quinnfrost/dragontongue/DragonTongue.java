@@ -1,9 +1,8 @@
 package com.github.quinnfrost.dragontongue;
 
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.client.KeyBindRegistry;
 import com.github.quinnfrost.dragontongue.client.render.RenderEvent;
-import com.github.quinnfrost.dragontongue.event.CommonEvents;
 import com.github.quinnfrost.dragontongue.iceandfire.event.IafServerEvent;
 import com.github.quinnfrost.dragontongue.iceandfire.gui.ScreenDragon;
 import com.github.quinnfrost.dragontongue.client.overlay.OverlayRenderEvent;
@@ -12,11 +11,8 @@ import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.container.RegistryContainers;
 import com.github.quinnfrost.dragontongue.event.ClientEvents;
 import com.github.quinnfrost.dragontongue.event.ServerEvents;
-import com.github.quinnfrost.dragontongue.proxy.ClientProxy;
-import com.github.quinnfrost.dragontongue.proxy.CommonProxy;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScreenManager;
 import net.minecraft.entity.Entity;
@@ -27,8 +23,6 @@ import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -40,8 +34,6 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.util.stream.Collectors;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(References.MOD_ID)
@@ -66,10 +58,10 @@ public class DragonTongue
 
         // Test if Ice-And-Fire is installed
         if(util.isClassPresent(References.IAF_CLASS_NAME)) {
-            LOGGER.info("Ice and fire mod found");
+            LOGGER.info("Ice and fire mod found, let's roll.");
             isIafPresent = true;
         } else {
-            LOGGER.info("Ice and fire mod not found");
+            LOGGER.info("Ice and fire mod not found.");
             isIafPresent = false;
         }
 
@@ -80,13 +72,14 @@ public class DragonTongue
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
 //        PROXY.init();
-        MinecraftForge.EVENT_BUS.register(CommonEvents.class);
+//        MinecraftForge.EVENT_BUS.register(CommonEvents.class);
         MinecraftForge.EVENT_BUS.register(ServerEvents.class);
 
         if (isIafPresent) {
             IafServerEvent.register(MinecraftForge.EVENT_BUS);
         }
 
+        // Todo: more settings!
         // Load configs
         Config.loadConfig(Config.CLIENT_CONFIG,
                 FMLPaths.CONFIGDIR.get().resolve(References.CLIENT_CONFIG_NAME + "-client.toml"));
@@ -98,19 +91,19 @@ public class DragonTongue
     private void setup(final FMLCommonSetupEvent event)
     {
         // some preinit code
-        LOGGER.info("HELLO FROM PREINIT");
-        LOGGER.info("DIRT BLOCK >> {}", Blocks.DIRT.getRegistryName());
+//        LOGGER.info("HELLO FROM PREINIT");
+//        LOGGER.info("DIRT BLOCK >> {}", Blocks.DIRT.getRegistryName());
 
         // Setup sided proxy
 //        CommonProxy.commonInit();
 
         // Register the custom capability
-        CapTargetHolder.register();
+        CapabilityInfoHolder.register();
     }
 
     private void doClientStuff(final FMLClientSetupEvent event) {
         // do something that can only be done on the client
-        LOGGER.info("Got game settings {}", event.getMinecraftSupplier().get().gameSettings);
+//        LOGGER.info("Got game settings {}", event.getMinecraftSupplier().get().gameSettings);
 
         // Setup client proxy
 //        ClientProxy.clientInit();
@@ -130,21 +123,21 @@ public class DragonTongue
     private void enqueueIMC(final InterModEnqueueEvent event)
     {
         // some example code to dispatch IMC to another mod
-        InterModComms.sendTo("examplemod", "helloworld", () -> { LOGGER.info("Hello world from the MDK"); return "Hello world";});
+//        InterModComms.sendTo("examplemod", "helloworld", () -> { LOGGER.info("Hello world from the MDK"); return "Hello world";});
     }
 
     private void processIMC(final InterModProcessEvent event)
     {
         // some example code to receive and process InterModComms from other mods
-        LOGGER.info("Got IMC {}", event.getIMCStream().
-                map(m->m.getMessageSupplier().get()).
-                collect(Collectors.toList()));
+//        LOGGER.info("Got IMC {}", event.getIMCStream().
+//                map(m->m.getMessageSupplier().get()).
+//                collect(Collectors.toList()));
     }
     // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent
     public void onServerStarting(FMLServerStartingEvent event) {
         // do something when the server starts
-        LOGGER.info("HELLO from server starting");
+//        LOGGER.info("HELLO from server starting");
         RegistryCommands.registerCommands(event.getServer().getFunctionManager().getCommandDispatcher());
     }
 
@@ -163,7 +156,7 @@ public class DragonTongue
 
     @SubscribeEvent
     public static void onAttachCapabilitiesEvent(AttachCapabilitiesEvent<Entity> event) {
-        CapTargetHolder.onAttachCapabilitiesEvent(event);
+        CapabilityInfoHolder.onAttachCapabilitiesEvent(event);
     }
 
     // You can use EventBusSubscriber to automatically subscribe events on the contained class (this is subscribing to the MOD
@@ -173,7 +166,7 @@ public class DragonTongue
         @SubscribeEvent
         public static void onBlocksRegistry(final RegistryEvent.Register<Block> blockRegistryEvent) {
             // register a new block here
-            LOGGER.info("HELLO from Register Block");
+//            LOGGER.info("HELLO from Register Block");
         }
     }
 }

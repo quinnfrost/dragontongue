@@ -1,7 +1,6 @@
 package com.github.quinnfrost.dragontongue.capability;
 
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.List;
@@ -9,8 +8,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ICapTargetHolder {
-    void copy(ICapTargetHolder cap);
+public interface ICapabilityInfoHolder {
+    void copy(ICapabilityInfoHolder cap);
     List<UUID> getCommandEntities();
     void setCommandEntities(List<UUID> uuids);
     void addCommandEntity(UUID uuid);
@@ -30,8 +29,8 @@ public interface ICapTargetHolder {
 
     void setDestination(BlockPos blockPos);
     Optional<BlockPos> getDestination();
-    void setCommandStatus(EnumCommandStatus status);
-    EnumCommandStatus getCommandStatus();
+    void setCommandStatus(EnumCommandSettingType.CommandStatus status);
+    EnumCommandSettingType.CommandStatus getCommandStatus();
     void setBreathTarget(BlockPos target);
     Optional<BlockPos> getBreathTarget();
     void setHomePosition(BlockPos blockPos);

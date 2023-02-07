@@ -1,5 +1,59 @@
 {
   "itemGroup.dragontongue": "Dragontongue Items",
   "item.dragontongue.crow_wand": "Crow wand",
-  "item.dragontongue.dragon_staff": "Dragon staff replica"
+  "item.dragontongue.dragon_staff": "Dragon staff replica",
+
+  "key.command_tamed": "Dragontongue: Command tamed",
+  "key.select_tamed": "Dragontongue: Select tamed",
+  "key.set_tamed_status": "Dragontongue: Set status",
+
+  "dragontongue.gui.reset": "Reset",
+  "dragontongue.gui.command": "Command",
+  "dragontongue.gui.sleep": "Sleep",
+  "dragontongue.gui.return_roost": "Return roost",
+  "dragontongue.gui.breath": "Breath type",
+  "dragontongue.gui.destroy": "Destruction",
+  "dragontongue.gui.movement": "Movement type",
+  "dragontongue.gui.attack_decision": "Attack decision",
+  "dragontongue.gui.ground_attack": "Ground attack type",
+  "dragontongue.gui.air_attack": "Air attack type",
+
+  "dragontongue.gui.command.0": "Wonder",
+  "dragontongue.gui.command.1": "Sit",
+  "dragontongue.gui.command.2": "Escort",
+
+  "dragontongue.gui.boolean.true": "True",
+  "dragontongue.gui.boolean.false": "False",
+
+  "dragontongue.gui.breath_type.ANY": "Violent",
+  "dragontongue.gui.breath_type.WITHOUT_BLAST": "Mild",
+  "dragontongue.gui.breath_type.NONE": "None",
+
+  "dragontongue.gui.destroy_type.ANY": "Any",
+  "dragontongue.gui.destroy_type.CAREFUL_AROUND_ROOST": "Outside roost",
+  "dragontongue.gui.destroy_type.NONE": "None",
+
+  "dragontongue.gui.movement_type.ANY": "Any",
+  "dragontongue.gui.movement_type.LAND": "Walk",
+  "dragontongue.gui.movement_type.AIR": "Fly",
+
+  "dragontongue.gui.attack_decision.GUARD": "Guard",
+  "dragontongue.gui.attack_decision.ALWAYS_HELP": "Always help",
+  "dragontongue.gui.attack_decision.DONT_HELP": "Don't help",
+  "dragontongue.gui.attack_decision.NONE": "None",
+
+  "dragontongue.gui.ground_attack.ANY": "Any",
+  "dragontongue.gui.ground_attack.BITE": "Bite",
+  "dragontongue.gui.ground_attack.SHAKE_PREY": "Shake prey",
+  "dragontongue.gui.ground_attack.TAIL_WHIP": "Tail whip",
+  "dragontongue.gui.ground_attack.WING_BLAST": "Wing blast",
+  "dragontongue.gui.ground_attack.FIRE": "Fire",
+  "dragontongue.gui.ground_attack.NONE": "None",
+
+  "dragontongue.gui.air_attack.ANY": "Any",
+  "dragontongue.gui.air_attack.SCORCH_STREAM": "Scorch stream",
+  "dragontongue.gui.air_attack.HOVER_BLAST": "Hover blast",
+  "dragontongue.gui.air_attack.TACKLE": "Tackle",
+  "dragontongue.gui.air_attack.NONE": "None"
+
 }

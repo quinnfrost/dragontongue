@@ -1,9 +1,10 @@
 package com.github.quinnfrost.dragontongue.event;
 
 import com.github.quinnfrost.dragontongue.DragonTongue;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
-import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
+import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.entity.ai.RegistryAI;
 import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
@@ -76,12 +77,12 @@ public class ServerEvents {
 
         ProjectileEntity projectile = event.getArrow();
         Entity shooter = projectile.getShooter();
-        ServerWorld serverWorld = (ServerWorld) shooter.getEntityWorld();
 
         // Trident teleports
         if (projectile instanceof TridentEntity && shooter instanceof ServerPlayerEntity) {
+            ServerWorld serverWorld = (ServerWorld) shooter.getEntityWorld();
             ServerPlayerEntity player = (ServerPlayerEntity) shooter;
-            if (shooter.isSneaking() && event.getRayTraceResult().getType() != RayTraceResult.Type.MISS) {
+            if (Config.TRIDENT_TELEPORT.get() && shooter.isSneaking() && event.getRayTraceResult().getType() != RayTraceResult.Type.MISS) {
                 Vector3d targetBlock = event.getRayTraceResult().getHitVec();
                 shooter.teleportKeepLoaded(targetBlock.getX(), targetBlock.getY(), targetBlock.getZ());
                 util.spawnParticleForce(serverWorld, ParticleTypes.PORTAL, targetBlock.getX(), targetBlock.getY(),
@@ -115,7 +116,7 @@ public class ServerEvents {
         Item mainhandItem = player.getHeldItemMainhand().getItem();
         Item offhandItem = player.getHeldItemOffhand().getItem();
         // Player can fall back before fallback timer tick to 0
-        player.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+        player.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
             iCapTargetHolder.tickFallbackTimer();
             List<String> msg = new ArrayList<>();
             msg.add(String.valueOf(iCapTargetHolder.getFallbackTimer()));
@@ -150,7 +151,7 @@ public class ServerEvents {
             // Ask all clients to draw entity destination
             if (event.getEntityLiving() instanceof PlayerEntity && DragonTongue.debugTarget != null) {
                 PlayerEntity playerEntity = (PlayerEntity) event.getEntityLiving();
-                ICapTargetHolder cap = playerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(playerEntity));
+                ICapabilityInfoHolder cap = playerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(playerEntity));
                 for (UUID entityUUID :
                         cap.getCommandEntities()) {
                     MobEntity mobEntity = (MobEntity) ((ServerWorld) playerEntity.world).getEntityByUuid(entityUUID);
@@ -181,7 +182,7 @@ public class ServerEvents {
             CompoundNBT compoundNBT = new CompoundNBT();
             DragonTongue.debugTarget.writeAdditional(compoundNBT);
 
-            ICapTargetHolder capabilityInfoHolder = mobEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(mobEntity));
+            ICapabilityInfoHolder capabilityInfoHolder = mobEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(mobEntity));
             BlockPos targetPos = mobEntity.getNavigator().getTargetPos();
             String targetPosString = (targetPos == null ? "" :
                     targetPos + "(" + String.valueOf(util.getDistance(mobEntity.getPosition(), targetPos))) + ")";
@@ -237,7 +238,7 @@ public class ServerEvents {
         // Initial capability update for the first time player logs in
         if (entity instanceof PlayerEntity) {
             PlayerEntity playerEntity = (PlayerEntity) entity;
-            playerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+            playerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                 RegistryMessages.sendToClient(new MessageSyncCapability(playerEntity), (ServerPlayerEntity) playerEntity);
             });
         }
@@ -257,7 +258,7 @@ public class ServerEvents {
     }
 
     @SubscribeEvent
-    public static void onEntityUseItem(PlayerInteractEvent.EntityInteractSpecific event) {
+    public static void onEntityInteractSpecific(PlayerInteractEvent.EntityInteractSpecific event) {
         if (event.getEntity().world.isRemote) {
             return;
         }
@@ -330,7 +331,7 @@ public class ServerEvents {
         if (targetEntity instanceof TameableEntity) {
             TameableEntity tameableEntity = (TameableEntity) targetEntity;
             if (tameableEntity instanceof WolfEntity && playerEntity.isSneaking() && tameableEntity.isOwner(playerEntity)) {
-                tameableEntity.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                tameableEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                     if (iCapTargetHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE) != EnumCommandSettingType.AttackDecisionType.GUARD) {
 //                        playerEntity.sendStatusMessage(ITextComponent.getTextComponentOrEmpty("Attack decision set to guard"), true);
                         iCapTargetHolder.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.GUARD);

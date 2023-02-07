@@ -1,7 +1,7 @@
 package com.github.quinnfrost.dragontongue.message;
 
 import com.github.quinnfrost.dragontongue.DragonTongue;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCrowWand;
 import com.github.quinnfrost.dragontongue.utils.util;
@@ -71,21 +71,7 @@ public class MessageCrowWand {
                     case PASS:
                         break;
                     case TELEPORT:
-                        player.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                            switch (blockRayTraceResult.getFace()) {
-                                case DOWN:
-                                    break;
-                                case UP:
-                                    break;
-                                case NORTH:
-                                    break;
-                                case SOUTH:
-                                    break;
-                                case WEST:
-                                    break;
-                                case EAST:
-                                    break;
-                            }
+                        player.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                             iCapTargetHolder.setFallbackPosition(player.getPosition());
                             player.addPotionEffect(new EffectInstance(Effects.BLINDNESS, 10, 0, true, false));
                             player.teleportKeepLoaded(targetX, targetY, targetZ);
@@ -96,7 +82,7 @@ public class MessageCrowWand {
 
                         break;
                     case FALLBACK:
-                        player.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+                        player.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                             if (iCapTargetHolder.getFallbackTimer() != 0) {
                                 Vector3d playerPos = player.getPositionVec();
                                 player.teleportKeepLoaded(iCapTargetHolder.getFallbackPosition().getX(),

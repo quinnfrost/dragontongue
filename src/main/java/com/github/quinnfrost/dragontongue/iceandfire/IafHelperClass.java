@@ -9,9 +9,9 @@ import com.github.alexthe666.iceandfire.item.ItemDragonsteelArmor;
 import com.github.alexthe666.iceandfire.item.ItemScaleArmor;
 import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.DragonTongue;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
-import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
-import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
+import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.message.MessageClientDraw;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
@@ -102,7 +102,7 @@ public class IafHelperClass {
         CompoundNBT compoundNBT = new CompoundNBT();
         DragonTongue.debugTarget.writeAdditional(compoundNBT);
 
-        ICapTargetHolder capabilityInfoHolder = dragon.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(dragon));
+        ICapabilityInfoHolder capabilityInfoHolder = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
         BlockPos targetPos = getReachTarget(dragon);
 
         float distX = (float) (dragon.flightManager.getFlightTarget().x - dragon.getPosX());
@@ -158,7 +158,8 @@ public class IafHelperClass {
     /**
      * Determine if player is wearing full set of dragon scale/steel set
      * @param playerEntity
-     * @return For scale set, "ice","fire","lightning". For steel set, "dragonsteel_ice" and alike.
+     * @return For scale set, "ice","fire","lightning". For steel set, "dragonsteel_ice", "dragonsteel fire", "dragonsteel_lightning".
+     *         Dragon steel fire the name is DIFFERENT for unknown reason
      */
     @Nullable
     public static String isFullSetOf(PlayerEntity playerEntity) {

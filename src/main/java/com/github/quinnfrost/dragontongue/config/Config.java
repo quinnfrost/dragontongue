@@ -22,7 +22,7 @@ public class Config {
     public static ForgeConfigSpec COMMON_CONFIG;
     public static ForgeConfigSpec CLIENT_CONFIG;
 
-    public static ForgeConfigSpec.BooleanValue DEBUG;
+    public static ForgeConfigSpec.BooleanValue TRIDENT_TELEPORT;
     public static ForgeConfigSpec.IntValue COMMAND_ENTITIES_MAX;
     public static ForgeConfigSpec.DoubleValue CROW_WAND_RANGE_MAX;
     public static ForgeConfigSpec.DoubleValue COMMAND_DISTANCE_MAX;
@@ -31,8 +31,6 @@ public class Config {
 
     static {
         COMMON_BUILDER.comment("General settings").push(CATEGORY_GENERAL);
-        DEBUG = COMMON_BUILDER.comment("Enable verbose output to console")
-                .define("verbose", false);
         COMMAND_ENTITIES_MAX = COMMON_BUILDER.comment("Max entities to command")
                         .defineInRange("count", 10, 1, 20);
         COMMON_BUILDER.pop();
@@ -48,8 +46,9 @@ public class Config {
 
     private static void setupItemConfig(){
 
-        COMMAND_DISTANCE_MAX = COMMON_BUILDER.comment("Distance in block the entity can be targeted").defineInRange("command_distance_max",256f,0,512);
-        NEARBY_RANGE = COMMON_BUILDER.comment("Distance in block the entity nearby will attack").defineInRange("nearby_range",128f,0,512);
+        TRIDENT_TELEPORT = COMMON_BUILDER.comment("Do trident teleport thrower on hit").define("do_trident_teleport", false);
+        COMMAND_DISTANCE_MAX = COMMON_BUILDER.comment("Max distance in block the entity can be targeted").defineInRange("command_distance_max",256f,0,512);
+        NEARBY_RANGE = COMMON_BUILDER.comment("Max distance in block the entity nearby will attack").defineInRange("nearby_range",128f,0,512);
         CROW_WAND_RANGE_MAX = COMMON_BUILDER.comment("Distance in block the crow wand can takes you").defineInRange("crow_wand_range_max",256f,0,512);
 
     }
