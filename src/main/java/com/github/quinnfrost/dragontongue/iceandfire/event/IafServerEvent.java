@@ -154,9 +154,6 @@ public class IafServerEvent {
 
     // This event is called in server event, could register though
     public static boolean onEntityInteract(PlayerInteractEvent.EntityInteract event) {
-        if (event.getWorld().isRemote) {
-            return false;
-        }
         Entity targetEntity = event.getTarget();
         if (IafHelperClass.isDragon(IafHelperClass.getDragon(targetEntity)) && event.getEntityLiving() instanceof PlayerEntity) {
             EntityDragonBase dragon = IafHelperClass.getDragon(targetEntity);
@@ -213,16 +210,13 @@ public class IafServerEvent {
     }
 
     public static boolean onEntityUseItem(PlayerInteractEvent.RightClickItem event) {
-        if (event.getWorld().isRemote) {
-            return false;
-        }
         if (event.getEntityLiving() instanceof PlayerEntity) {
             PlayerEntity playerEntity = (PlayerEntity) event.getEntityLiving();
             Hand hand = event.getHand();
             ItemStack itemStack = playerEntity.getHeldItem(hand);
 
             // Hijack the original dragon staff function in EntityDragonBase#1269
-            if (itemStack.getItem() == IafItemRegistry.DRAGON_STAFF && !playerEntity.isSneaking()) {
+            if (itemStack.getItem() == IafItemRegistry.DRAGON_STAFF) {
                 EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(playerEntity, Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f,
                         entity -> entity instanceof EntityDragonPart || entity instanceof LivingEntity);
                 if (entityRayTraceResult == null || !IafHelperClass.isDragon(IafHelperClass.getDragon(entityRayTraceResult.getEntity()))) {
@@ -232,13 +226,15 @@ public class IafServerEvent {
 
                 playerEntity.sendMessage(ITextComponent.getTextComponentOrEmpty("Dragon staff used"), Util.DUMMY_UUID);
 
-                if (util.isOwner(dragon, playerEntity)) {
-                    RegistryMessages.sendToClient(new MessageClientSetReferenceDragon(
-                            dragon.getEntityId()
-                    ), (ServerPlayerEntity) playerEntity);
-                    ScreenDragon.openGui(playerEntity, dragon);
-                    event.setCancellationResult(ActionResultType.SUCCESS);
-                    event.setCanceled(true);
+                if (!playerEntity.isSneaking()) {
+                    if (util.isOwner(dragon, playerEntity)) {
+                        RegistryMessages.sendToClient(new MessageClientSetReferenceDragon(
+                                dragon.getEntityId()
+                        ), (ServerPlayerEntity) playerEntity);
+                        ScreenDragon.openGui(playerEntity, dragon);
+                        event.setCancellationResult(ActionResultType.SUCCESS);
+                        event.setCanceled(true);
+                    }
                 }
             }
         }
@@ -334,16 +330,10 @@ public class IafServerEvent {
     }
 
     public static void onEntityDamage(LivingDamageEvent event) {
-        if (event.getEntity().world.isRemote) {
-            return;
-        }
 
     }
 
     public static boolean onEntityAttacked(LivingAttackEvent event) {
-        if (event.getEntity().world.isRemote) {
-            return false;
-        }
         Entity entity = event.getEntity();
         DamageSource damageSource = event.getSource();
         BlockPos blockPos = new BlockPos(entity.getPosition());

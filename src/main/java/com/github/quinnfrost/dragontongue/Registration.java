@@ -16,12 +16,12 @@ public class Registration {
     public static final DeferredRegister<ContainerType<?>> CONTAINERS = DeferredRegister.create(ForgeRegistries.CONTAINERS, References.MOD_ID);
 
     // Add new creative mod tab
-    public static final ItemGroup TAB_DRAGONTONGUE = new ItemGroup("dragontongue") {
-        @Override
-        public ItemStack createIcon() {
-            return new ItemStack(RegistryItems.CROW_WAND.get());
-        }
-    };
+//    public static final ItemGroup TAB_DRAGONTONGUE = new ItemGroup("dragontongue") {
+//        @Override
+//        public ItemStack createIcon() {
+//            return new ItemStack(RegistryItems.CROW_WAND.get());
+//        }
+//    };
 
     public static void registerModContent(IEventBus eventBus) {
         RegistryItems.registerItems(eventBus);

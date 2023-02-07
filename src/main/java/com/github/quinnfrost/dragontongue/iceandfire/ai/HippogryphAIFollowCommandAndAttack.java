@@ -1,26 +1,23 @@
-package com.github.quinnfrost.dragontongue.entity.ai;
+package com.github.quinnfrost.dragontongue.iceandfire.ai;
 
+import com.github.alexthe666.iceandfire.entity.EntityHippogryph;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
+import com.github.quinnfrost.dragontongue.entity.ai.FollowCommandAndAttackGoal;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import net.minecraft.entity.CreatureEntity;
-import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.ai.goal.MeleeAttackGoal;
 
-import java.util.EnumSet;
-
-public class FollowCommandAndAttackGoal extends MeleeAttackGoal {
-    protected CreatureEntity creature;
-    protected ICapTargetHolder capabilityInfoHolder;
-
-    public FollowCommandAndAttackGoal(CreatureEntity creature, double speedIn, boolean useLongMemory) {
+public class HippogryphAIFollowCommandAndAttack extends MeleeAttackGoal {
+    EntityHippogryph hippogryph;
+    ICapTargetHolder capabilityInfoHolder;
+    public HippogryphAIFollowCommandAndAttack(EntityHippogryph creature, double speedIn, boolean useLongMemory) {
         super(creature, speedIn, useLongMemory);
-        this.creature = creature;
+        this.hippogryph = creature;
         this.capabilityInfoHolder = creature.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(creature));
-        this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
-    };
+    }
 
     // Todo: cleanup what's happening below
     @Override
@@ -49,7 +46,7 @@ public class FollowCommandAndAttackGoal extends MeleeAttackGoal {
     }
     @Override
     public void startExecuting() {
-        if (creature.getAttackTarget() != null) {
+        if (hippogryph.getAttackTarget() != null) {
             super.startExecuting();
         }
     }
@@ -57,19 +54,34 @@ public class FollowCommandAndAttackGoal extends MeleeAttackGoal {
     @Override
     public void tick() {
         if (capabilityInfoHolder.getCommandStatus() != EnumCommandStatus.NONE
-                && creature.getAttackTarget() == null) {
+                && hippogryph.getAttackTarget() == null) {
+
             capabilityInfoHolder.getDestination().ifPresent(blockPos -> {
-                creature.getNavigator().tryMoveToXYZ(
-                        blockPos.getX(),
-                        blockPos.getY(),
-                        blockPos.getZ(),
-                        1.1D
-                );
+                if (hippogryph.world.isAirBlock(blockPos) && hippogryph.world.isAirBlock(blockPos.down())) {
+                    hippogryph.setFlying(true);
+                    hippogryph.getMoveHelper().setMoveTo(
+                            blockPos.getX(),
+                            blockPos.getY(),
+                            blockPos.getZ(),
+                            1.1D
+                    );
+                } else {
+                    if (!hippogryph.world.isAirBlock(hippogryph.getPosition()) || !hippogryph.world.isAirBlock(hippogryph.getPosition().down())) {
+                        hippogryph.setFlying(false);
+                    }
+                    hippogryph.getNavigator().tryMoveToXYZ(
+                            blockPos.getX(),
+                            blockPos.getY(),
+                            blockPos.getZ(),
+                            1.1D
+                    );
+                }
 
             });
         }
-        if (creature.getAttackTarget() != null) {
+        if (hippogryph.getAttackTarget() != null) {
             super.tick();
         }
     }
+
 }

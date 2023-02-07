@@ -1,23 +1,26 @@
 package com.github.quinnfrost.dragontongue.iceandfire;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
+import com.github.alexthe666.iceandfire.entity.EntityHippogryph;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
+import com.github.quinnfrost.dragontongue.entity.ai.GuardGoal;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAIAsYouWish;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAICalmLook;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAIGuard;
+import com.github.quinnfrost.dragontongue.iceandfire.ai.HippogryphAIFollowCommandAndAttack;
 import com.github.quinnfrost.dragontongue.iceandfire.event.IafServerEvent;
 import com.github.quinnfrost.dragontongue.utils.util;
 import com.google.common.base.Predicate;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
@@ -25,8 +28,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
 
 import javax.annotation.Nullable;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class IafDragonBehaviorHelper {
     public static boolean registerDragonAI(MobEntity mobEntity) {
@@ -46,6 +47,24 @@ public class IafDragonBehaviorHelper {
                 }
             }));
 
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean registerHippogryphAI(MobEntity mobEntity) {
+        if (IafHelperClass.isHippogryph(mobEntity)) {
+            EntityHippogryph hippogryph = (EntityHippogryph) mobEntity;
+
+            hippogryph.goalSelector.addGoal(2, new HippogryphAIFollowCommandAndAttack(hippogryph, 1.0f,true));
+
+            hippogryph.targetSelector.addGoal(3, new GuardGoal<>(hippogryph, LivingEntity.class, false, new java.util.function.Predicate<LivingEntity>() {
+                @Override
+                public boolean test(@Nullable LivingEntity entity) {
+                    return (!(entity instanceof PlayerEntity) || !((PlayerEntity) entity).isCreative() || !entity.isSpectator())
+                            && util.isHostile(entity);
+                }
+            }));
             return true;
         }
         return false;
@@ -468,7 +487,7 @@ public class IafDragonBehaviorHelper {
      * @param dragonIn
      * @return
      */
-    public static boolean updateDragonCommand(LivingEntity dragonIn) {
+    public static boolean applyPatchedDragonLogic(LivingEntity dragonIn) {
         if (!IafHelperClass.isDragon(dragonIn)) {
             return false;
         }

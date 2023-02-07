@@ -1,5 +1,6 @@
 package com.github.quinnfrost.dragontongue.event;
 
+import com.github.quinnfrost.dragontongue.client.ClientGlow;
 import com.github.quinnfrost.dragontongue.client.KeyBindRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
@@ -45,6 +46,7 @@ public class ClientEvents {
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event){
         ClientPlayerEntity clientPlayerEntity = Minecraft.getInstance().player;
+        ClientGlow.tickGlowing();
         KeyBindRegistry.scanKeyPress(clientPlayerEntity);
     }
 

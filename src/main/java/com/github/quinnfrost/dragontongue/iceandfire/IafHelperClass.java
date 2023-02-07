@@ -2,6 +2,7 @@ package com.github.quinnfrost.dragontongue.iceandfire;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.EntityDragonPart;
+import com.github.alexthe666.iceandfire.entity.EntityHippogryph;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.alexthe666.iceandfire.entity.util.IDeadMob;
 import com.github.alexthe666.iceandfire.item.ItemDragonsteelArmor;
@@ -33,6 +34,10 @@ import java.util.List;
 public class IafHelperClass {
     public static boolean isDragon(Entity dragonIn) {
         return DragonTongue.isIafPresent && dragonIn instanceof EntityDragonBase;
+    }
+
+    public static boolean isHippogryph(Entity hippogryphIn) {
+        return DragonTongue.isIafPresent && hippogryphIn instanceof EntityHippogryph;
     }
 
     public static EntityDragonBase getDragon(Entity dragonIn) {
@@ -67,7 +72,7 @@ public class IafHelperClass {
         try {
             if (entity.getNavigator() instanceof AdvancedPathNavigate) {
                 AdvancedPathNavigate navigate = (AdvancedPathNavigate) entity.getNavigator();
-
+                // What is this?
                 if (navigate.getTargetPos() != null) {
                     return navigate.getTargetPos();
                 } else if (navigate.getDestination() != null) {
@@ -105,7 +110,7 @@ public class IafHelperClass {
         float distZ = (float) (dragon.flightManager.getFlightTarget().z - dragon.getPosZ());
 
         return Arrays.asList(
-                "Navigator target:" + (targetPos != null ? targetPos.getCoordinatesAsString() : ""),
+                "Navigator target:" + (targetPos != null ? targetPos : ""),
                 "FlightMgr:" + dragon.flightManager.getFlightTarget().toString() + "(" + util.getDistance(dragon.flightManager.getFlightTarget(), dragon.getPositionVec()) + ")",
                 "NavType:" + dragon.navigatorType,
 //                "Flying:" + compoundNBT.getByte("Flying"),
@@ -150,6 +155,11 @@ public class IafHelperClass {
                 ;
     }
 
+    /**
+     * Determine if player is wearing full set of dragon scale/steel set
+     * @param playerEntity
+     * @return For scale set, "ice","fire","lightning". For steel set, "dragonsteel_ice" and alike.
+     */
     @Nullable
     public static String isFullSetOf(PlayerEntity playerEntity) {
         Item headItem = playerEntity.getItemStackFromSlot(EquipmentSlotType.HEAD).getItem();

@@ -24,7 +24,7 @@ public class ItemCrowWand extends Item {
 
     public ItemCrowWand() {
         super(new Properties()
-                .group(Registration.TAB_DRAGONTONGUE)
+//                .group(Registration.TAB_DRAGONTONGUE)
                 .maxStackSize(1)
                 .isImmuneToFire()
                 .rarity(Rarity.EPIC)

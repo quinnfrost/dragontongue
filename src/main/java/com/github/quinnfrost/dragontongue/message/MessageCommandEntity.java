@@ -4,6 +4,7 @@ import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandStatus;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
@@ -22,6 +23,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.fml.network.NetworkEvent;
 
@@ -108,7 +110,7 @@ public class MessageCommandEntity {
                 return;
             }
             if (targetEntity != null) {
-                targetEntity.addPotionEffect(new EffectInstance(Effects.GLOWING, 20, 0, true, false));
+//                targetEntity.addPotionEffect(new EffectInstance(Effects.GLOWING, 20, 0, true, false));
             }
 
             if (action == EnumCommandType.DEBUG && targetEntity instanceof MobEntity) {
@@ -143,6 +145,7 @@ public class MessageCommandEntity {
                 if (util.isOwner(target, commander)) {
                     capTargetHolder.addCommandEntity(target.getUniqueID());
                 }
+                MessageSyncCapability.syncCapabilityToClients(commander);
                 break;
             case SET:
                 // Allow set a single entity and remove all
@@ -151,6 +154,7 @@ public class MessageCommandEntity {
                 } else if (util.isOwner(target, commander)) {
                     capTargetHolder.setCommandEntities(new ArrayList<>(Arrays.asList(target.getUniqueID())));
                 }
+                MessageSyncCapability.syncCapabilityToClients(commander);
                 break;
             case REMOVE:
                 if (util.isOwner(target, commander)) {
@@ -158,8 +162,8 @@ public class MessageCommandEntity {
                     target.getCapability(CapTargetHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                         iCapTargetHolder.setCommandStatus(EnumCommandStatus.NONE);
                     });
-
                 }
+                MessageSyncCapability.syncCapabilityToClients(commander);
                 break;
             case ATTACK:
                 List<UUID> attackerUUIDs = commander.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(commander)).getCommandEntities();
@@ -217,6 +221,9 @@ public class MessageCommandEntity {
                 }
                 break;
             case GUARD:
+                if (target != null) {
+                    commandGuard(commander, target);
+                }
                 break;
             case GUI:
 //                ScreenDragon.openGui(commander, target);
@@ -266,7 +273,7 @@ public class MessageCommandEntity {
             // iteration through entities to set their target
             for (Entity tamed : entities) {
                 if (tamed instanceof TameableEntity) {
-                    ((LivingEntity) tamed).addPotionEffect(new EffectInstance(Effects.GLOWING, 20, 0, true, false));
+//                    ((LivingEntity) tamed).addPotionEffect(new EffectInstance(Effects.GLOWING, 20, 0, true, false));
                     switch (command) {
                         case ATTACK:
                             // Attack friendly, exit
@@ -396,6 +403,24 @@ public class MessageCommandEntity {
         }
     }
 
+    public static void commandGuard(LivingEntity commander, LivingEntity tamed) {
+        if (!(tamed instanceof AnimalEntity) || !util.isOwner(tamed, commander)) {
+            return;
+        }
+        if (!(commander instanceof PlayerEntity)) {
+            return;
+        }
+        ICapTargetHolder capTargetHolder = tamed.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(tamed));
+        EnumCommandSettingType.AttackDecisionType attackDecisionType = (EnumCommandSettingType.AttackDecisionType) capTargetHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE);
+        PlayerEntity playerEntity = (PlayerEntity) commander;
+        if (attackDecisionType == EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP) {
+            playerEntity.sendStatusMessage(new StringTextComponent("Guard"), true);
+            capTargetHolder.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.GUARD);
+        } else if (attackDecisionType == EnumCommandSettingType.AttackDecisionType.GUARD) {
+            playerEntity.sendStatusMessage(new StringTextComponent("Default"), true);
+            capTargetHolder.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP);
+        }
+    }
 
     public static void commandSit(LivingEntity commander, @Nullable LivingEntity target) {
         if (target instanceof TameableEntity && util.isOwner(target, commander)) {

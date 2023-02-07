@@ -1,14 +1,11 @@
 package com.github.quinnfrost.dragontongue.client;
 
-import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolder;
 import com.github.quinnfrost.dragontongue.capability.CapTargetHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapTargetHolder;
 import com.github.quinnfrost.dragontongue.client.overlay.OverlayCrossHair;
-import com.github.quinnfrost.dragontongue.client.render.RenderNode;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
-import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import com.github.quinnfrost.dragontongue.message.MessageClientCommandDistance;
 import com.github.quinnfrost.dragontongue.message.MessageCommandEntity;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
@@ -17,13 +14,10 @@ import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
@@ -135,9 +129,10 @@ public class KeyBindRegistry {
             }
         }
         if (KeyBindRegistry.debug.isPressed()) {
-            clientPlayerEntity.setGlowing(!clientPlayerEntity.isGlowing());
+//            clientPlayerEntity.setGlowing(!clientPlayerEntity.isGlowing());
         }
 
+        // Scan scroll action
         if (
                 KeyBindRegistry.command_tamed.isKeyDown()
                         || KeyBindRegistry.select_tamed.isKeyDown()
@@ -153,26 +148,41 @@ public class KeyBindRegistry {
                 KeyBindRegistry.scan_scroll = false;
             }
         }
+
         if (KeyBindRegistry.set_tamed_status.isKeyDown()) {
             GameSettings gameSettings = Minecraft.getInstance().gameSettings;
             double commandDistance = clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(clientPlayerEntity)).getCommandDistance();
             RayTraceResult rayTraceResult = util.getTargetBlockOrEntity(clientPlayerEntity,
                     Config.COMMAND_DISTANCE_MAX.get().floatValue(), null);
+
+            // Select entity
             if (rayTraceResult.getType() == RayTraceResult.Type.ENTITY) {
+                // H + LB
                 if (gameSettings.keyBindAttack.isKeyDown()) {
+                    ClientGlow.setGlowing(((EntityRayTraceResult) rayTraceResult).getEntity(), 2 * 50);
                     RegistryMessages.sendToServer(new MessageCommandEntity(
                             EnumCommandType.FOLLOW, clientPlayerEntity.getUniqueID(), (EntityRayTraceResult) rayTraceResult
                     ));
                 }
+                // H + RB
                 if (gameSettings.keyBindUseItem.isKeyDown()) {
+                    ClientGlow.setGlowing(((EntityRayTraceResult) rayTraceResult).getEntity(), 2 * 50);
                     RegistryMessages.sendToServer(new MessageCommandEntity(
                             EnumCommandType.SIT, clientPlayerEntity.getUniqueID(), (EntityRayTraceResult) rayTraceResult
                     ));
                 }
+                // H + MB
                 if (gameSettings.keyBindPickBlock.isKeyDown()) {
-                    RegistryMessages.sendToServer(new MessageCommandEntity(
-                            EnumCommandType.WONDER, clientPlayerEntity.getUniqueID(), (EntityRayTraceResult) rayTraceResult
-                    ));
+                    if (gameSettings.keyBindPickBlock.isPressed()) {
+                        ClientGlow.setGlowing(((EntityRayTraceResult) rayTraceResult).getEntity(), 2 * 50);
+                        RegistryMessages.sendToServer(new MessageCommandEntity(
+                                EnumCommandType.GUARD, clientPlayerEntity.getUniqueID(), (EntityRayTraceResult) rayTraceResult
+                        ));
+                    }
+//                    ClientGlow.setGlowing(((EntityRayTraceResult) rayTraceResult).getEntity(), 2 * 50);
+//                    RegistryMessages.sendToServer(new MessageCommandEntity(
+//                            EnumCommandType.WONDER, clientPlayerEntity.getUniqueID(), (EntityRayTraceResult) rayTraceResult
+//                    ));
                 }
             }
 
@@ -185,28 +195,44 @@ public class KeyBindRegistry {
             BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(clientPlayerEntity, (float) commandDistance, 1.0f);
             RayTraceResult rayTraceResult = util.getTargetBlockOrEntity(clientPlayerEntity,
                     (float) commandDistance, null);
+            ICapTargetHolder capTargetHolder = clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(clientPlayerEntity));
 
+            // G + LB
             if (gameSettings.keyBindAttack.isKeyDown()) {
+                if (capTargetHolder.getCommandEntities().isEmpty()) {
+                    ClientGlow.glowSurroundTamed(clientPlayerEntity, 2 * 50, capTargetHolder.getSelectDistance(), null);
+                }
+                // Entity selected
                 if (rayTraceResult.getType() == RayTraceResult.Type.ENTITY) {
+                    ClientGlow.setGlowing(((EntityRayTraceResult) rayTraceResult).getEntity(), 2 * 50);
                     RegistryMessages.sendToServer(new MessageCommandEntity(
                             EnumCommandType.ATTACK, clientPlayerEntity.getUniqueID(), (EntityRayTraceResult) rayTraceResult
                     ));
+                    // G + LB + RB
                 } else if (gameSettings.keyBindUseItem.isKeyDown()) {
+//                        if (capTargetHolder.getCommandEntities().isEmpty()) {
+//                            ClientGlow.glowSurroundTamed(clientPlayerEntity, 2 * 50, capTargetHolder.getSelectDistance(), null);
+//                        }
                     RegistryMessages.sendToServer(new MessageCommandEntity(
                             EnumCommandType.BREATH, clientPlayerEntity.getUniqueID(), null, blockRayTraceResult
                     ));
                 }
+                // G + RB
             } else if (gameSettings.keyBindUseItem.isKeyDown()) {
                 RegistryMessages.sendToServer(new MessageCommandEntity(
                         EnumCommandType.REACH, clientPlayerEntity.getUniqueID(), blockRayTraceResult
                 ));
             }
+            // G + MB
             if (gameSettings.keyBindPickBlock.isKeyDown()) {
                 if (rayTraceResult.getType() == RayTraceResult.Type.ENTITY) {
+                    ClientGlow.setGlowing(((EntityRayTraceResult) rayTraceResult).getEntity(), 2 * 50);
                     RegistryMessages.sendToServer(new MessageCommandEntity(
                             EnumCommandType.HALT, clientPlayerEntity.getUniqueID(), (EntityRayTraceResult) rayTraceResult
                     ));
                 } else {
+                    // Nothing selected
+                    ClientGlow.glowSurroundTamed(clientPlayerEntity, 2 * 50, capTargetHolder.getSelectDistance(), null);
                     RegistryMessages.sendToServer(new MessageCommandEntity(
                             EnumCommandType.HALT, clientPlayerEntity.getUniqueID(), null, blockRayTraceResult
                     ));
@@ -214,6 +240,7 @@ public class KeyBindRegistry {
             }
 
         }
+
         if (KeyBindRegistry.select_tamed.isKeyDown()) {
             GameSettings gameSettings = Minecraft.getInstance().gameSettings;
             double commandDistance = clientPlayerEntity.getCapability(CapTargetHolder.TARGET_HOLDER).orElse(new CapTargetHolderImpl(clientPlayerEntity)).getCommandDistance();
@@ -222,24 +249,36 @@ public class KeyBindRegistry {
             RayTraceResult rayTraceResult = util.getTargetBlockOrEntity(clientPlayerEntity,
                     Config.COMMAND_DISTANCE_MAX.get().floatValue(), null);
 
+            // V + LB
             if (gameSettings.keyBindAttack.isKeyDown()) {
                 if (rayTraceResult.getType() == RayTraceResult.Type.ENTITY) {
+                    ClientGlow.setGlowing(((EntityRayTraceResult) rayTraceResult).getEntity(), 2 * 50);
                     RegistryMessages.sendToServer(new MessageCommandEntity(
                             EnumCommandType.ADD, clientPlayerEntity.getUniqueID(), entityRayTraceResult
                     ));
+                    // V + LB + RB
                 } else if (gameSettings.keyBindUseItem.isKeyDown()) {
                     RegistryMessages.sendToServer(new MessageCommandEntity(
                             EnumCommandType.SET, clientPlayerEntity.getUniqueID(), (UUID) null
                     ));
                 }
             }
+            // V + RB
             if (gameSettings.keyBindUseItem.isKeyDown()) {
+                if (rayTraceResult.getType() == RayTraceResult.Type.ENTITY) {
+                    ClientGlow.setGlowing(((EntityRayTraceResult) rayTraceResult).getEntity(), 2 * 50);
+                }
                 RegistryMessages.sendToServer(new MessageCommandEntity(
                         EnumCommandType.REMOVE, clientPlayerEntity.getUniqueID(), entityRayTraceResult
                 ));
+                RegistryMessages.sendToServer(new MessageCommandEntity(
+                        EnumCommandType.WONDER, clientPlayerEntity.getUniqueID(), entityRayTraceResult
+                ));
             }
+            // V + MB
             if (gameSettings.keyBindPickBlock.isKeyDown()) {
                 if (rayTraceResult.getType() == RayTraceResult.Type.ENTITY) {
+                    ClientGlow.setGlowing(((EntityRayTraceResult) rayTraceResult).getEntity(), 2 * 50);
                     RegistryMessages.sendToServer(new MessageCommandEntity(
                             EnumCommandType.SET, clientPlayerEntity.getUniqueID(), entityRayTraceResult
                     ));
