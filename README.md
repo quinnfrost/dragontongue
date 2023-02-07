@@ -1,7 +1,7 @@
 Dragon tongue
 =============
 
-[Ice and Fire mod](https://www.mcbbs.net/forum.php?mod=viewthread&tid=795249)
+[Ice and Fire mod](https://github.com/AlexModGuy/Ice_and_Fire)
 
 [中文](https://github.com/quinnfrost/dragontongue/blob/master/README_CN.md)
 
