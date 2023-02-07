@@ -1,7 +1,6 @@
 package com.github.quinnfrost.dragontongue.iceandfire.gui;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
-import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.References;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
@@ -23,23 +22,16 @@ import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.entity.EntityRendererManager;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.vector.Quaternion;
 import net.minecraft.util.math.vector.Vector3f;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class ScreenDragon extends ContainerScreen<ContainerDragon> {
     private static final ResourceLocation textureGuiDragon = new ResourceLocation(References.MOD_ID, "textures/gui/dragon.png");
@@ -416,49 +408,6 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
 
     public static String translateToLocal(String s) {
         return I18n.format(s);
-    }
-
-    /**
-     * Open the dragon gui
-     * This should be called on both server and client side
-     *
-     * @param player
-     * @param referencedDragon
-     */
-    public static void openGui(LivingEntity player, Entity referencedDragon) {
-        if (DragonTongue.isIafPresent && referencedDragon instanceof EntityDragonBase && player instanceof PlayerEntity) {
-            EntityDragonBase dragon = (EntityDragonBase) referencedDragon;
-            PlayerEntity playerEntity = (PlayerEntity) player;
-            if (!referencedDragon.world.isRemote) {
-                ServerPlayerEntity serverPlayerEntity = (ServerPlayerEntity) playerEntity;
-                serverPlayerEntity.openContainer(new INamedContainerProvider() {
-                    @Override
-                    public ITextComponent getDisplayName() {
-                        return serverPlayerEntity.getDisplayName();
-                    }
-
-                    @Nullable
-                    @Override
-                    public Container createMenu(int p_createMenu_1_, PlayerInventory p_createMenu_2_, PlayerEntity p_createMenu_3_) {
-                        return new ContainerDragon(
-                                p_createMenu_1_,
-                                p_createMenu_2_,
-                                dragon.dragonInventory,
-                                dragon
-                        );
-                    }
-                });
-                MessageSyncCapability.syncCapabilityToClients(dragon);
-
-            } else {
-//                ScreenDragon.referencedDragon = dragon;
-//                RegistryMessages.sendToServer(new MessageCommandEntity(
-//                        EnumCommandType.GUI,
-//                        playerEntity.getUniqueID(),
-//                        dragon.getUniqueID()
-//                ));
-            }
-        }
     }
 
 }

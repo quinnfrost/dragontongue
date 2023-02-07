@@ -2,14 +2,25 @@ package com.github.quinnfrost.dragontongue.container;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.item.ItemDragonArmor;
+import com.github.quinnfrost.dragontongue.DragonTongue;
+import com.github.quinnfrost.dragontongue.message.MessageSyncCapability;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.container.Container;
+import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.BannerItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+
+import javax.annotation.Nullable;
 
 public class ContainerDragon extends Container {
     public EntityDragonBase dragon;
@@ -151,6 +162,49 @@ public class ContainerDragon extends Container {
     public void onContainerClosed(PlayerEntity playerIn) {
         super.onContainerClosed(playerIn);
         this.dragonInventory.closeInventory(playerIn);
+    }
+
+    /**
+     * Open the dragon gui
+     * This should be called on both server and client side
+     *
+     * @param player
+     * @param referencedDragon
+     */
+    public static void openGui(LivingEntity player, Entity referencedDragon) {
+        if (DragonTongue.isIafPresent && referencedDragon instanceof EntityDragonBase && player instanceof PlayerEntity) {
+            EntityDragonBase dragon = (EntityDragonBase) referencedDragon;
+            PlayerEntity playerEntity = (PlayerEntity) player;
+            if (!referencedDragon.world.isRemote) {
+                ServerPlayerEntity serverPlayerEntity = (ServerPlayerEntity) playerEntity;
+                serverPlayerEntity.openContainer(new INamedContainerProvider() {
+                    @Override
+                    public ITextComponent getDisplayName() {
+                        return serverPlayerEntity.getDisplayName();
+                    }
+
+                    @Nullable
+                    @Override
+                    public Container createMenu(int p_createMenu_1_, PlayerInventory p_createMenu_2_, PlayerEntity p_createMenu_3_) {
+                        return new ContainerDragon(
+                                p_createMenu_1_,
+                                p_createMenu_2_,
+                                dragon.dragonInventory,
+                                dragon
+                        );
+                    }
+                });
+                MessageSyncCapability.syncCapabilityToClients(dragon);
+
+            } else {
+//                ScreenDragon.referencedDragon = dragon;
+//                RegistryMessages.sendToServer(new MessageCommandEntity(
+//                        EnumCommandType.GUI,
+//                        playerEntity.getUniqueID(),
+//                        dragon.getUniqueID()
+//                ));
+            }
+        }
     }
 
 }

@@ -16,9 +16,9 @@ import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.config.Config;
+import com.github.quinnfrost.dragontongue.container.ContainerDragon;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
-import com.github.quinnfrost.dragontongue.iceandfire.gui.ScreenDragon;
 import com.github.quinnfrost.dragontongue.iceandfire.message.MessageClientSetReferenceDragon;
 import com.github.quinnfrost.dragontongue.message.MessageSyncCapability;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
@@ -189,7 +189,7 @@ public class IafServerEvent {
                         RegistryMessages.sendToClient(new MessageClientSetReferenceDragon(
                                 dragon.getEntityId()
                         ), (ServerPlayerEntity) playerEntity);
-                        ScreenDragon.openGui(playerEntity, dragon);
+                        ContainerDragon.openGui(playerEntity, dragon);
                     }
                     event.setCancellationResult(ActionResultType.SUCCESS);
                     event.setCanceled(true);
@@ -225,7 +225,7 @@ public class IafServerEvent {
                         RegistryMessages.sendToClient(new MessageClientSetReferenceDragon(
                                 dragon.getEntityId()
                         ), (ServerPlayerEntity) playerEntity);
-                        ScreenDragon.openGui(playerEntity, dragon);
+                        ContainerDragon.openGui(playerEntity, dragon);
                         event.setCancellationResult(ActionResultType.SUCCESS);
                         event.setCanceled(true);
                     }

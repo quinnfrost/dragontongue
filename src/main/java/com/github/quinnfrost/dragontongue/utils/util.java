@@ -142,11 +142,11 @@ public class util {
         float f = 1.0F;
         // 计算结束位置向量构成的区域(Bounding Box)
         AxisAlignedBB axisalignedbb = entity.getBoundingBox().expand(vector3d1.scale(d0)).grow(1.0D, 1.0D, 1.0D);
-        EntityRayTraceResult entityraytraceresult = ProjectileHelper.rayTraceEntities(entity, vector3d, vector3d2,
+        EntityRayTraceResult entityraytraceresult = ProjectileHelper.rayTraceEntities(entity.world, entity, vector3d, vector3d2,
                 axisalignedbb, ((Predicate<Entity>) notExclude -> !notExclude.isSpectator()
                         && notExclude.canBeCollidedWith())
-                        .and(excludeEntity),
-                d1);
+                        .and(excludeEntity)
+        );
         return entityraytraceresult;
 
     }
