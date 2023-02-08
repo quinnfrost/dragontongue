@@ -172,12 +172,12 @@ public class KeyBindRegistry {
                 }
                 // H + MB
                 if (gameSettings.keyBindPickBlock.isKeyDown()) {
-                    if (gameSettings.keyBindPickBlock.isPressed()) {
-                        ClientGlow.setGlowing(((EntityRayTraceResult) rayTraceResult).getEntity(), 2 * 50);
-                        RegistryMessages.sendToServer(new MessageCommandEntity(
-                                EnumCommandType.GUARD, clientPlayerEntity.getUniqueID(), (EntityRayTraceResult) rayTraceResult
-                        ));
-                    }
+                    // For some reason isPress() doesn't work in server mode
+                    gameSettings.keyBindPickBlock.setPressed(false);
+                    ClientGlow.setGlowing(((EntityRayTraceResult) rayTraceResult).getEntity(), 2 * 50);
+                    RegistryMessages.sendToServer(new MessageCommandEntity(
+                            EnumCommandType.GUARD, clientPlayerEntity.getUniqueID(), (EntityRayTraceResult) rayTraceResult
+                    ));
 //                    ClientGlow.setGlowing(((EntityRayTraceResult) rayTraceResult).getEntity(), 2 * 50);
 //                    RegistryMessages.sendToServer(new MessageCommandEntity(
 //                            EnumCommandType.WONDER, clientPlayerEntity.getUniqueID(), (EntityRayTraceResult) rayTraceResult

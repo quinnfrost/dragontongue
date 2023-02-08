@@ -38,8 +38,6 @@ public class ClientGlow {
                     return time - 1;
                 } else if (world.getEntityByID(entityID) != null) {
                     world.getEntityByID(entityID).setGlowing(false);
-                } else {
-                    DragonTongue.LOGGER.warn("No world in scope");
                 }
                 return 0;
             });

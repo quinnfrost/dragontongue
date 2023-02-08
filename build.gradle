@@ -13,6 +13,9 @@ apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
 repositories {
+    flatDir {
+        dirs("libs")
+    }
     maven {
         url "https://cursemaven.com"
         content {
@@ -36,7 +39,7 @@ repositories {
 
 }
 
-version = '0.3.1'
+version = '0.3.2'
 group = 'com.github.quinnfrost' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'dragontongue'
 
@@ -161,6 +164,7 @@ dependencies {
 
     compileOnly fg.deobf("curse.maven:iceandfire-264231:3948661")
     runtimeOnly fg.deobf("curse.maven:iceandfire-264231:3948661")
+//    implementation fg.deobf(files('libs/Ice_and_Fire-2.1.12-1.16.5.jar'))
 
 //    implementation fg.deobf(project(":Ice_and_Fire-1.16.3"))
 

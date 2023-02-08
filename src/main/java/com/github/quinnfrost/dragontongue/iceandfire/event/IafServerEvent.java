@@ -165,7 +165,6 @@ public class IafServerEvent {
                 if (itemStackMainhand.getItem() == IafItemRegistry.DRAGON_STAFF || itemStackOffhand.getItem() == IafItemRegistry.DRAGON_STAFF) {
                     // Hijack the dragon staff right click dragon in sneaking
                     if (event.getHand() == event.getPlayer().getActiveHand() && playerEntity.getDistance(dragon) < 5) {
-                        playerEntity.sendMessage(ITextComponent.getTextComponentOrEmpty("Dragon staff used"), Util.DUMMY_UUID);
                         if (dragon.hasHomePosition) {
                             dragon.hasHomePosition = false;
                             playerEntity.sendStatusMessage(new TranslationTextComponent("dragon.command.remove_home"), true);
@@ -421,7 +420,7 @@ public class IafServerEvent {
                         }
                         break;
                     case "fire":
-                    case "dragonsteel fire":
+                    case "dragonsteel_fire":
                         if (fireDamage) {
                             playerEntity.forceFireTicks(0);
                             event.setCanceled(true);

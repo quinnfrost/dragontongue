@@ -5,6 +5,8 @@ import com.github.alexthe666.iceandfire.entity.EntityDragonPart;
 import com.github.alexthe666.iceandfire.entity.EntityHippogryph;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.alexthe666.iceandfire.entity.util.IDeadMob;
+import com.github.alexthe666.iceandfire.item.IafArmorMaterial;
+import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import com.github.alexthe666.iceandfire.item.ItemDragonsteelArmor;
 import com.github.alexthe666.iceandfire.item.ItemScaleArmor;
 import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
@@ -147,7 +149,7 @@ public class IafHelperClass {
         if (livingEntity instanceof IDeadMob || !DragonUtils.isAlive(livingEntity)) {
             return false;
         }
-        if (livingEntity instanceof EntityDragonBase && ((EntityDragonBase)livingEntity).isModelDead()) {
+        if (livingEntity instanceof EntityDragonBase && ((EntityDragonBase) livingEntity).isModelDead()) {
             return false;
         }
         // Todo: what hostiles does iaf have?
@@ -157,9 +159,9 @@ public class IafHelperClass {
 
     /**
      * Determine if player is wearing full set of dragon scale/steel set
+     *
      * @param playerEntity
-     * @return For scale set, "ice","fire","lightning". For steel set, "dragonsteel_ice", "dragonsteel fire", "dragonsteel_lightning".
-     *         Dragon steel fire the name is DIFFERENT for unknown reason
+     * @return For scale set, "ice","fire","lightning". For steel set, "dragonsteel_ice", "dragonsteel_fire", "dragonsteel_lightning".
      */
     @Nullable
     public static String isFullSetOf(PlayerEntity playerEntity) {
@@ -198,8 +200,15 @@ public class IafHelperClass {
             ItemDragonsteelArmor legSteelArmor = (ItemDragonsteelArmor) legItem;
             ItemDragonsteelArmor feetSteelArmor = (ItemDragonsteelArmor) feetItem;
 
-            if (headSteelArmor.getArmorMaterial().getName() == chestSteelArmor.getArmorMaterial().getName() && chestSteelArmor.getArmorMaterial().getName() == legSteelArmor.getArmorMaterial().getName() && legSteelArmor.getArmorMaterial().getName() == feetSteelArmor.getArmorMaterial().getName()) {
-                return headSteelArmor.getArmorMaterial().getName();
+            if (headSteelArmor.getArmorMaterial() == chestSteelArmor.getArmorMaterial() && chestSteelArmor.getArmorMaterial() == legSteelArmor.getArmorMaterial() && legSteelArmor.getArmorMaterial() == feetSteelArmor.getArmorMaterial()) {
+                if (headSteelArmor.getArmorMaterial() == IafItemRegistry.DRAGONSTEEL_ICE_ARMOR_MATERIAL) {
+                    return "dragonsteel_ice";
+                } else if (headSteelArmor.getArmorMaterial() == IafItemRegistry.DRAGONSTEEL_FIRE_ARMOR_MATERIAL) {
+                    return "dragonsteel_fire";
+                } else if (headSteelArmor.getArmorMaterial() == IafItemRegistry.DRAGONSTEEL_LIGHTNING_ARMOR_MATERIAL) {
+                    return "dragonsteel_lightning";
+                }
+
             }
         }
 

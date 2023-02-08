@@ -7,6 +7,7 @@ import com.github.quinnfrost.dragontongue.enums.EnumCrowWand;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.LightningBoltEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.entity.projectile.EvokerFangsEntity;
@@ -15,11 +16,14 @@ import net.minecraft.particles.ParticleTypes;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.IndirectEntityDamageSource;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.fml.network.NetworkEvent;
 
 import java.util.List;
@@ -97,14 +101,22 @@ public class MessageCrowWand {
                         });
                         break;
                     case LIGHTNING:
-                        LightningBoltEntity lightningBolt = new LightningBoltEntity(EntityType.LIGHTNING_BOLT,
-                                player.world);
+//                        LightningBoltEntity lightningBolt = new LightningBoltEntity(EntityType.LIGHTNING_BOLT,
+//                                player.world);
+                        LightningBoltEntity lightningBolt = EntityType.LIGHTNING_BOLT.create(serverWorld);
                         lightningBolt.setCaster(player);
+//                        lightningBolt.moveForced(targetX,targetY,targetZ);
                         lightningBolt.setPosition(targetX, targetY, targetZ);
 
                         List<Entity> list = lightningBolt.world.getEntitiesInAABBexcluding(lightningBolt, new AxisAlignedBB(lightningBolt.getPosX() - 3.0D, lightningBolt.getPosY() - 3.0D, lightningBolt.getPosZ() - 3.0D, lightningBolt.getPosX() + 3.0D, lightningBolt.getPosY() + 6.0D + 3.0D, lightningBolt.getPosZ() + 3.0D), Entity::isAlive);
                         for(Entity entity : list) {
-                            entity.attackEntityFrom(DamageSource.causeIndirectMagicDamage(lightningBolt, player), lightningBolt.getDamage());
+                            if (entity instanceof LivingEntity) {
+                                if (!MinecraftForge.EVENT_BUS.post(new LivingAttackEvent((LivingEntity) entity, DamageSource.LIGHTNING_BOLT, lightningBolt.getDamage()))) {
+                                    entity.attackEntityFrom(DamageSource.causeIndirectMagicDamage(lightningBolt, player), lightningBolt.getDamage());
+                                }
+                            } else {
+                                entity.attackEntityFrom(DamageSource.LIGHTNING_BOLT,lightningBolt.getDamage());
+                            }
                         }
 
                         lightningBolt.setDamage(0f);

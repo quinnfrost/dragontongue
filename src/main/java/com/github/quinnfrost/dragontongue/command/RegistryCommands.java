@@ -69,7 +69,7 @@ public class RegistryCommands {
                                                                      return new ContainerDragon(
                                                                              p_createMenu_1_,
                                                                              p_createMenu_2_,
-                                                                             ((EntityDragonBase) entity).dragonInventory,
+                                                                             ((EntityDragonBase) entity).inventory,
                                                                              (EntityDragonBase) entity
                                                                      );
                                                                  }
