@@ -1,5 +1,6 @@
 package com.github.quinnfrost.dragontongue.iceandfire.gui;
 
+import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.References;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
@@ -34,7 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ScreenDragon extends ContainerScreen<ContainerDragon> {
-    private static final ResourceLocation textureGuiDragon = new ResourceLocation(References.MOD_ID, "textures/gui/dragon.png");
+    private static final ResourceLocation textureGuiDragon = new ResourceLocation(IceAndFire.MODID, "textures/gui/dragon.png");
     public static EntityDragonBase referencedDragon;
     private static final GameSettings gameSettings = Minecraft.getInstance().gameSettings;
     private final List<Button> buttons = new ArrayList<>();
