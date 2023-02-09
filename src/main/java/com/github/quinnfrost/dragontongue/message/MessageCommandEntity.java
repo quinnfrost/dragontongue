@@ -4,6 +4,7 @@ import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
@@ -108,10 +109,6 @@ public class MessageCommandEntity {
             }
             if (targetEntity != null) {
 //                targetEntity.addPotionEffect(new EffectInstance(Effects.GLOWING, 20, 0, true, false));
-            }
-
-            if (action == EnumCommandType.DEBUG && targetEntity instanceof MobEntity) {
-                DragonTongue.debugTarget = (MobEntity) targetEntity;
             }
 
             commandEntity(serverWorld, commander, action, targetEntity, targetPos, null);
@@ -226,9 +223,21 @@ public class MessageCommandEntity {
 //                ScreenDragon.openGui(commander, target);
                 break;
             case DEBUG:
+                if (target instanceof MobEntity) {
+                    if (DragonTongue.debugTarget == null || DragonTongue.debugTarget.getUniqueID() != target.getUniqueID()) {
+                        DragonTongue.debugTarget = (MobEntity) target;
+                    } else {
+                        DragonTongue.debugTarget = null;
+                        RegistryMessages.sendToAll(new MessageClientDisplay(
+                                EnumClientDisplay.ENTITY_DEBUG,
+                                1,
+                                Collections.singletonList("")
+                        ));
+                    }
+                }
+                DragonTongue.LOGGER.debug("Debug triggered, set a breakpoint at MessageCommandEntity#232");
                 break;
             default:
-                DragonTongue.LOGGER.info("Debug triggered");
                 break;
         }
 

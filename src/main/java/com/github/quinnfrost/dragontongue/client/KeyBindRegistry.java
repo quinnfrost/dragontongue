@@ -118,7 +118,7 @@ public class KeyBindRegistry {
      * @param clientPlayerEntity
      */
     public static void scanKeyPress(ClientPlayerEntity clientPlayerEntity) {
-        if (KeyBindRegistry.debug.isKeyDown()) {
+        if (KeyBindRegistry.debug.isPressed()) {
             RayTraceResult debugRayTraceResult = util.getTargetBlockOrEntity(clientPlayerEntity,
                     Config.COMMAND_DISTANCE_MAX.get().floatValue(), null);
             if (debugRayTraceResult.getType() == RayTraceResult.Type.ENTITY) {

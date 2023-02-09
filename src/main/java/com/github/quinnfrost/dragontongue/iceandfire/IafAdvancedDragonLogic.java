@@ -253,15 +253,20 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         // Resets attack target if the target is dead, vanilla behavior did this in the entity AI resetTask
         if ((dragon.getAttackTarget() != null && !dragon.getAttackTarget().isAlive())
                 || (dragon.getAttackTarget() == null && cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.ATTACK)) {
-            if (!cap.getDestination().isPresent()) {
-                cap.setDestination(dragon.getPosition());
+            if (dragon.getCommand() == 2) {
+                cap.setCommandStatus(EnumCommandSettingType.CommandStatus.NONE);
+                cap.setDestination(null);
+            } else {
+                cap.setCommandStatus(EnumCommandSettingType.CommandStatus.REACH);
+                if (!cap.getDestination().isPresent()) {
+                    cap.setDestination(dragon.getPosition());
+                }
             }
 //            if (IafDragonBehaviorHelper.isDragonInAir(dragon)) {
 //                cap.setCommandStatus(CommandStatus.HOVER);
 //            } else {
 //                cap.setCommandStatus(CommandStatus.STAY);
 //            }
-            cap.setCommandStatus(EnumCommandSettingType.CommandStatus.REACH);
             dragon.setAttackTarget(null);
             if (dragon.getAnimation() == EntityDragonBase.ANIMATION_SHAKEPREY) {
                 dragon.setAnimation(IAnimatedEntity.NO_ANIMATION);

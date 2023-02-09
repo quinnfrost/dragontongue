@@ -79,8 +79,8 @@ public class DragonTongue
             IafServerEvent.register(MinecraftForge.EVENT_BUS);
         }
 
-        // Todo: try to reset pathfind data structure, especially, reset desired pos
-        // Todo: Iaf pathfinding stop working sometimes, find a way to reset it!
+        // Todo: remove debug target, add command to debug
+        // Todo: command is reset to 0 when attack target dies
 
         // Todo: more settings!
         // Load configs
