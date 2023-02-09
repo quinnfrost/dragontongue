@@ -1,10 +1,13 @@
 package com.github.quinnfrost.dragontongue.message;
 
+import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.network.PacketBuffer;
@@ -52,6 +55,7 @@ public class MessageSyncCapability {
 
             if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
                 Entity entity = Minecraft.getInstance().player.world.getEntityByID(entityID);
+//                DragonTongue.LOGGER.debug("Getting cap sync for " + entity);
                 if (entity != null) {
                     entity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                         iCapTargetHolder.copy(cap);
@@ -59,6 +63,7 @@ public class MessageSyncCapability {
                 }
             } else if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_SERVER){
                 Entity entity = contextSupplier.get().getSender().world.getEntityByID(entityID);
+//                DragonTongue.LOGGER.debug("Getting cap sync for " + entity);
                 if (entity != null) {
                     entity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                         iCapTargetHolder.copy(cap);
@@ -75,6 +80,9 @@ public class MessageSyncCapability {
             RegistryMessages.CHANNEL.send(
                     PacketDistributor.TRACKING_ENTITY.with(() -> entity),
                     new MessageSyncCapability(entity));
+        }
+        if (entity instanceof PlayerEntity) {
+            RegistryMessages.sendToClient(new MessageSyncCapability(entity), (ServerPlayerEntity) entity);
         }
     }
 
