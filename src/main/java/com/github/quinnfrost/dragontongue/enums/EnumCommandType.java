@@ -10,6 +10,7 @@ public enum EnumCommandType {
     BREATH,
     NEARBY_ATTACK,
     LOOP_STATUS,
+    LOOP_STATUS_REVERSE,
     FOLLOW,
     SIT,
     WONDER,

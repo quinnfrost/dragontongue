@@ -21,6 +21,7 @@ public enum EnumCommandSettingType {
         NONE
         ;
         private static final GroundAttackType[] vals = values();
+        public GroundAttackType prev() {return vals[(this.ordinal() + vals.length - 1) % vals.length];}
 
         public GroundAttackType next() {
             return vals[(this.ordinal() + 1) % vals.length];
@@ -35,6 +36,7 @@ public enum EnumCommandSettingType {
         NONE
         ;
         private static final AirAttackType[] vals = values();
+        public AirAttackType prev() {return vals[(this.ordinal() + vals.length - 1) % vals.length];}
 
         public AirAttackType next() {
             return vals[(this.ordinal() + 1) % vals.length];
@@ -48,6 +50,7 @@ public enum EnumCommandSettingType {
         NONE
         ;
         private static final AttackDecisionType[] vals = values();
+        public AttackDecisionType prev() {return vals[(this.ordinal() + vals.length - 1) % vals.length];}
 
         public AttackDecisionType next() {
             return vals[(this.ordinal() + 1) % vals.length];
@@ -60,6 +63,7 @@ public enum EnumCommandSettingType {
         AIR
         ;
         private static final MovementType[] vals = values();
+        public MovementType prev() {return vals[(this.ordinal() + vals.length - 1) % vals.length];}
 
         public MovementType next() {
             return vals[(this.ordinal() + 1) % vals.length];
@@ -72,6 +76,7 @@ public enum EnumCommandSettingType {
         NONE
         ;
         private static final DestroyType[] vals = values();
+        public DestroyType prev() {return vals[(this.ordinal() + vals.length - 1) % vals.length];}
 
         public DestroyType next() {
             return vals[(this.ordinal() + 1) % vals.length];
@@ -84,7 +89,7 @@ public enum EnumCommandSettingType {
         NONE
         ;
         private static final BreathType[] vals = values();
-
+        public BreathType prev() {return vals[(this.ordinal() + vals.length - 1) % vals.length];}
         public BreathType next() {
             return vals[(this.ordinal() + 1) % vals.length];
         }
@@ -98,7 +103,7 @@ public enum EnumCommandSettingType {
         ATTACK
         ;
         private static final CommandStatus[] vals = values();
-
+        public CommandStatus prev() {return vals[(this.ordinal() + vals.length - 1) % vals.length];}
         public CommandStatus next() {
             return vals[(this.ordinal() + 1) % vals.length];
         }

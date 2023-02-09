@@ -233,6 +233,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             dragon.setCommand(1);
             dragon.getNavigator().clearPath();
         }
+
         // Release control if the owner climbs up
         if (dragon.getControllingPassenger() != null) {
             if (cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.STAY || cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.HOVER) {

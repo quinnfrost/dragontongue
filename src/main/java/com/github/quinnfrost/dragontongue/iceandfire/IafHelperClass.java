@@ -147,7 +147,7 @@ public class IafHelperClass {
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
         RegistryMessages.sendToAll(new MessageClientDraw(
-                dragon.getEntityId(), dragon.flightManager.getFlightTarget(),
+                -dragon.getEntityId(), dragon.flightManager.getFlightTarget(),
                 dragon.getPositionVec()
         ));
         return true;

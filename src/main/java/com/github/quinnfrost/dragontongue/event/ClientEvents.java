@@ -7,12 +7,15 @@ import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.ColorHandlerEvent;
+import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 @OnlyIn(Dist.CLIENT)
 public class ClientEvents {
+    public static int lastMouseKeyCode = 0;
+    public static boolean keySneakPressed = false;
     @SubscribeEvent
     public static void detectScroll(InputEvent.MouseScrollEvent event) {
         if (KeyBindRegistry.scan_scroll) {
@@ -63,6 +66,22 @@ public class ClientEvents {
 //        }
 //    }
 
+    @SubscribeEvent
+    public static void onGuiKeyPressed(GuiScreenEvent.KeyboardKeyPressedEvent event) {
+        if (event.getKeyCode() == Minecraft.getInstance().gameSettings.keyBindSneak.getKey().getKeyCode()) {
+            keySneakPressed = true;
+        }
+    }
+    @SubscribeEvent
+    public static void onGuiKeyReleased(GuiScreenEvent.KeyboardKeyReleasedEvent event) {
+        if (event.getKeyCode() == Minecraft.getInstance().gameSettings.keyBindSneak.getKey().getKeyCode()) {
+            keySneakPressed = false;
+        }
+    }
 
+    @SubscribeEvent
+    public static void onGuiMouseClick(GuiScreenEvent.MouseClickedEvent.Pre event) {
+
+    }
 
 }

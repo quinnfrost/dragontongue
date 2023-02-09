@@ -9,6 +9,7 @@ import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.container.ContainerDragon;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
+import com.github.quinnfrost.dragontongue.event.ClientEvents;
 import com.github.quinnfrost.dragontongue.message.MessageCommandEntity;
 import com.github.quinnfrost.dragontongue.message.MessageSyncCapability;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
@@ -51,6 +52,7 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
     private ICapabilityInfoHolder cap;
     private Boolean shouldReturnRoost;
     private Boolean shouldSleep;
+    private EnumCommandSettingType.CommandStatus commandStatus;
     private EnumCommandSettingType.BreathType breathType;
     private EnumCommandSettingType.DestroyType destroyType;
     private EnumCommandSettingType.AttackDecisionType attackDecisionType;
@@ -105,9 +107,15 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
                 new StringTextComponent(translateToLocal("")),
                 button -> {
                     cap.setCommandStatus(EnumCommandSettingType.CommandStatus.NONE);
-                    RegistryMessages.sendToServer(new MessageCommandEntity(
-                            EnumCommandType.LOOP_STATUS, minecraft.player.getUniqueID(), referencedDragon.getUniqueID()
-                    ));
+                    if (!ClientEvents.keySneakPressed) {
+                        RegistryMessages.sendToServer(new MessageCommandEntity(
+                                EnumCommandType.LOOP_STATUS, minecraft.player.getUniqueID(), referencedDragon.getUniqueID()
+                        ));
+                    } else {
+                        RegistryMessages.sendToServer(new MessageCommandEntity(
+                                EnumCommandType.LOOP_STATUS_REVERSE, minecraft.player.getUniqueID(), referencedDragon.getUniqueID()
+                        ));
+                    }
 
                     RegistryMessages.sendToServer(new MessageSyncCapability(referencedDragon));
                     minecraft.player.sendStatusMessage(ITextComponent.getTextComponentOrEmpty(String.valueOf(referencedDragon.getCommand())), true);
@@ -158,7 +166,11 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
                 buttonHeight,
                 new StringTextComponent(""),
                 button -> {
-                    breathType = breathType.next();
+                    if (!ClientEvents.keySneakPressed) {
+                        breathType = breathType.next();
+                    } else {
+                        breathType = breathType.prev();
+                    }
                     cap.setObjectSetting(EnumCommandSettingType.BREATH_TYPE, breathType);
                     RegistryMessages.sendToServer(new MessageSyncCapability(referencedDragon));
                     minecraft.player.sendStatusMessage(ITextComponent.getTextComponentOrEmpty(cap.getObjectSetting(EnumCommandSettingType.BREATH_TYPE).toString()), true);
@@ -173,7 +185,11 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
                 buttonHeight,
                 new StringTextComponent(""),
                 button -> {
-                    destroyType = destroyType.next();
+                    if (!ClientEvents.keySneakPressed) {
+                        destroyType = destroyType.next();
+                    } else {
+                        destroyType = destroyType.prev();
+                    }
                     cap.setObjectSetting(EnumCommandSettingType.DESTROY_TYPE, destroyType);
                     RegistryMessages.sendToServer(new MessageSyncCapability(referencedDragon));
                     minecraft.player.sendStatusMessage(ITextComponent.getTextComponentOrEmpty(cap.getObjectSetting(EnumCommandSettingType.DESTROY_TYPE).toString()), true);
@@ -188,7 +204,11 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
                 buttonHeight,
                 new StringTextComponent(""),
                 button -> {
-                    movementType = movementType.next();
+                    if (!ClientEvents.keySneakPressed) {
+                        movementType = movementType.next();
+                    } else {
+                        movementType = movementType.prev();
+                    }
                     cap.setObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE, movementType);
                     RegistryMessages.sendToServer(new MessageSyncCapability(referencedDragon));
                     minecraft.player.sendStatusMessage(ITextComponent.getTextComponentOrEmpty(cap.getObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE).toString()), true);
@@ -203,7 +223,11 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
                 buttonHeight,
                 new StringTextComponent(""),
                 button -> {
-                    attackDecisionType = attackDecisionType.next();
+                    if (!ClientEvents.keySneakPressed) {
+                        attackDecisionType = attackDecisionType.next();
+                    } else {
+                        attackDecisionType = attackDecisionType.prev();
+                    }
                     cap.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, attackDecisionType);
                     RegistryMessages.sendToServer(new MessageSyncCapability(referencedDragon));
                     minecraft.player.sendStatusMessage(ITextComponent.getTextComponentOrEmpty(cap.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE).toString()), true);
@@ -218,7 +242,11 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
                 buttonHeight,
                 new StringTextComponent(""),
                 button -> {
-                    groundAttackType = groundAttackType.next();
+                    if (!ClientEvents.keySneakPressed) {
+                        groundAttackType = groundAttackType.next();
+                    } else {
+                        groundAttackType = groundAttackType.prev();
+                    }
                     cap.setObjectSetting(EnumCommandSettingType.GROUND_ATTACK_TYPE, groundAttackType);
                     RegistryMessages.sendToServer(new MessageSyncCapability(referencedDragon));
                     minecraft.player.sendStatusMessage(ITextComponent.getTextComponentOrEmpty(cap.getObjectSetting(EnumCommandSettingType.GROUND_ATTACK_TYPE).toString()), true);
@@ -233,7 +261,11 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
                 buttonHeight,
                 new StringTextComponent(""),
                 button -> {
-                    airAttackType = airAttackType.next();
+                    if (!ClientEvents.keySneakPressed) {
+                        airAttackType = airAttackType.next();
+                    } else {
+                        airAttackType = airAttackType.prev();
+                    }
                     cap.setObjectSetting(EnumCommandSettingType.AIR_ATTACK_TYPE, airAttackType);
                     RegistryMessages.sendToServer(new MessageSyncCapability(referencedDragon));
                     minecraft.player.sendStatusMessage(ITextComponent.getTextComponentOrEmpty(cap.getObjectSetting(EnumCommandSettingType.AIR_ATTACK_TYPE).toString()), true);
@@ -325,6 +357,7 @@ public class ScreenDragon extends ContainerScreen<ContainerDragon> {
             offset += buttonHeight;
         }
 
+        commandStatus = cap.getCommandStatus();
         shouldSleep = cap.getShouldSleep();
         shouldReturnRoost = cap.getReturnHome();
         breathType = (EnumCommandSettingType.BreathType) cap.getObjectSetting(EnumCommandSettingType.BREATH_TYPE);

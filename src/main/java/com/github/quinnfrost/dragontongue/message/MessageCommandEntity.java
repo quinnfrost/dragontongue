@@ -187,7 +187,10 @@ public class MessageCommandEntity {
                 commandNearby(EnumCommandType.ATTACK, commander, target, pos, excludeEntity, (float) capTargetHolder.getSelectDistance());
                 break;
             case LOOP_STATUS:
-                loopSitting(commander, target);
+                loopSitting(commander, false, target);
+                break;
+            case LOOP_STATUS_REVERSE:
+                loopSitting(commander, true, target);
                 break;
             case SIT:
                 commandSit(commander, target);
@@ -476,19 +479,19 @@ public class MessageCommandEntity {
         }
     }
 
-    private static void loopSitting(LivingEntity commander, @Nullable LivingEntity target) {
+    private static void loopSitting(LivingEntity commander, boolean reverse, @Nullable LivingEntity target) {
         if (target instanceof TameableEntity && util.isOwner(target, commander)) {
 
             if (util.getByteTag(target, "Command").isPresent()) {
                 switch (util.getByteTag(target, "Command").get()) {
                     case (byte) 0:
-                        util.setByteTag(target, "Command", (byte) 1);
+                        util.setByteTag(target, "Command", reverse ? (byte) 1 : 2);
                         break;
                     case 1:
-                        util.setByteTag(target, "Command", (byte) 2);
+                        util.setByteTag(target, "Command", reverse ? (byte) 2 : 0);
                         break;
                     case 2:
-                        util.setByteTag(target, "Command", (byte) 0);
+                        util.setByteTag(target, "Command", reverse ? (byte) 0 : 1);
                         break;
                     default:
                         break;
