@@ -26,6 +26,8 @@ import net.minecraft.item.Item;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.World;
 import net.minecraft.world.gen.Heightmap;
 
 import javax.annotation.Nullable;
@@ -62,6 +64,10 @@ public class IafHelperClass {
 
         BlockPos ground = dragon.world.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, dragon.getPosition());
         return dragon.getPosY() - ground.getY();
+    }
+
+    public static double getTerrainHeight(World worldIn, BlockPos positionIn) {
+        return worldIn.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, positionIn).getY();
     }
 
     /**
@@ -112,6 +118,7 @@ public class IafHelperClass {
         float distZ = (float) (dragon.flightManager.getFlightTarget().z - dragon.getPosZ());
 
         return Arrays.asList(
+                "Flight height:" + IafHelperClass.getFlightHeight(dragon),
                 "Navigator target:" + (targetPos != null ? targetPos : ""),
                 "FlightMgr:" + dragon.flightManager.getFlightTarget().toString() + "(" + util.getDistance(dragon.flightManager.getFlightTarget(), dragon.getPositionVec()) + ")",
                 "NavType:" + dragon.navigatorType,

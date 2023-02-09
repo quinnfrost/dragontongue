@@ -18,11 +18,13 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3d;
 
 import java.util.List;
 
 public class IafAdvancedDragonLogic extends IafDragonLogic {
     private EntityDragonBase dragon;
+
 
     public IafAdvancedDragonLogic(EntityDragonBase dragon) {
         super(dragon);
@@ -194,7 +196,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
 
         // Do not attack
         if (attackDecision == EnumCommandSettingType.AttackDecisionType.DONT_HELP
-                && (commandStatus != EnumCommandSettingType.CommandStatus.NONE && commandStatus != EnumCommandSettingType.CommandStatus.ATTACK )
+                && (commandStatus != EnumCommandSettingType.CommandStatus.NONE && commandStatus != EnumCommandSettingType.CommandStatus.ATTACK)
                 && dragon.getAttackTarget() != null) {
             dragon.setAttackTarget(null);
         }
@@ -211,7 +213,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
                 cap.setCommandStatus(EnumCommandSettingType.CommandStatus.ATTACK);
             }
         }
-        if (attackDecision == EnumCommandSettingType.AttackDecisionType.GUARD && dragon.isMovementBlocked() ) {
+        if (attackDecision == EnumCommandSettingType.AttackDecisionType.GUARD && dragon.isMovementBlocked()) {
             if (DragonAIGuard.findNearestTarget(dragon) != null) {
                 dragon.setQueuedToSit(false);
                 if (dragon.getCommand() == 1) {
@@ -243,6 +245,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             });
             return;
         }
+
         // Vanilla takes over
         if (cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.NONE) {
             cap.setBreathTarget(null);
