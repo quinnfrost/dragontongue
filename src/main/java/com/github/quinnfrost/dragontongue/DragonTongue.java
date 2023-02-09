@@ -79,10 +79,13 @@ public class DragonTongue
             IafServerEvent.register(MinecraftForge.EVENT_BUS);
         }
 
-        // Todo: remove debug target, add command to debug
-        // Todo: command is reset to 0 when attack target dies
+        // Todo: dragons not return home (so close)
+        // Todo: limit float point display
+        // Todo: ATs and mixins
+        // Todo: moved too quickly fix
 
         // Todo: more settings!
+        // Todo: settings hot reload
         // Load configs
         Config.loadConfig(Config.CLIENT_CONFIG,
                 FMLPaths.CONFIGDIR.get().resolve(References.CLIENT_CONFIG_NAME + "-client.toml"));

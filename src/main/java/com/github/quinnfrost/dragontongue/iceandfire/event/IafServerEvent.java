@@ -164,7 +164,7 @@ public class IafServerEvent {
             if (playerEntity.isSneaking()) {
                 if (itemStackMainhand.getItem() == IafItemRegistry.DRAGON_STAFF || itemStackOffhand.getItem() == IafItemRegistry.DRAGON_STAFF) {
                     // Hijack the dragon staff right click dragon in sneaking
-                    if (event.getHand() == event.getPlayer().getActiveHand() && playerEntity.getDistance(dragon) < 5) {
+                    if (event.getHand() == event.getPlayer().getActiveHand() && playerEntity.getDistance(dragon) < 6) {
                         if (dragon.hasHomePosition) {
                             dragon.hasHomePosition = false;
                             playerEntity.sendStatusMessage(new TranslationTextComponent("dragon.command.remove_home"), true);
@@ -184,7 +184,7 @@ public class IafServerEvent {
                     event.setCanceled(true);
                 } else if (itemStackMainhand.isEmpty() || itemStackOffhand.isEmpty()) {
                     // Hijack empty hand right click dragon in sneaking
-                    if (event.getHand() == event.getPlayer().getActiveHand() && playerEntity.getDistance(dragon) < 5) {
+                    if (event.getHand() == event.getPlayer().getActiveHand() && playerEntity.getDistance(dragon) < 6) {
                         RegistryMessages.sendToClient(new MessageClientSetReferenceDragon(
                                 dragon.getEntityId()
                         ), (ServerPlayerEntity) playerEntity);

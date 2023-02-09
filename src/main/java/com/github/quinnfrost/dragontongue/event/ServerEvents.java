@@ -328,6 +328,7 @@ public class ServerEvents {
         if (DragonTongue.isIafPresent) {
             IafServerEvent.onEntityInteract(event);
         }
+        // Todo: delete this
         if (targetEntity instanceof TameableEntity) {
             TameableEntity tameableEntity = (TameableEntity) targetEntity;
             if (tameableEntity instanceof WolfEntity && playerEntity.isSneaking() && tameableEntity.isOwner(playerEntity)) {

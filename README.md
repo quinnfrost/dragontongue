@@ -26,6 +26,7 @@ Features
 - Use totem of undying to resurrect dragons.
 - The dragon scale set and steel set will now immune to its correspond damage, such as ice set to dragon ice spikes, lightning set to lightning strike.
 - Elder dragons will not take damage from minor sources, such as cactus and sweet berry bushes.
+- Elder dragons tend to fly higher when wandering/escorting.
 
 Other stuff
 -----------
@@ -34,7 +35,7 @@ Other stuff
 point if you are sneaking (Default disabled).
 - Creepers and TNTs no longer damage terrains.
 - A wand that teleport you to anywhere you pointed.
-- A simple damage feedback system migrated from https://www.mcbbs.net/forum.php?mod=viewthread&tid=795249
+- A simple damage feedback system migrated from [这里](https://www.mcbbs.net/forum.php?mod=viewthread&tid=795249)
 
 How to use
 ----------
@@ -60,4 +61,4 @@ Command key (default G)
 Status key (default H)
 - H + LB: tamed will stand/follow.
 - H + RB: tamed will sit.
-- H + MB: tamed will enter Guarding mode, any hostile in sight will be its target. Only dragons, hippogryphs, wolves, cats can do this.
+- H + MB: tamed will enter Guarding mode, any hostile in sight will be its target.
