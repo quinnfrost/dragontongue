@@ -113,6 +113,7 @@ public class IafDragonBehaviorHelper {
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
         ICapabilityInfoHolder cap = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
+        AdvancedPathNavigate navigate = (AdvancedPathNavigate) dragon.getNavigator();
 
         if (cap.getObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE) != EnumCommandSettingType.MovementType.LAND
                 && cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.STAY && IafDragonBehaviorHelper.isOverAir(dragon)) {
@@ -344,7 +345,10 @@ public class IafDragonBehaviorHelper {
         ICapabilityInfoHolder cap = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
 
         if (target != null) {
-            dragon.setCommand(2);
+            // If dragon was command 0, after attack IafAdvancedDragonLogic#254 will set to HOVER/STAY
+            if (dragon.getCommand() == 1) {
+                dragon.setCommand(2);
+            }
             cap.setCommandStatus(EnumCommandSettingType.CommandStatus.ATTACK);
             // One target at a time
             setDragonBreathTarget(dragon, null);

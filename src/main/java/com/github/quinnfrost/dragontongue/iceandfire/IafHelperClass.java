@@ -115,6 +115,7 @@ public class IafHelperClass {
                 "Navigator target:" + (targetPos != null ? targetPos : ""),
                 "FlightMgr:" + dragon.flightManager.getFlightTarget().toString() + "(" + util.getDistance(dragon.flightManager.getFlightTarget(), dragon.getPositionVec()) + ")",
                 "NavType:" + dragon.navigatorType,
+                "Command:" + dragon.getCommand(),
 //                "Flying:" + compoundNBT.getByte("Flying"),
 //                "HoverTicks:" + dragon.hoverTicks,
 //                "TicksStill:" + dragon.ticksStill,
