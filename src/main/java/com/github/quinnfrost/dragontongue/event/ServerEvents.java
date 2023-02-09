@@ -183,9 +183,9 @@ public class ServerEvents {
             DragonTongue.debugTarget.writeAdditional(compoundNBT);
 
             ICapabilityInfoHolder capabilityInfoHolder = mobEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(mobEntity));
-            BlockPos targetPos = mobEntity.getNavigator().getTargetPos();
+            BlockPos targetPos = DragonTongue.isIafPresent ? IafHelperClass.getReachTarget(mobEntity) : mobEntity.getNavigator().getTargetPos();
             String targetPosString = (targetPos == null ? "" :
-                    targetPos + "(" + String.valueOf(util.getDistance(mobEntity.getPosition(), targetPos))) + ")";
+                    targetPos + "(" + String.valueOf(util.getDistance(mobEntity.getPosition(), targetPos)) + ")");
             Entity targetEntity = mobEntity.getAttackTarget();
             String targetString = targetEntity == null ? "" :
                     targetEntity.getEntityString() + " " + mobEntity.getAttackTarget().getPosition();

@@ -1,6 +1,7 @@
 package com.github.quinnfrost.dragontongue.iceandfire.ai;
 
 import com.github.alexthe666.iceandfire.entity.EntityHippogryph;
+import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
@@ -19,6 +20,9 @@ public class HippogryphAIFollowCommandAndAttack extends MeleeAttackGoal {
     // Todo: cleanup what's happening below
     @Override
     public boolean shouldExecute() {
+        if (this.attacker.getAttackTarget() != null || capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE) {
+            return true;
+        }
         if (super.shouldExecute()) {
             return true;
         }
@@ -31,6 +35,9 @@ public class HippogryphAIFollowCommandAndAttack extends MeleeAttackGoal {
     }
     @Override
     public boolean shouldContinueExecuting() {
+        if (this.attacker.getAttackTarget() != null || capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE) {
+            return true;
+        }
         if (super.shouldContinueExecuting()) {
             return true;
         }
@@ -77,6 +84,7 @@ public class HippogryphAIFollowCommandAndAttack extends MeleeAttackGoal {
             });
         }
         if (hippogryph.getAttackTarget() != null) {
+            hippogryph.getNavigator().tryMoveToEntityLiving(hippogryph.getAttackTarget(), 1.1f);
             super.tick();
         }
     }

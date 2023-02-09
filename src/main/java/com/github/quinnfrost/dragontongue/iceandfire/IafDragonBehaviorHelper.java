@@ -54,7 +54,7 @@ public class IafDragonBehaviorHelper {
         if (IafHelperClass.isHippogryph(mobEntity)) {
             EntityHippogryph hippogryph = (EntityHippogryph) mobEntity;
 
-            hippogryph.goalSelector.addGoal(2, new HippogryphAIFollowCommandAndAttack(hippogryph, 1.0f,true));
+            hippogryph.goalSelector.addGoal(3, new HippogryphAIFollowCommandAndAttack(hippogryph, 1.0f,true));
 
             hippogryph.targetSelector.addGoal(3, new GuardGoal<>(hippogryph, LivingEntity.class, false, new java.util.function.Predicate<LivingEntity>() {
                 @Override

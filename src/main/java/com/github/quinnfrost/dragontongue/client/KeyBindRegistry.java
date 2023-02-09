@@ -198,9 +198,6 @@ public class KeyBindRegistry {
 
             // G + LB
             if (gameSettings.keyBindAttack.isKeyDown()) {
-                if (capTargetHolder.getCommandEntities().isEmpty()) {
-                    ClientGlow.glowSurroundTamed(clientPlayerEntity, 2 * 50, capTargetHolder.getSelectDistance(), null);
-                }
                 // Entity selected
                 if (rayTraceResult.getType() == RayTraceResult.Type.ENTITY) {
                     ClientGlow.setGlowing(((EntityRayTraceResult) rayTraceResult).getEntity(), 2 * 50);
@@ -215,6 +212,9 @@ public class KeyBindRegistry {
                     RegistryMessages.sendToServer(new MessageCommandEntity(
                             EnumCommandType.BREATH, clientPlayerEntity.getUniqueID(), null, blockRayTraceResult
                     ));
+                }
+                if (capTargetHolder.getCommandEntities().isEmpty()) {
+                    ClientGlow.glowSurroundTamed(clientPlayerEntity, 2 * 50, capTargetHolder.getSelectDistance(), null);
                 }
                 // G + RB
             } else if (gameSettings.keyBindUseItem.isKeyDown()) {
