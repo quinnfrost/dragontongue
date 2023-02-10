@@ -3,6 +3,10 @@ package com.github.quinnfrost.dragontongue.iceandfire.mixin;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.IafDragonAttacks;
 import com.github.alexthe666.iceandfire.entity.IafDragonFlightManager;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
+import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonFlightUtil;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.MobEntity;
@@ -56,25 +60,28 @@ public class MixinFlightMoveHelper extends MovementController {
      */
     @Overwrite
     public void tick() {
+        ICapabilityInfoHolder cap = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl());
+        EnumCommandSettingType.CommandStatus commandStatus = cap.getCommandStatus();
         Vector3d flightTarget = dragon.flightManager.getFlightTarget();
         float distToX = (float) (flightTarget.x - dragon.getPosX());
         float distToY = (float) (flightTarget.y - dragon.getPosY());
         float distToZ = (float) (flightTarget.z - dragon.getPosZ());
 
         // Every 1 second (or collided already) the dragon check if there is terrain between her and the target
-        if (detourState == 0 &&
-                (dragon.world.getGameTime() % 20 == 0 || dragon.collidedHorizontally)) {
-            BlockRayTraceResult blockRayTraceResult = util.rayTraceBlock(dragon.world, dragon.getPositionVec(), dragon.flightManager.getFlightTarget());
-            // If there is, she will find a higher place where the target is directly in her sight
-            if (!dragon.world.isAirBlock(blockRayTraceResult.getPos())) {
-                BlockPos preferredFlightPos = IafDragonFlightUtil.getHighestBlockInRadius(dragon.world, blockRayTraceResult.getPos(), 10);
-                while (!dragon.world.isAirBlock(blockRayTraceResult.getPos()) && preferredFlightPos.getY() < dragon.world.getHeight()) {
-                    preferredFlightPos = preferredFlightPos.add(0, dragon.getYNavSize() * 2, 0);
-                    blockRayTraceResult = util.rayTraceBlock(dragon.world, Vector3d.copyCentered(preferredFlightPos), dragon.flightManager.getFlightTarget());
+        if ((detourState == 0 && dragon.world.getGameTime() % 20 == 0) || dragon.collidedHorizontally) {
+            if (commandStatus != EnumCommandSettingType.CommandStatus.STAY && commandStatus != EnumCommandSettingType.CommandStatus.HOVER) {
+                BlockRayTraceResult blockRayTraceResult = util.rayTraceBlock(dragon.world, dragon.getPositionVec(), dragon.flightManager.getFlightTarget());
+                // If there is, she will find a higher place where the target is directly in her sight
+                if (!dragon.world.isAirBlock(blockRayTraceResult.getPos())) {
+                    BlockPos preferredFlightPos = IafDragonFlightUtil.getHighestBlockInRadius(dragon.world, blockRayTraceResult.getPos(), 10);
+                    while (!dragon.world.isAirBlock(blockRayTraceResult.getPos()) && preferredFlightPos.getY() < dragon.world.getHeight()) {
+                        preferredFlightPos = preferredFlightPos.add(0, dragon.getYNavSize() * 2, 0);
+                        blockRayTraceResult = util.rayTraceBlock(dragon.world, Vector3d.copyCentered(preferredFlightPos), dragon.flightManager.getFlightTarget());
+                    }
+                    // And take a detour to reach her target
+                    detourState = 1;
+                    detourTarget = Vector3d.copyCentered(preferredFlightPos);
                 }
-                // And take a detour to reach her target
-                detourState = 1;
-                detourTarget = Vector3d.copyCentered(preferredFlightPos);
             }
         }
         if (detourState != 0) {
@@ -83,18 +90,20 @@ public class MixinFlightMoveHelper extends MovementController {
             distToZ = (float) (detourTarget.z - dragon.getPosZ());
             // Detour state 1: try reach the top of the terrain
             if (detourState == 1 && detourTarget != null) {
-                if (util.hasArrived(dragon, new BlockPos(detourTarget), dragon.getBoundingBox().getYSize())) {
+                if (dragon.getPositionVec().y >= detourTarget.y
+                        && util.hasArrived(dragon, new BlockPos(detourTarget), Double.valueOf(dragon.getYNavSize() * 2))) {
                     detourState = 2;
                     detourTarget = detourTarget.add(
                             (flightTarget.x - detourTarget.x) / 2,
-                            0,
+                            dragon.getYNavSize(),
                             (flightTarget.z - detourTarget.z) / 2
                     );
                 }
             }
             // Detour state 2: try fly over the terrain (by travel half of the distance in high air)
             if (detourState == 2 && detourTarget != null) {
-                if (util.hasArrived(dragon, new BlockPos(detourTarget), dragon.getBoundingBox().getYSize())) {
+                if (dragon.getPositionVec().y >= detourTarget.y
+                        && util.hasArrived(dragon, new BlockPos(detourTarget), Double.valueOf(dragon.getYNavSize() * 2))) {
                     detourState = 0;
                     detourTarget = null;
                 }
@@ -132,7 +141,7 @@ public class MixinFlightMoveHelper extends MovementController {
             speed *= dragon.getFlightSpeedModifier();
             speed *= detourState == 0
                     ? Math.min(1, distToTarget / 50 + 0.3)  //Make the dragon fly slower when close to target
-                    : 1;
+                    : 1;    // Do not limit speed when detouring
             double lvt_16_1_ = speed * MathHelper.cos(yawTurnHead * 0.017453292F) * Math.abs((double) distToX / distToTarget);
             double lvt_18_1_ = speed * MathHelper.sin(yawTurnHead * 0.017453292F) * Math.abs((double) distToZ / distToTarget);
             double lvt_20_1_ = speed * MathHelper.sin(finPitch * 0.017453292F) * Math.abs((double) distToY / distToTarget);
