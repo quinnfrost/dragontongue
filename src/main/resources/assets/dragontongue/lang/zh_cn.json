@@ -32,6 +32,7 @@
   "dragontongue.gui.destroy_type.ANY": "任意",
   "dragontongue.gui.destroy_type.CAREFUL_AROUND_ROOST": "巢穴外",
   "dragontongue.gui.destroy_type.NONE": "无",
+  "dragontongue.gui.destroy_type.DELIBERATE": "故意",
 
   "dragontongue.gui.movement_type.ANY": "任意",
   "dragontongue.gui.movement_type.LAND": "走路",

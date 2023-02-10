@@ -552,14 +552,16 @@ public class IafDragonBehaviorHelper {
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
         ICapabilityInfoHolder cap = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
+        EnumCommandSettingType.DestroyType destroyType = (EnumCommandSettingType.DestroyType) cap.getObjectSetting(EnumCommandSettingType.DESTROY_TYPE);
 
-        if (cap.getObjectSetting(EnumCommandSettingType.DESTROY_TYPE) == EnumCommandSettingType.DestroyType.ANY) {
+        if (destroyType == EnumCommandSettingType.DestroyType.ANY
+            || destroyType == EnumCommandSettingType.DestroyType.DELIBERATE) {
             return true;
         }
-        if (cap.getObjectSetting(EnumCommandSettingType.DESTROY_TYPE) == EnumCommandSettingType.DestroyType.CAREFUL_AROUND_ROOST) {
+        if (destroyType == EnumCommandSettingType.DestroyType.CAREFUL_AROUND_ROOST) {
             if (!cap.getHomePosition().isPresent()) {
                 return true;
-            } else if (util.getDistance(cap.getHomePosition().get(), destroyPosition) > IafServerEvent.TEMP_ROOST_PROTECTION_RANGE) {
+            } else if (util.getDistance(cap.getHomePosition().get(), destroyPosition) > 64) { // Todo: replace 64 with a settable value
                 return true;
             }
         }

@@ -79,8 +79,6 @@ public class DragonTongue
             IafServerEvent.register(MinecraftForge.EVENT_BUS);
         }
 
-        // Todo: ATs and mixins
-
         // Todo: more settings!
         // Todo: settings hot reload
         // Load configs

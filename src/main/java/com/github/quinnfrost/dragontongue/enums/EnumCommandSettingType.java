@@ -73,7 +73,8 @@ public enum EnumCommandSettingType {
     public enum DestroyType {
         ANY,
         CAREFUL_AROUND_ROOST,
-        NONE
+        NONE,
+        DELIBERATE
         ;
         private static final DestroyType[] vals = values();
         public DestroyType prev() {return vals[(this.ordinal() + vals.length - 1) % vals.length];}

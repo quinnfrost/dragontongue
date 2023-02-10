@@ -97,10 +97,6 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
 
         super.updateDragonServer();
 
-        if (this.dragon.collidedHorizontally) {
-
-        }
-
         // At IafDragonLogic#320, dragon takes random chance to flight if she is idle on ground
         if (movementType != EnumCommandSettingType.MovementType.AIR && cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.STAY) {
             // Prevent flying
@@ -118,7 +114,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
 //                IafDragonBehaviorHelper.setDragonWalkTarget(dragon, blockPos);
 //            });
 //        }
-        // Todo: dragon flying over a mountain issue
+
         // At IafDragonFlightManager$FlightMoveHelper#237, dragons will instantly turn around if she hit the wall
         // However this doesn't really help to solve the issue that she is behind a montain, so try to make her fly a little higher
         if (dragon.collidedHorizontally) {
@@ -233,7 +229,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         }
 
         // Bug: In some circumstances elder dragons (125+) fail to sleep even navigator believes it has reached home.
-        if (dragon.lookingForRoostAIFlag && dragon.getDistanceSquared(Vector3d.copyCentered(dragon.getHomePosition())) < dragon.getWidth() * 11) {
+        if (dragon.lookingForRoostAIFlag && dragon.getDistanceSquared(Vector3d.copyCentered(dragon.getHomePosition())) < dragon.getWidth() * 12) {
             dragon.lookingForRoostAIFlag = false;
             if (!dragon.isInWater() && dragon.isOnGround() && !dragon.isFlying() && !dragon.isHovering() && dragon.getAttackTarget() == null) {
                 dragon.setQueuedToSit(true);

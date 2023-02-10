@@ -32,6 +32,7 @@
   "dragontongue.gui.destroy_type.ANY": "Any",
   "dragontongue.gui.destroy_type.CAREFUL_AROUND_ROOST": "Outside roost",
   "dragontongue.gui.destroy_type.NONE": "None",
+  "dragontongue.gui.destroy_type.DELIBERATE": "Deliberate",
 
   "dragontongue.gui.movement_type.ANY": "Any",
   "dragontongue.gui.movement_type.LAND": "Walk",

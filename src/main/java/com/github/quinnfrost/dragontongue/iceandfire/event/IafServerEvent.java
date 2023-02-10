@@ -45,8 +45,6 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class IafServerEvent {
-    @Deprecated
-    public static final int TEMP_ROOST_PROTECTION_RANGE = 64;
 
     public static void register(IEventBus eventBus) {
         eventBus.register(IafServerEvent.class);

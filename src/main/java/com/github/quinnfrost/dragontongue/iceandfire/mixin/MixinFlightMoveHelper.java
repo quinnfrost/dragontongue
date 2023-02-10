@@ -23,12 +23,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(targets = "com.github.alexthe666.iceandfire.entity.IafDragonFlightManager$FlightMoveHelper")
-public class MixinFlightMoveHelper extends MovementController {
+public abstract class MixinFlightMoveHelper extends MovementController {
+    public MixinFlightMoveHelper(MobEntity mob) {
+        super(mob);
+    }
 
-    @Shadow
-    private EntityDragonBase dragon;
-    private long lastCollidedTime;
-    private int collidePenalty;
     /*
     Detouring state
     0: no detour
@@ -38,27 +37,26 @@ public class MixinFlightMoveHelper extends MovementController {
     private int detourState;
     private Vector3d detourTarget;
 
-    public MixinFlightMoveHelper(MobEntity mob) {
-        super(mob);
-    }
+
+    @Shadow(remap = false)
+    private EntityDragonBase dragon;
+
 
     @Inject(
+            remap = false,
             method = "<init>(Lcom/github/alexthe666/iceandfire/entity/EntityDragonBase;)V",
             at = @At(value = "RETURN")
     )
     public void FlightMoveHelper(EntityDragonBase dragonBase, CallbackInfo ci) {
         detourState = 0;
         detourTarget = null;
-
-        lastCollidedTime = 0;
-        collidePenalty = 0;
     }
 
     /**
      * @author
      * @reason Only for test use
      */
-    @Overwrite
+    @Overwrite(remap = false)
     public void tick() {
         ICapabilityInfoHolder cap = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl());
         EnumCommandSettingType.CommandStatus commandStatus = cap.getCommandStatus();
@@ -67,6 +65,7 @@ public class MixinFlightMoveHelper extends MovementController {
         float distToY = (float) (flightTarget.y - dragon.getPosY());
         float distToZ = (float) (flightTarget.z - dragon.getPosZ());
 
+        // Try to avoid the CFIT issue
         // Every 1 second (or collided already) the dragon check if there is terrain between her and the target
         if ((detourState == 0 && dragon.world.getGameTime() % 20 == 0) || dragon.collidedHorizontally) {
             if (commandStatus != EnumCommandSettingType.CommandStatus.STAY && commandStatus != EnumCommandSettingType.CommandStatus.HOVER) {
@@ -110,6 +109,7 @@ public class MixinFlightMoveHelper extends MovementController {
             }
         }
 
+        // Following logic makes dragon actually fly to the target, it's not touched except the name
         // The shortest possible distance to the target plane (parallel to y)
         double xzPlaneDist = MathHelper.sqrt(distToX * distToX + distToZ * distToZ);
         // f = 1 - |0.7 * Y| / sqrt(X^2+Y^2)

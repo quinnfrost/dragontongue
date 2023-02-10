@@ -5,7 +5,7 @@
   "refmap": "dragontongue.refmap.json",
 
   "mixins": [
-    "MixinTestClass",
-    "MixinFlightMoveHelper"
+    "MixinFlightMoveHelper",
+    "MixinEntityDragonBase"
   ]
 }

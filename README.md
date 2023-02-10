@@ -28,6 +28,7 @@ Features
 - The dragon scale set and steel set will now immune to its correspond damage, such as ice set to dragon ice spikes, lightning set to lightning strike.
 - Elder dragons will not take damage from minor sources, such as cactus and sweet berry bushes.
 - Elder dragons tend to fly higher when wandering/escorting.
+- Elder dragons can walk up fences, according to their stages at most 3 blocks can be walked up.
 - Other minor bug fixes for Ice and Fire that has not been in the release yet.
 
 Other stuff

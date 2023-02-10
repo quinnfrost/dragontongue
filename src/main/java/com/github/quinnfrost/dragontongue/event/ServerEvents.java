@@ -203,7 +203,8 @@ public class ServerEvents {
                     "Current dest:" + targetPosString,
                     "Command status:" + capabilityInfoHolder.getCommandStatus().toString(),
                     "Command dest:" + destinationString,
-                    "AttackDecision:" + capabilityInfoHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE)
+                    "AttackDecision:" + capabilityInfoHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE),
+                    "StepHeight:" + mobEntity.stepHeight
             );
             if (DragonTongue.isIafPresent) {
                 List<String> additional = IafHelperClass.getAdditionalDragonDebugStrings(mobEntity);
