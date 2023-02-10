@@ -5,7 +5,6 @@ import com.github.alexthe666.iceandfire.entity.EntityDragonPart;
 import com.github.alexthe666.iceandfire.entity.EntityHippogryph;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.alexthe666.iceandfire.entity.util.IDeadMob;
-import com.github.alexthe666.iceandfire.item.IafArmorMaterial;
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import com.github.alexthe666.iceandfire.item.ItemDragonsteelArmor;
 import com.github.alexthe666.iceandfire.item.ItemScaleArmor;
@@ -26,8 +25,6 @@ import net.minecraft.item.Item;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
 import net.minecraft.world.gen.Heightmap;
 
 import javax.annotation.Nullable;
@@ -64,10 +61,6 @@ public class IafHelperClass {
 
         BlockPos ground = dragon.world.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, dragon.getPosition());
         return dragon.getPosY() - ground.getY();
-    }
-
-    public static double getTerrainHeight(World worldIn, BlockPos positionIn) {
-        return worldIn.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, positionIn).getY();
     }
 
     /**

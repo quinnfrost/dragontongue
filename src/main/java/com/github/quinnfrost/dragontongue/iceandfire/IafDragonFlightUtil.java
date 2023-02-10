@@ -6,6 +6,7 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.World;
 import net.minecraft.world.gen.Heightmap;
 
 // This class came from DragonUtils, with some modification
@@ -89,6 +90,23 @@ public class IafDragonFlightUtil {
             return pos;
         }
         return null;
+    }
+
+    public static int getTerrainHeight(World worldIn, BlockPos positionIn) {
+        return worldIn.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, positionIn).getY();
+    }
+
+    public static BlockPos getHighestBlockInRadius(World worldIn, BlockPos positionIn, int radius) {
+        BlockPos areaTerrainHighest = positionIn;
+        for (int i = positionIn.getX() - radius; i <= positionIn.getX() + radius; i++) {
+            for (int j = positionIn.getZ() - radius; j <= positionIn.getZ() + radius; j++) {
+                int height = getTerrainHeight(worldIn, new BlockPos(i, 0, j));
+                if (height > areaTerrainHighest.getY()) {
+                    areaTerrainHighest = new BlockPos(i, height, j);
+                }
+            }
+        }
+        return areaTerrainHighest;
     }
 
 }

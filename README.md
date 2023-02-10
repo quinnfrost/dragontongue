@@ -20,9 +20,10 @@ Features
 - Use dragon staff from a distance, cycle the command mode from the ground, no dragon flute is ever needed.
 - Original dragon staff behavior is modified, from far distance right click on the dragon will open the gui, from close remain the same.
 - A new Guarding state, your pet will try to attack any hostile mob in sight.
-- Dragon specific griefing rules, attack options, flight options and more. Configurable in the original shift right click gui.
+- Dragon specific griefing rules, attack options, flight options and more. Each dragon have independent settings. Configurable in the original shift right click gui.
 
 ### Other modification
+- Fix dragon flight CFIT issue, they will now fly higher to pass the terrain if they can't see the target directly.
 - Use totem of undying to resurrect dragons.
 - The dragon scale set and steel set will now immune to its correspond damage, such as ice set to dragon ice spikes, lightning set to lightning strike.
 - Elder dragons will not take damage from minor sources, such as cactus and sweet berry bushes.

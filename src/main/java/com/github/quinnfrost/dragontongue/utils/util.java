@@ -173,6 +173,11 @@ public class util {
                 RayTraceContext.FluidMode.NONE, entity));
     }
 
+    public static BlockRayTraceResult rayTraceBlock(World world, Vector3d startVec, Vector3d endVec) {
+        return world.rayTraceBlocks(new RayTraceContext(startVec, endVec, RayTraceContext.BlockMode.VISUAL,
+                RayTraceContext.FluidMode.NONE, null));
+    }
+
 
 //    public static List<Entity> getEntitiesAround(BlockPos blockPos, World world, float radius, Predicate<? super Entity> excludeEntity) {
 //        if (excludeEntity == null) {
@@ -309,6 +314,11 @@ public class util {
             targetGoal.resetTask();
         }
         return true;
+    }
+
+    public static void mixinDebugger() {
+        String str = "A breakpoint over here will do the trick";
+//        DragonTongue.LOGGER.debug(str);
     }
 
     @OnlyIn(Dist.CLIENT)

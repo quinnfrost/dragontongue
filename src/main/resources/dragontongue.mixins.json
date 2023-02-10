@@ -1,0 +1,11 @@
+{
+  "required": false,
+  "package": "com.github.quinnfrost.dragontongue.iceandfire.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "dragontongue.refmap.json",
+
+  "mixins": [
+    "MixinTestClass",
+    "MixinFlightMoveHelper"
+  ]
+}

@@ -97,6 +97,10 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
 
         super.updateDragonServer();
 
+        if (this.dragon.collidedHorizontally) {
+
+        }
+
         // At IafDragonLogic#320, dragon takes random chance to flight if she is idle on ground
         if (movementType != EnumCommandSettingType.MovementType.AIR && cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.STAY) {
             // Prevent flying
