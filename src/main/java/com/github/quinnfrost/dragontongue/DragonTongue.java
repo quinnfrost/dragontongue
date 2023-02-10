@@ -79,10 +79,7 @@ public class DragonTongue
             IafServerEvent.register(MinecraftForge.EVENT_BUS);
         }
 
-        // Todo: dragons not return home (so close)
-        // Todo: limit float point display
         // Todo: ATs and mixins
-        // Todo: moved too quickly fix
 
         // Todo: more settings!
         // Todo: settings hot reload
