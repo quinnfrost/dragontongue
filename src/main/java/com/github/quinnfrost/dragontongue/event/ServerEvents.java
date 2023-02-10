@@ -329,22 +329,22 @@ public class ServerEvents {
             IafServerEvent.onEntityInteract(event);
         }
         // Todo: delete this
-        if (targetEntity instanceof TameableEntity) {
-            TameableEntity tameableEntity = (TameableEntity) targetEntity;
-            if (tameableEntity instanceof WolfEntity && playerEntity.isSneaking() && tameableEntity.isOwner(playerEntity)) {
-                tameableEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                    if (iCapTargetHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE) != EnumCommandSettingType.AttackDecisionType.GUARD) {
-//                        playerEntity.sendStatusMessage(ITextComponent.getTextComponentOrEmpty("Attack decision set to guard"), true);
-                        iCapTargetHolder.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.GUARD);
-                    } else {
-//                        playerEntity.sendStatusMessage(ITextComponent.getTextComponentOrEmpty("Attack decision set to default"), true);
-                        iCapTargetHolder.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP);
-                    }
-                    event.setCancellationResult(ActionResultType.SUCCESS);
-                    event.setCanceled(true);
-                });
-            }
-        }
+//        if (targetEntity instanceof TameableEntity) {
+//            TameableEntity tameableEntity = (TameableEntity) targetEntity;
+//            if (tameableEntity instanceof WolfEntity && playerEntity.isSneaking() && tameableEntity.isOwner(playerEntity)) {
+//                tameableEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
+//                    if (iCapTargetHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE) != EnumCommandSettingType.AttackDecisionType.GUARD) {
+////                        playerEntity.sendStatusMessage(ITextComponent.getTextComponentOrEmpty("Attack decision set to guard"), true);
+//                        iCapTargetHolder.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.GUARD);
+//                    } else {
+////                        playerEntity.sendStatusMessage(ITextComponent.getTextComponentOrEmpty("Attack decision set to default"), true);
+//                        iCapTargetHolder.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP);
+//                    }
+//                    event.setCancellationResult(ActionResultType.SUCCESS);
+//                    event.setCanceled(true);
+//                });
+//            }
+//        }
     }
 
     @SubscribeEvent
@@ -388,8 +388,9 @@ public class ServerEvents {
             ServerPlayerEntity playerEntity = (ServerPlayerEntity) source;
             float damageAmount = event.getAmount();
             if (hurtEntity.isAlive()) {
+
                 RegistryMessages.sendToClient(new MessageClientDisplay(
-                                EnumClientDisplay.DAMAGE, 1, Collections.singletonList(String.valueOf(damageAmount))),
+                                EnumClientDisplay.DAMAGE, 1, Collections.singletonList(String.format("%.1f", damageAmount))),
                         playerEntity
                 );
             }

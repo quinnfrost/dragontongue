@@ -135,7 +135,8 @@ public class IafHelperClass {
                 "Distance:" + (double) MathHelper.sqrt(distX * distX + distZ * distZ + distY * distY),
                 "AirAttack:" + dragon.airAttack,
                 "GroundAttack:" + dragon.groundAttack,
-                "UseGroundAttack? " + dragon.usingGroundAttack
+                "UseGroundAttack? " + dragon.usingGroundAttack,
+                "LookingForRoost? " + dragon.lookingForRoostAIFlag
         );
 
 

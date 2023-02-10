@@ -6,6 +6,7 @@ import com.github.alexthe666.iceandfire.entity.EntityDragonCharge;
 import com.github.alexthe666.iceandfire.entity.IafDragonAttacks;
 import com.github.alexthe666.iceandfire.entity.IafDragonLogic;
 import com.github.alexthe666.iceandfire.entity.util.HomePosition;
+import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
@@ -203,7 +204,10 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         if (attackDecision == EnumCommandSettingType.AttackDecisionType.NONE && dragon.getAttackTarget() != null) {
             dragon.setAttackTarget(null);
         }
-        if (attackDecision == EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP && dragon.getAttackTarget() != null) {
+        if (attackDecision == EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP && dragon.getAttackTarget() != null &&
+                (commandStatus != EnumCommandSettingType.CommandStatus.NONE
+                || dragon.getCommand() == 1)) {
+            //
             cap.setCommandStatus(EnumCommandSettingType.CommandStatus.ATTACK);
         }
         if (attackDecision == EnumCommandSettingType.AttackDecisionType.GUARD && commandStatus != EnumCommandSettingType.CommandStatus.NONE) {
@@ -224,6 +228,13 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             }
         }
 
+        // Bug: In some circumstances elder dragons (125+) fail to sleep even navigator believes it has reached home.
+        if (dragon.lookingForRoostAIFlag && dragon.getDistanceSquared(Vector3d.copyCentered(dragon.getHomePosition())) < dragon.getWidth() * 11) {
+            dragon.lookingForRoostAIFlag = false;
+            if (!dragon.isInWater() && dragon.isOnGround() && !dragon.isFlying() && !dragon.isHovering() && dragon.getAttackTarget() == null) {
+                dragon.setQueuedToSit(true);
+            }
+        }
         // Bug: lightning dragon won't wake up when command is set to escort
         if (dragon.getCommand() == 2 && !dragon.canMove()) {
             dragon.setQueuedToSit(false);
