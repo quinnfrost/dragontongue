@@ -2,6 +2,10 @@ package com.github.quinnfrost.dragontongue.iceandfire;
 
 import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
+import com.github.quinnfrost.dragontongue.message.MessageClientDraw;
+import com.github.quinnfrost.dragontongue.message.RegistryMessages;
+import com.github.quinnfrost.dragontongue.utils.util;
+import net.minecraft.entity.Entity;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -93,20 +97,79 @@ public class IafDragonFlightUtil {
     }
 
     public static int getTerrainHeight(World worldIn, BlockPos positionIn) {
-        return worldIn.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, positionIn).getY();
+        return getHighestBlock(worldIn, positionIn).getY();
+    }
+    public static BlockPos getHighestBlock(World worldIn, BlockPos positionIn) {
+        return worldIn.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, positionIn);
     }
 
     public static BlockPos getHighestBlockInRadius(World worldIn, BlockPos positionIn, int radius) {
         BlockPos areaTerrainHighest = positionIn;
         for (int i = positionIn.getX() - radius; i <= positionIn.getX() + radius; i++) {
             for (int j = positionIn.getZ() - radius; j <= positionIn.getZ() + radius; j++) {
-                int height = getTerrainHeight(worldIn, new BlockPos(i, 0, j));
-                if (height > areaTerrainHighest.getY()) {
-                    areaTerrainHighest = new BlockPos(i, height, j);
+                BlockPos currentBlock = getHighestBlock(worldIn, new BlockPos(i, 0, j));
+                if (currentBlock.getY() > areaTerrainHighest.getY()) {
+                    areaTerrainHighest = currentBlock;
                 }
             }
         }
         return areaTerrainHighest;
     }
 
+    public static boolean canAreaSeeSky(World worldIn, BlockPos blockPosIn, int radius) {
+        for (int i = blockPosIn.getX() - radius; i <= blockPosIn.getX() + radius; i++) {
+            for (int j = blockPosIn.getZ() - radius; j <= blockPosIn.getZ() + radius; j++) {
+                if (!worldIn.canBlockSeeSky(new BlockPos(i, blockPosIn.getY(), j))) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public static BlockPos highestBlockOnPath(World worldIn, Vector3d startIn, Vector3d endIn, float width) {
+        double length = endIn.distanceTo(startIn);
+        Vector3d direction = endIn.subtract(startIn).normalize();
+        Vector3d directionXZ = new Vector3d(direction.x, 0, direction.z).normalize();
+
+        Vector3d central = startIn;
+        Vector3d leftWing = central.add(directionXZ.rotateYaw(90 * ((float) Math.PI / 180F)).scale(width));
+        leftWing = worldIn.isAirBlock(new BlockPos(leftWing)) || width == 0 ? leftWing : null;
+        Vector3d rightWing = central.add(directionXZ.rotateYaw(-90 * ((float) Math.PI / 180F)).scale(width));
+        rightWing = worldIn.isAirBlock(new BlockPos(rightWing)) || width == 0 ? rightWing : null;
+
+        Vector3d centralTarget = endIn;
+        Vector3d leftWingTarget = centralTarget.add(directionXZ.rotateYaw(90 * ((float) Math.PI / 180F)).scale(width));
+        Vector3d rightWingTarget = centralTarget.add(directionXZ.rotateYaw(-90 * ((float) Math.PI / 180F)).scale(width));
+
+        BlockPos highestBlock = new BlockPos(startIn);
+        for (int i = 0; i < length; i++) {
+            BlockPos currentCentral = getHighestBlock(worldIn, new BlockPos(util.getDirectionOffset(central, direction, i)));
+            if (currentCentral.getY() > highestBlock.getY()) {
+                highestBlock = currentCentral;
+            }
+            if (leftWing != null) {
+                BlockPos currentLeft = getHighestBlock(worldIn, new BlockPos(util.getDirectionOffset(leftWing, direction, i)));
+                if (currentLeft.getY() > highestBlock.getY()) {
+                    highestBlock = currentLeft;
+                }
+            }
+            if (rightWing != null) {
+                BlockPos currentRight = getHighestBlock(worldIn, new BlockPos(util.getDirectionOffset(rightWing, direction, i)));
+                if (currentRight.getY() > highestBlock.getY()) {
+                    highestBlock = currentRight;
+                }
+            }
+        }
+        return highestBlock;
+    }
+
+    public static double getFlightHeight(Entity dragonIn) {
+        if (!IafHelperClass.isDragon(dragonIn)) {
+            return 0;
+        }
+        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+
+        return dragon.getPositionVec().y - getTerrainHeight(dragon.world, dragon.getPosition());
+    }
 }

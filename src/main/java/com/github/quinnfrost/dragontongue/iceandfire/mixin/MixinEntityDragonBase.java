@@ -66,7 +66,6 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     public ICapabilityInfoHolder cap = this.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(this));
 
     @Inject(
-            remap = false,
             method = "tick()V",
             at = @At(value = "INVOKE", ordinal = 0, target = "Lcom/github/alexthe666/iceandfire/entity/EntityDragonBase;isOverAirLogic()Z")
     )

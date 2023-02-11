@@ -3,11 +3,14 @@ package com.github.quinnfrost.dragontongue.iceandfire.mixin;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.IafDragonAttacks;
 import com.github.alexthe666.iceandfire.entity.IafDragonFlightManager;
+import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonFlightUtil;
+import com.github.quinnfrost.dragontongue.message.MessageClientDraw;
+import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.ai.controller.MovementController;
@@ -56,7 +59,7 @@ public abstract class MixinFlightMoveHelper extends MovementController {
      * @author
      * @reason Only for test use
      */
-    @Overwrite(remap = false)
+    @Overwrite
     public void tick() {
         ICapabilityInfoHolder cap = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl());
         EnumCommandSettingType.CommandStatus commandStatus = cap.getCommandStatus();
@@ -68,15 +71,13 @@ public abstract class MixinFlightMoveHelper extends MovementController {
         // Try to avoid the CFIT issue
         // Every 1 second (or collided already) the dragon check if there is terrain between her and the target
         if ((detourState == 0 && dragon.world.getGameTime() % 20 == 0) || dragon.collidedHorizontally) {
-            if (commandStatus != EnumCommandSettingType.CommandStatus.STAY && commandStatus != EnumCommandSettingType.CommandStatus.HOVER) {
+            if (commandStatus != EnumCommandSettingType.CommandStatus.STAY && commandStatus != EnumCommandSettingType.CommandStatus.HOVER
+            && !util.hasArrived(dragon, new BlockPos(flightTarget), (double) dragon.getRenderSize())) {
                 BlockRayTraceResult blockRayTraceResult = util.rayTraceBlock(dragon.world, dragon.getPositionVec(), dragon.flightManager.getFlightTarget());
                 // If there is, she will find a higher place where the target is directly in her sight
                 if (!dragon.world.isAirBlock(blockRayTraceResult.getPos())) {
-                    BlockPos preferredFlightPos = IafDragonFlightUtil.getHighestBlockInRadius(dragon.world, blockRayTraceResult.getPos(), 10);
-                    while (!dragon.world.isAirBlock(blockRayTraceResult.getPos()) && preferredFlightPos.getY() < dragon.world.getHeight()) {
-                        preferredFlightPos = preferredFlightPos.add(0, dragon.getYNavSize() * 2, 0);
-                        blockRayTraceResult = util.rayTraceBlock(dragon.world, Vector3d.copyCentered(preferredFlightPos), dragon.flightManager.getFlightTarget());
-                    }
+                    BlockPos preferredFlightPos = IafDragonFlightUtil.highestBlockOnPath(dragon.world, dragon.getPositionVec(), flightTarget, 0).add(0, 2 * dragon.getYNavSize(), 0);
+
                     // And take a detour to reach her target
                     detourState = 1;
                     detourTarget = Vector3d.copyCentered(preferredFlightPos);
@@ -89,12 +90,11 @@ public abstract class MixinFlightMoveHelper extends MovementController {
             distToZ = (float) (detourTarget.z - dragon.getPosZ());
             // Detour state 1: try reach the top of the terrain
             if (detourState == 1 && detourTarget != null) {
-                if (dragon.getPositionVec().y >= detourTarget.y
-                        && util.hasArrived(dragon, new BlockPos(detourTarget), Double.valueOf(dragon.getYNavSize() * 2))) {
+                if (dragon.getPositionVec().y >= detourTarget.y) {
                     detourState = 2;
                     detourTarget = detourTarget.add(
                             (flightTarget.x - detourTarget.x) / 2,
-                            dragon.getYNavSize(),
+                            0,
                             (flightTarget.z - detourTarget.z) / 2
                     );
                 }
@@ -102,7 +102,7 @@ public abstract class MixinFlightMoveHelper extends MovementController {
             // Detour state 2: try fly over the terrain (by travel half of the distance in high air)
             if (detourState == 2 && detourTarget != null) {
                 if (dragon.getPositionVec().y >= detourTarget.y
-                        && util.hasArrived(dragon, new BlockPos(detourTarget), Double.valueOf(dragon.getYNavSize() * 2))) {
+                        && util.hasArrived(dragon, new BlockPos(detourTarget), (double) (dragon.getYNavSize() * 2))) {
                     detourState = 0;
                     detourTarget = null;
                 }

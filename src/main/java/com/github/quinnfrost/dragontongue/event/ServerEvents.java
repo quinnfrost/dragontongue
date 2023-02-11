@@ -141,6 +141,7 @@ public class ServerEvents {
         if (event.getEntity().world.isRemote) {
             return;
         }
+
         if (DragonTongue.isIafPresent) {
             IafServerEvent.onLivingUpdate(event);
 
@@ -152,6 +153,13 @@ public class ServerEvents {
             if (event.getEntityLiving() instanceof PlayerEntity && DragonTongue.debugTarget != null) {
                 PlayerEntity playerEntity = (PlayerEntity) event.getEntityLiving();
                 ICapabilityInfoHolder cap = playerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(playerEntity));
+
+//                RegistryMessages.sendToAll(new MessageClientDraw(
+//                        98981,
+//                        util.getDirectionOffset(playerEntity.getPositionVec(), playerEntity.getLookVec(), 10),
+//                        playerEntity.getPositionVec()
+//                ));
+
                 for (UUID entityUUID :
                         cap.getCommandEntities()) {
                     MobEntity mobEntity = (MobEntity) ((ServerWorld) playerEntity.world).getEntityByUuid(entityUUID);

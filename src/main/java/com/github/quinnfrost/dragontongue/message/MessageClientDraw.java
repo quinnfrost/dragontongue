@@ -69,7 +69,7 @@ public class MessageClientDraw {
             contextSupplier.get().setPacketHandled(true);
 
             if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
-                RenderNode.setRenderPos(2,pos,start, index);
+                RenderNode.setRenderPos(2 * 20,pos,start, index);
             } else if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_SERVER) {
 
             }

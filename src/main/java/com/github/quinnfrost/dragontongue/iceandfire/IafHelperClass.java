@@ -25,7 +25,7 @@ import net.minecraft.item.Item;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.gen.Heightmap;
+import net.minecraft.util.math.vector.Vector3d;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -51,16 +51,6 @@ public class IafHelperClass {
             }
         }
         return null;
-    }
-
-    public static double getFlightHeight(Entity dragonIn) {
-        if (!isDragon(dragonIn)) {
-            return 0;
-        }
-        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-
-        BlockPos ground = dragon.world.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, dragon.getPosition());
-        return dragon.getPosY() - ground.getY();
     }
 
     /**
@@ -111,7 +101,8 @@ public class IafHelperClass {
         float distZ = (float) (dragon.flightManager.getFlightTarget().z - dragon.getPosZ());
 
         return Arrays.asList(
-                "Flight height:" + IafHelperClass.getFlightHeight(dragon),
+                "Render size:" + dragon.getRenderSize() + String.format("(%.2f)", dragon.getRenderScale()),
+                "Flight height:" + IafDragonFlightUtil.getFlightHeight(dragon),
                 "Navigator target:" + (targetPos != null ? targetPos : ""),
                 "FlightMgr:" + dragon.flightManager.getFlightTarget().toString() + "(" + util.getDistance(dragon.flightManager.getFlightTarget(), dragon.getPositionVec()) + ")",
                 "NavType:" + dragon.navigatorType,
@@ -143,6 +134,25 @@ public class IafHelperClass {
         RegistryMessages.sendToAll(new MessageClientDraw(
                 -dragon.getEntityId(), dragon.flightManager.getFlightTarget(),
                 dragon.getPositionVec()
+        ));
+
+        double length = dragon.flightManager.getFlightTarget().distanceTo(dragon.getPositionVec());
+        Vector3d direction = dragon.flightManager.getFlightTarget().subtract(dragon.getPositionVec()).normalize();
+        Vector3d directionXZ = new Vector3d(direction.x, 0, direction.z).normalize();
+
+        Vector3d central = dragon.getPositionVec();
+        Vector3d leftWing = central.add(directionXZ.rotateYaw(90 * ((float) Math.PI / 180F)).scale(dragon.getRenderSize()));
+        Vector3d rightWing = central.add(directionXZ.rotateYaw(-90 * ((float) Math.PI / 180F)).scale(dragon.getRenderSize()));
+
+        Vector3d centralTarget = dragon.flightManager.getFlightTarget();
+        Vector3d leftWingTarget = centralTarget.add(directionXZ.rotateYaw(90 * ((float) Math.PI / 180F)).scale(dragon.getRenderSize()));
+        Vector3d rightWingTarget = centralTarget.add(directionXZ.rotateYaw(-90 * ((float) Math.PI / 180F)).scale(dragon.getRenderSize()));
+
+        RegistryMessages.sendToAll(new MessageClientDraw(
+                2554, leftWingTarget, leftWing
+        ));
+        RegistryMessages.sendToAll(new MessageClientDraw(
+                2555, rightWingTarget, rightWing
         ));
         return true;
     }

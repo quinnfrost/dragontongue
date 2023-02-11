@@ -1,9 +1,7 @@
 package com.github.quinnfrost.dragontongue.utils;
 
 import com.github.quinnfrost.dragontongue.DragonTongue;
-import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
-import com.google.common.collect.Sets;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -29,7 +27,6 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -176,6 +173,10 @@ public class util {
     public static BlockRayTraceResult rayTraceBlock(World world, Vector3d startVec, Vector3d endVec) {
         return world.rayTraceBlocks(new RayTraceContext(startVec, endVec, RayTraceContext.BlockMode.VISUAL,
                 RayTraceContext.FluidMode.NONE, null));
+    }
+
+    public static Vector3d getDirectionOffset(Vector3d startIn, Vector3d direction, float length) {
+        return startIn.add(direction.normalize().scale(length));
     }
 
 

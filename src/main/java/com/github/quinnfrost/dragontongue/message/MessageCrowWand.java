@@ -83,7 +83,7 @@ public class MessageCrowWand {
                                     0.1);
                             iCapTargetHolder.setFallbackTimer(200);
                         });
-
+//                        DragonTongue.LOGGER.debug("Target biome:" + player.world.getBiome(blockRayTraceResult.getPos()).getRegistryName().toString());
                         break;
                     case FALLBACK:
                         player.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
