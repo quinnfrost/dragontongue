@@ -290,7 +290,7 @@ public class ServerEvents {
 
     @SubscribeEvent
     public static void onMobGriefing(EntityMobGriefingEvent event) {
-        if (event.getEntity().world.isRemote) {
+        if (event.getEntity() == null || event.getEntity().world.isRemote) {
             return;
         }
         Entity entity = event.getEntity();

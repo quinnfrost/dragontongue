@@ -64,6 +64,7 @@ public abstract class MixinFlightMoveHelper extends MovementController {
         ICapabilityInfoHolder cap = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl());
         EnumCommandSettingType.CommandStatus commandStatus = cap.getCommandStatus();
         Vector3d flightTarget = dragon.flightManager.getFlightTarget();
+
         float distToX = (float) (flightTarget.x - dragon.getPosX());
         float distToY = (float) (flightTarget.y - dragon.getPosY());
         float distToZ = (float) (flightTarget.z - dragon.getPosZ());
@@ -80,7 +81,11 @@ public abstract class MixinFlightMoveHelper extends MovementController {
 
                     // And take a detour to reach her target
                     detourState = 1;
-                    detourTarget = Vector3d.copyCentered(preferredFlightPos);
+                    if (preferredFlightPos.getY() <= 400) {
+                        detourTarget = Vector3d.copyCentered(preferredFlightPos);
+                    } else {
+                        detourTarget = new Vector3d(preferredFlightPos.getX(), 400, preferredFlightPos.getZ());
+                    }
                 }
             }
         }
