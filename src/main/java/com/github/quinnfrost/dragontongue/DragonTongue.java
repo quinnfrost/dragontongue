@@ -79,6 +79,15 @@ public class DragonTongue
             IafServerEvent.register(MinecraftForge.EVENT_BUS);
         }
 
+        // Todo:
+        //  block ray trace cleanup: through windows or not
+        //  entity ray trace cleanup: server side, through blocks or not
+        //  right panel info
+        //  more text around crosshair
+        //  distance marker and bow aim scope (client side)
+        //  replace dragon AI
+        //  dragon flight behavior modification
+
         // Todo: more settings!
         // Todo: settings hot reload
         // Load configs
