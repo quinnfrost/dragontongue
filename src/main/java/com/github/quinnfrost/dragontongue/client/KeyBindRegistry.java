@@ -16,6 +16,7 @@ import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
+import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -50,7 +51,7 @@ public class KeyBindRegistry {
             if (rayTraceResult.getType() == RayTraceResult.Type.MISS) {
                 OverlayCrossHair.setCrossHairDisplay(null, 0, 2, OverlayCrossHair.IconType.WARN, true);
             }
-            BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(Minecraft.getInstance().player, 128, 1.0f);
+            BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(Minecraft.getInstance().player, 128, 1.0f, RayTraceContext.BlockMode.COLLIDER);
 //            RenderNode.setRenderPos(4, rayTraceResult.getHitVec(), clientPlayerEntity.getPositionVec(), 0);
 
             switch (getScrollStatus()) {
@@ -191,7 +192,7 @@ public class KeyBindRegistry {
             double commandDistance = clientPlayerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(clientPlayerEntity)).getCommandDistance();
 //            EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(clientPlayerEntity,
 //                    Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f, null);
-            BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(clientPlayerEntity, (float) commandDistance, 1.0f);
+            BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(clientPlayerEntity, (float) commandDistance, 1.0f, RayTraceContext.BlockMode.COLLIDER);
             RayTraceResult rayTraceResult = util.getTargetBlockOrEntity(clientPlayerEntity,
                     (float) commandDistance, null);
             ICapabilityInfoHolder capTargetHolder = clientPlayerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(clientPlayerEntity));

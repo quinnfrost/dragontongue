@@ -16,9 +16,9 @@ import net.minecraft.particles.ParticleTypes;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.IndirectEntityDamageSource;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.server.ServerWorld;
@@ -65,7 +65,7 @@ public class MessageCrowWand {
     public static void crowWandAction(EnumCrowWand action, ServerPlayerEntity player, ServerWorld serverWorld) {
         try {
             BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(player,
-                    Config.CROW_WAND_RANGE_MAX.get().floatValue(), 1.0f);
+                    Config.CROW_WAND_RANGE_MAX.get().floatValue(), 1.0f, RayTraceContext.BlockMode.COLLIDER);
 
             if (blockRayTraceResult.getType() != RayTraceResult.Type.MISS) {
                 double targetX = blockRayTraceResult.getHitVec().getX();

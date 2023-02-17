@@ -1,4 +1,4 @@
-package com.github.quinnfrost.dragontongue.iceandfire.mixin;
+package com.github.quinnfrost.dragontongue.mixin.iceandfire;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.ai.DragonAIWatchClosest;

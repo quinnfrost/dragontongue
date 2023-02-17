@@ -95,7 +95,7 @@ public class util {
      * @return  A BlockRayTraceResult or EntityRayTraceResult, separated by its type
      */
     public static RayTraceResult getTargetBlockOrEntity(Entity entity, float maxDistance, @Nullable Predicate<? super Entity> excludeEntity) {
-        BlockRayTraceResult blockRayTraceResult = getTargetBlock(entity, maxDistance, 1.0f);
+        BlockRayTraceResult blockRayTraceResult = getTargetBlock(entity, maxDistance, 1.0f, RayTraceContext.BlockMode.COLLIDER);
         float entityRayTraceDistance = maxDistance;
         if (blockRayTraceResult.getType() != RayTraceResult.Type.MISS) {
             entityRayTraceDistance = (float) Math.sqrt(entity.getDistanceSq(blockRayTraceResult.getHitVec()));
@@ -155,9 +155,10 @@ public class util {
      * @param maxDistance  Only blocks within the distance in block is traced
      * @param partialTicks Time in ticks to smooth the movement(linear interpolation
      *                     or 'lerp'), use 1.0F to disable
+     * @param blockMode
      * @return Result of ray trace, or RayTraceResult.Type.MISS if nothing within the distance is found
      */
-    public static BlockRayTraceResult getTargetBlock(Entity entity, float maxDistance, float partialTicks) {
+    public static BlockRayTraceResult getTargetBlock(Entity entity, float maxDistance, float partialTicks, RayTraceContext.BlockMode blockMode) {
         Vector3d vector3d = entity.getEyePosition(partialTicks);
         double d0 = maxDistance;
         double d1 = d0 * d0;
@@ -166,7 +167,7 @@ public class util {
         Vector3d vector3d1 = entity.getLook(1.0F);
         // 结束位置向量
         Vector3d vector3d2 = vector3d.add(vector3d1.x * d0, vector3d1.y * d0, vector3d1.z * d0);
-        return entity.world.rayTraceBlocks(new RayTraceContext(vector3d, vector3d2, RayTraceContext.BlockMode.VISUAL,
+        return entity.world.rayTraceBlocks(new RayTraceContext(vector3d, vector3d2, blockMode,
                 RayTraceContext.FluidMode.NONE, entity));
     }
 

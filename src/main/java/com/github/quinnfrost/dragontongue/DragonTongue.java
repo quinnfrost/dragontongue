@@ -17,6 +17,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScreenManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
@@ -46,6 +47,7 @@ public class DragonTongue
 //    public static CommonProxy PROXY = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> CommonProxy::new);
     public static boolean isIafPresent = false;
     public static MobEntity debugTarget;
+    public static PlayerEntity debugger;
     public DragonTongue() {
         // Register the setup method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
@@ -80,11 +82,7 @@ public class DragonTongue
         }
 
         // Todo:
-        //  block ray trace cleanup: through windows or not
         //  entity ray trace cleanup: server side, through blocks or not
-        //  right panel info
-        //  more text around crosshair
-        //  distance marker and bow aim scope (client side)
         //  replace dragon AI
         //  dragon flight behavior modification
 

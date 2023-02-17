@@ -1,12 +1,14 @@
 {
   "required": false,
-  "package": "com.github.quinnfrost.dragontongue.iceandfire.mixin",
+  "package": "com.github.quinnfrost.dragontongue.mixin",
   "compatibilityLevel": "JAVA_8",
   "refmap": "dragontongue.refmap.json",
   "mixins": [
-    "MixinDragonAILookIdle",
-    "MixinDragonAIWatchClosest",
-    "MixinEntityDragonBase",
-    "MixinEntityDragonBase$MixinFlightMoveHelper"
+    "MixinIngameGui",
+    "iceandfire.MixinDragonAILookIdle",
+    "iceandfire.MixinDragonAIWatchClosest",
+    "iceandfire.MixinDragonBow",
+    "iceandfire.MixinEntityDragonBase",
+    "iceandfire.MixinEntityDragonBase$MixinFlightMoveHelper"
   ]
 }
