@@ -30,66 +30,6 @@ import java.util.Arrays;
 
 public class RegistryCommands {
     public static void registerCommands(CommandDispatcher<CommandSource> dispatcher) {
-        LiteralCommandNode<CommandSource> cmdDragonTongue = dispatcher.register(Commands.literal(References.MOD_ID)
-                .then(CommandShowGUI.register(dispatcher))
-        );
-
-        dispatcher.register(Commands.literal("dragontongue")
-                .redirect(cmdDragonTongue)
-        );
-
-        dispatcher.register(Commands.literal("gui").requires(commandSource -> {
-                    return commandSource.hasPermissionLevel(0);
-                }).executes(context -> {
-                    context.getSource().sendFeedback(
-                            new StringTextComponent("Command showGUI called"),
-                            false
-                    );
-                    return 0;
-                }).then(Commands.argument("target", EntityArgument.entity()).executes(context -> {
-
-                    context.getSource().sendFeedback(
-                            new StringTextComponent("Command showGUI called"),
-                            false
-                    );
-
-                    try {
-                        Entity entity = EntityArgument.getEntity(context, "target");
-                        if (IafHelperClass.isDragon(entity)) {
-                            ServerPlayerEntity serverPlayerEntity = context.getSource().asPlayer();
-                            serverPlayerEntity.openContainer(new INamedContainerProvider() {
-                                                                 @Override
-                                                                 public ITextComponent getDisplayName() {
-                                                                     return serverPlayerEntity.getDisplayName();
-                                                                 }
-
-                                                                 @Nullable
-                                                                 @Override
-                                                                 public Container createMenu(int p_createMenu_1_, PlayerInventory p_createMenu_2_, PlayerEntity p_createMenu_3_) {
-                                                                     return new ContainerDragon(
-                                                                             p_createMenu_1_,
-                                                                             p_createMenu_2_,
-                                                                             ((EntityDragonBase) entity).dragonInventory,
-                                                                             (EntityDragonBase) entity
-                                                                     );
-                                                                 }
-                                                             }
-
-                            );
-                        } else {
-                            context.getSource().sendFeedback(
-                                    new StringTextComponent("None dragon entity selected"),
-                                    false
-                            );
-                            return 1;
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    return 0;
-                }))
-        );
-
         dispatcher.register(Commands.literal("dragon").requires(commandSource -> commandSource.hasPermissionLevel(0))
                 .then(Commands.argument("target", EntityArgument.entity())
                         .then(Commands.argument("setting", StringArgumentType.word())
@@ -132,6 +72,9 @@ public class RegistryCommands {
                                 )
                         ))
         );
+
+        // new command
+
 
     }
 }

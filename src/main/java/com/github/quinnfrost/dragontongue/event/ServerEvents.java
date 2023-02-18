@@ -286,7 +286,7 @@ public class ServerEvents {
         Entity exploder = event.getExplosion().getExploder();
         Entity placer = event.getExplosion().getExplosivePlacedBy();
         if ((exploder instanceof TNTEntity)
-        || (exploder instanceof TNTMinecartEntity)) {
+                || (exploder instanceof TNTMinecartEntity)) {
             explosion.clearAffectedBlockPositions();
         }
     }

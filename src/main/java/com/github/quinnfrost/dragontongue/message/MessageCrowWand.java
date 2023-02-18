@@ -4,6 +4,7 @@ import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCrowWand;
+import com.github.quinnfrost.dragontongue.item.ItemCrowWand;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -15,6 +16,7 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
+import net.minecraft.server.ServerPropertiesProvider;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -65,7 +67,7 @@ public class MessageCrowWand {
     public static void crowWandAction(EnumCrowWand action, ServerPlayerEntity player, ServerWorld serverWorld) {
         try {
             BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(player,
-                    Config.CROW_WAND_RANGE_MAX.get().floatValue(), 1.0f, RayTraceContext.BlockMode.COLLIDER);
+                    ItemCrowWand.CROW_WAND_MAX_DISTANCE, 1.0f, RayTraceContext.BlockMode.COLLIDER);
 
             if (blockRayTraceResult.getType() != RayTraceResult.Type.MISS) {
                 double targetX = blockRayTraceResult.getHitVec().getX();

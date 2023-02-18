@@ -21,6 +21,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 public class ItemCrowWand extends Item {
+    public static int CROW_WAND_MAX_DISTANCE = 512;
 
     public ItemCrowWand() {
         super(new Properties()
@@ -71,7 +72,7 @@ public class ItemCrowWand extends Item {
     public void inventoryTick(ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
         super.inventoryTick(stack, worldIn, entityIn, itemSlot, isSelected);
         if (isSelected) {
-            BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(entityIn, Config.CROW_WAND_RANGE_MAX.get().floatValue(), 1.0f, RayTraceContext.BlockMode.COLLIDER);
+            BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(entityIn, CROW_WAND_MAX_DISTANCE, 1.0f, RayTraceContext.BlockMode.COLLIDER);
             if (blockRayTraceResult.getType() == RayTraceResult.Type.MISS) {
                 OverlayCrossHair.setCrossHairDisplay(null, 0, 2, OverlayCrossHair.IconType.WARN, true);
             }

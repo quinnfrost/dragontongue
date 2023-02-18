@@ -14,9 +14,9 @@ apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
 repositories {
-    flatDir {
-        dirs("libs")
-    }
+//    flatDir {
+//        dirs("libs")
+//    }
     maven {
         url "https://cursemaven.com"
         content {

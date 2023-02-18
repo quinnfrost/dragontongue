@@ -88,8 +88,11 @@ public class RenderTrajectory {
                                 }
                             }
 
-                            Color color1 = new Color(0x00D9FF);
-                            Color color2 = new Color(0xFF1515);
+//                            Color color1 = new Color(0x00D9FF);
+//                            Color color2 = new Color(0xFF1515);
+                            Color color1 = new Color(Integer.parseInt("00D9FF", 16));
+                            Color color2 = new Color(Integer.parseInt("FF1515", 16));
+
                             Iterator var18 = trajectory.iterator();
 
                             while (var18.hasNext()) {
@@ -99,7 +102,7 @@ public class RenderTrajectory {
                                 double totalDistance = Math.sqrt(playerEntity.getDistanceSq(end));
                                 float pointScale = (float) (distanceFromPlayer / totalDistance);
 
-                                Particle point = particleManager.addParticle(ParticleTypes.END_ROD, vec3d.x, vec3d.y, vec3d.z, 0.0, 0.0, 0.0);
+                                Particle point = particleManager.addParticle(ParticleTypes.WITCH, vec3d.x, vec3d.y, vec3d.z, 0.0, 0.0, 0.0);
                                 if (point != null) {
                                     if (trajectory.indexOf(vec3d) % 2 == 0) {
                                         point.setColor((float) color1.getRed() / 255.0F, (float) color1.getGreen() / 255.0F, (float) color1.getBlue() / 255.0F);
@@ -107,7 +110,7 @@ public class RenderTrajectory {
                                         point.setColor((float) color2.getRed() / 255.0F, (float) color2.getGreen() / 255.0F, (float) color2.getBlue() / 255.0F);
                                     }
 
-                                    point.multiplyParticleScaleBy(pointScale / 2.5f);
+                                    point.multiplyParticleScaleBy(pointScale / 2.0f);
                                     point.setExpired();
                                 }
                             }

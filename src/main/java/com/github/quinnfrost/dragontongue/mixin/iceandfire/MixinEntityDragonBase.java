@@ -1,19 +1,21 @@
 package com.github.quinnfrost.dragontongue.mixin.iceandfire;
 
+import com.github.alexthe666.citadel.animation.Animation;
+import com.github.alexthe666.citadel.animation.AnimationHandler;
 import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.api.event.GenericGriefEvent;
-import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
-import com.github.alexthe666.iceandfire.entity.IafDragonAttacks;
-import com.github.alexthe666.iceandfire.entity.IafDragonFlightManager;
-import com.github.alexthe666.iceandfire.entity.IafDragonLogic;
+import com.github.alexthe666.iceandfire.entity.*;
 import com.github.alexthe666.iceandfire.entity.ai.*;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
+import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
+import com.github.alexthe666.iceandfire.pathfinding.raycoms.PathingStuckHandler;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.container.ContainerDragon;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import com.github.quinnfrost.dragontongue.iceandfire.IafDragonFlightUtil;
+import com.github.quinnfrost.dragontongue.iceandfire.*;
 import com.github.quinnfrost.dragontongue.utils.util;
 import com.google.common.base.Predicate;
 import net.minecraft.block.BlockState;
@@ -26,10 +28,16 @@ import net.minecraft.entity.ai.goal.OwnerHurtTargetGoal;
 import net.minecraft.entity.ai.goal.SitGoal;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.pathfinding.PathNavigator;
+import net.minecraft.potion.EffectInstance;
+import net.minecraft.potion.Effects;
+import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import org.spongepowered.asm.mixin.Mixin;
@@ -37,8 +45,10 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import javax.annotation.Nullable;
+import java.util.List;
 
 @Mixin(EntityDragonBase.class)
 public abstract class MixinEntityDragonBase extends TameableEntity {
@@ -48,7 +58,6 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 
     @Shadow(remap = false)
     public abstract int getAgeInDays();
-
 
 
     @Shadow(remap = false)
@@ -75,26 +84,72 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     @Shadow(remap = false)
     protected abstract boolean isBreakable(BlockPos pos, BlockState state, float hardness);
 
-    @Shadow public abstract void updateParts();
+    @Shadow(remap = false)
+    public abstract void updateParts();
 
-    @Shadow public float prevDragonPitch;
+    @Shadow(remap = false)
+    public float prevDragonPitch;
 
-    @Shadow public abstract float getDragonPitch();
+    @Shadow(remap = false)
+    public abstract float getDragonPitch();
 
-    @Shadow private boolean isOverAir;
+    @Shadow(remap = false)
+    private boolean isOverAir;
 
-    @Shadow protected abstract boolean isOverAirLogic();
+    @Shadow(remap = false)
+    protected abstract boolean isOverAirLogic();
 
-    @Shadow public IafDragonLogic logic;
+    @Shadow(remap = false)
+    public IafDragonLogic logic;
 
-    @Shadow public abstract void setBreathingFire(boolean breathing);
+    @Shadow(remap = false)
+    public abstract void setBreathingFire(boolean breathing);
 
-    @Shadow public abstract void setDragonPitch(float pitch);
+    @Shadow(remap = false)
+    public abstract void setDragonPitch(float pitch);
 
-    @Shadow public IafDragonFlightManager flightManager;
-    @Shadow public abstract boolean shouldTarget(Entity entity);
-    public EntityDragonBase thisInstance;
+    @Shadow(remap = false)
+    public IafDragonFlightManager flightManager;
+
+    @Shadow
+    public abstract boolean shouldTarget(Entity entity);
+
+    @Shadow public int navigatorType;
+
+    @Shadow public abstract void setFlying(boolean flying);
+
+    @Shadow public abstract void setHovering(boolean hovering);
+
+    @Shadow protected abstract PathingStuckHandler createStuckHandler();
+
+    @Shadow protected abstract PathNavigator createNavigator(World worldIn, AdvancedPathNavigate.MovementType type);
+
+    @Shadow protected abstract PathNavigator createNavigator(World worldIn, AdvancedPathNavigate.MovementType type, PathingStuckHandler stuckHandler);
+
+    @Shadow public abstract Animation getAnimation();
+
+    @Shadow public static Animation ANIMATION_EPIC_ROAR;
+
+    @Shadow public abstract void setAnimation(Animation animation);
+
+    @Shadow public abstract SoundEvent getRoarSound();
+
+    @Shadow protected abstract boolean isOwnersPet(LivingEntity living);
+
+    @Shadow public static Animation ANIMATION_ROAR;
+
+    @Shadow public abstract boolean hasFlightClearance();
+
     public ICapabilityInfoHolder cap = this.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(this));
+
+    @Inject(
+            method = "<init>",
+            at = @At(value = "RETURN")
+    )
+    public void $EntityDragonBase(EntityType t, World world, DragonType type, double minimumDamage, double maximumDamage, double minimumHealth, double maximumHealth, double minimumSpeed, double maximumSpeed, CallbackInfo ci) {
+        this.flightManager = new IafAdvancedDragonFlightManager((EntityDragonBase)(Object) this);
+        this.logic = new IafAdvancedDragonLogic((EntityDragonBase)(Object) this);
+    }
 
     @Inject(
             method = "registerGoals()V",
@@ -105,21 +160,22 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
         roadblock$registerGoals();
         ci.cancel();
     }
+
     public void roadblock$registerGoals() {
-        this.goalSelector.addGoal(0, new DragonAIRide<>((EntityDragonBase)(Object)this));
+        this.goalSelector.addGoal(0, new DragonAIRide<>((EntityDragonBase) (Object) this));
         this.goalSelector.addGoal(1, new SitGoal(this));
-        this.goalSelector.addGoal(2, new DragonAIMate((EntityDragonBase)(Object)this, 1.0D));
-        this.goalSelector.addGoal(3, new DragonAIReturnToRoost((EntityDragonBase)(Object)this, 1.0D));
-        this.goalSelector.addGoal(4, new DragonAIEscort((EntityDragonBase)(Object)this, 1.0D));
-        this.goalSelector.addGoal(5, new DragonAIAttackMelee((EntityDragonBase)(Object)this, 1.5D, false));
+        this.goalSelector.addGoal(2, new DragonAIMate((EntityDragonBase) (Object) this, 1.0D));
+        this.goalSelector.addGoal(3, new DragonAIReturnToRoost((EntityDragonBase) (Object) this, 1.0D));
+        this.goalSelector.addGoal(4, new DragonAIEscort((EntityDragonBase) (Object) this, 1.0D));
+        this.goalSelector.addGoal(5, new DragonAIAttackMelee((EntityDragonBase) (Object) this, 1.5D, false));
         this.goalSelector.addGoal(6, new AquaticAITempt(this, 1.0D, IafItemRegistry.FIRE_STEW, false));
-        this.goalSelector.addGoal(7, new DragonAIWander((EntityDragonBase)(Object)this, 1.0D));
+        this.goalSelector.addGoal(7, new DragonAIWander((EntityDragonBase) (Object) this, 1.0D));
         this.goalSelector.addGoal(8, new DragonAIWatchClosest(this, LivingEntity.class, 6.0F));
-        this.goalSelector.addGoal(8, new DragonAILookIdle((EntityDragonBase)(Object)this));
+        this.goalSelector.addGoal(8, new DragonAILookIdle((EntityDragonBase) (Object) this));
         this.targetSelector.addGoal(1, new OwnerHurtTargetGoal(this));
         this.targetSelector.addGoal(2, new OwnerHurtByTargetGoal(this));
         this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(4, new DragonAITargetNonTamed((EntityDragonBase)(Object)this, LivingEntity.class, false, new Predicate<LivingEntity>() {
+        this.targetSelector.addGoal(4, new DragonAITargetNonTamed((EntityDragonBase) (Object) this, LivingEntity.class, false, new Predicate<LivingEntity>() {
             @Override
             public boolean apply(@Nullable LivingEntity entity) {
 //                DragonTongue.LOGGER.debug("Getting inner class instance: " + this);
@@ -127,13 +183,127 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
                 return (!(entity instanceof PlayerEntity) || !((PlayerEntity) entity).isCreative()) && DragonUtils.canHostilesTarget(entity) && entity.getType() != MixinEntityDragonBase.this.getType() && MixinEntityDragonBase.this.shouldTarget(entity) && DragonUtils.isAlive(entity);
             }
         }));
-        this.targetSelector.addGoal(5, new DragonAITarget((EntityDragonBase)(Object)this, LivingEntity.class, true, new Predicate<LivingEntity>() {
+        this.targetSelector.addGoal(5, new DragonAITarget((EntityDragonBase) (Object) this, LivingEntity.class, true, new Predicate<LivingEntity>() {
             @Override
             public boolean apply(@Nullable LivingEntity entity) {
                 return entity instanceof LivingEntity && DragonUtils.canHostilesTarget(entity) && entity.getType() != MixinEntityDragonBase.this.getType() && MixinEntityDragonBase.this.shouldTarget(entity) && DragonUtils.isAlive(entity);
             }
         }));
-        this.targetSelector.addGoal(6, new DragonAITargetItems((EntityDragonBase)(Object)this, false));
+        this.targetSelector.addGoal(6, new DragonAITargetItems((EntityDragonBase) (Object) this, false));
+    }
+
+    @Inject(
+            remap = false,
+            method = "createNavigator(Lnet/minecraft/world/World;Lcom/github/alexthe666/iceandfire/pathfinding/raycoms/AdvancedPathNavigate$MovementType;Lcom/github/alexthe666/iceandfire/pathfinding/raycoms/PathingStuckHandler;FF)Lnet/minecraft/pathfinding/PathNavigator;",
+            at = @At(value = "HEAD"),
+            cancellable = true
+    )
+    public void $createNavigator(World worldIn, AdvancedPathNavigate.MovementType type, PathingStuckHandler stuckHandler, float width, float height, CallbackInfoReturnable<PathNavigator> cir) {
+        cir.setReturnValue(roadblock$createNavigator(worldIn, type, stuckHandler, width, height));
+        cir.cancel();
+    }
+
+    protected PathNavigator roadblock$createNavigator(World worldIn, AdvancedPathNavigate.MovementType type, PathingStuckHandler stuckHandler, float width, float height) {
+        IafAdvancedDragonPathNavigator newNavigator = new IafAdvancedDragonPathNavigator(this, world, type, width, height);
+        this.navigator = newNavigator;
+        newNavigator.setCanSwim(true);
+        newNavigator.getNodeProcessor().setCanOpenDoors(true);
+        return newNavigator;
+    }
+
+    @Inject(
+            remap = false,
+            method = "switchNavigator(I)V",
+            at = @At(value = "HEAD"),
+            cancellable = true
+    )
+    public void $switchNavigator(int navigatorType, CallbackInfo ci) {
+        roadblock$switchNavigator(navigatorType);
+        ci.cancel();
+    }
+    protected void roadblock$switchNavigator(int navigatorType) {
+        if (navigatorType == 0) {
+            this.moveController = new IafAdvancedMoveController.GroundMoveHelper(this);
+            this.navigator = createNavigator(world, AdvancedPathNavigate.MovementType.WALKING, createStuckHandler().withTeleportSteps(5));
+            this.navigatorType = 0;
+            this.setFlying(false);
+            this.setHovering(false);
+        } else if (navigatorType == 1) {
+            this.moveController = new IafAdvancedMoveController.FlightMoveHelper((EntityDragonBase)(Object)this);
+            this.navigator = createNavigator(world, AdvancedPathNavigate.MovementType.FLYING);
+            this.navigatorType = 1;
+        } else {
+            this.moveController = new IafAdvancedMoveController.PlayerFlightMoveHelper<>((EntityDragonBase)(Object)this);
+            this.navigator = createNavigator(world, AdvancedPathNavigate.MovementType.FLYING);
+            this.navigatorType = 2;
+        }
+    }
+
+    @Inject(
+            remap = false,
+            method = "openGUI",
+            at = @At(value = "HEAD"),
+            cancellable = true
+    )
+    public void $openGUI(PlayerEntity playerEntity, CallbackInfo ci) {
+        roadblock$openGUI(playerEntity);
+        ci.cancel();
+    }
+    public void roadblock$openGUI(PlayerEntity playerEntity) {
+        ContainerDragon.openGui(playerEntity, this);
+    }
+
+    @Inject(
+            remap = false,
+            method = "breakBlock()V",
+            at = @At(value = "HEAD"),
+            cancellable = true
+    )
+    public void $breakBlock(CallbackInfo ci) {
+        roadblock$breakBlock();
+        ci.cancel();
+    }
+    public void roadblock$breakBlock() {
+        if (this.blockBreakCounter > 0 || IafConfig.dragonBreakBlockCooldown == 0) {
+            --this.blockBreakCounter;
+            if (!this.isIceInWater() && (this.blockBreakCounter == 0 || IafConfig.dragonBreakBlockCooldown == 0) && net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.world, this)) {
+                if (IafConfig.dragonGriefing != 2 && (!this.isTamed() || IafConfig.tamedDragonGriefing)) {
+                    if (!isModelDead() && this.getDragonStage() >= 3 && (this.canMove() || this.getControllingPassenger() != null)) {
+                        final int bounds = 1;//(int)Math.ceil(this.getRenderSize() * 0.1);
+                        final int flightModifier =
+                                (isFlying() && this.getAttackTarget() != null) ? -1 : 1;
+//                        final int yMinus = calculateDownY();
+                        int yMinus = calculateDownY();
+                        if (cap.getObjectSetting(EnumCommandSettingType.DESTROY_TYPE) == EnumCommandSettingType.DestroyType.DELIBERATE) {
+                            yMinus = 0;
+                        }
+                        BlockPos.getAllInBox(
+                                (int) Math.floor(this.getBoundingBox().minX) - bounds,
+                                (int) Math.floor(this.getBoundingBox().minY) + yMinus,
+                                (int) Math.floor(this.getBoundingBox().minZ) - bounds,
+                                (int) Math.floor(this.getBoundingBox().maxX) + bounds,
+                                (int) Math.floor(this.getBoundingBox().maxY) + bounds + flightModifier,
+                                (int) Math.floor(this.getBoundingBox().maxZ) + bounds
+                        ).forEach(pos -> {
+                            if (MinecraftForge.EVENT_BUS.post(new GenericGriefEvent(this, pos.getX(), pos.getY(), pos.getZ())))
+                                return;
+                            final BlockState state = world.getBlockState(pos);
+                            final float hardness = IafConfig.dragonGriefing == 1 || this.getDragonStage() <= 3 ? 2.0F : 5.0F;
+                            if (isBreakable(pos, state, hardness)) {
+                                this.setMotion(this.getMotion().mul(0.6F, 1, 0.6F));
+                                if (!world.isRemote) {
+                                    if (rand.nextFloat() <= IafConfig.dragonBlockBreakingDropChance && DragonUtils.canDropFromDragonBlockBreak(state)) {
+                                        world.destroyBlock(pos, true);
+                                    } else {
+                                        world.setBlockState(pos, Blocks.AIR.getDefaultState());
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        }
     }
 
     @Inject(
@@ -192,190 +362,75 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 
     @Inject(
             remap = false,
-            method = "breakBlock()V",
+            method = "Lcom/github/alexthe666/iceandfire/entity/EntityDragonBase;roar()V",
             at = @At(value = "HEAD"),
             cancellable = true
     )
-    public void $breakBlock(CallbackInfo ci) {
-        roadblock$breakBlock();
+    public void $roar(CallbackInfo ci) {
+        roadblock$roar();
         ci.cancel();
     }
-    public void roadblock$breakBlock() {
-        if (this.blockBreakCounter > 0 || IafConfig.dragonBreakBlockCooldown == 0) {
-            --this.blockBreakCounter;
-            if (!this.isIceInWater() && (this.blockBreakCounter == 0 || IafConfig.dragonBreakBlockCooldown == 0) && net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.world, this)) {
-                if (IafConfig.dragonGriefing != 2 && (!this.isTamed() || IafConfig.tamedDragonGriefing)) {
-                    if (!isModelDead() && this.getDragonStage() >= 3 && (this.canMove() || this.getControllingPassenger() != null)) {
-                        final int bounds = 1;//(int)Math.ceil(this.getRenderSize() * 0.1);
-                        final int flightModifier =
-                                (isFlying() && this.getAttackTarget() != null) ? -1 : 1;
-//                        final int yMinus = calculateDownY();
-                        int yMinus = calculateDownY();
-                        if (cap.getObjectSetting(EnumCommandSettingType.DESTROY_TYPE) == EnumCommandSettingType.DestroyType.DELIBERATE) {
-                            yMinus = 0;
-                        }
-                        BlockPos.getAllInBox(
-                                (int) Math.floor(this.getBoundingBox().minX) - bounds,
-                                (int) Math.floor(this.getBoundingBox().minY) + yMinus,
-                                (int) Math.floor(this.getBoundingBox().minZ) - bounds,
-                                (int) Math.floor(this.getBoundingBox().maxX) + bounds,
-                                (int) Math.floor(this.getBoundingBox().maxY) + bounds + flightModifier,
-                                (int) Math.floor(this.getBoundingBox().maxZ) + bounds
-                        ).forEach(pos -> {
-                            if (MinecraftForge.EVENT_BUS.post(new GenericGriefEvent(this, pos.getX(), pos.getY(), pos.getZ())))
-                                return;
-                            final BlockState state = world.getBlockState(pos);
-                            final float hardness = IafConfig.dragonGriefing == 1 || this.getDragonStage() <= 3 ? 2.0F : 5.0F;
-                            if (isBreakable(pos, state, hardness)) {
-                                this.setMotion(this.getMotion().mul(0.6F, 1, 0.6F));
-                                if (!world.isRemote) {
-                                    if (rand.nextFloat() <= IafConfig.dragonBlockBreakingDropChance && DragonUtils.canDropFromDragonBlockBreak(state)) {
-                                        world.destroyBlock(pos, true);
-                                    } else {
-                                        world.setBlockState(pos, Blocks.AIR.getDefaultState());
-                                    }
-                                }
+    public void roadblock$roar() {
+        if (EntityGorgon.isStoneMob(this) || this.isModelDead()) {
+            return;
+        }
+        if (rand.nextBoolean()) {
+            if (this.getAnimation() != ANIMATION_EPIC_ROAR) {
+                this.setAnimation(ANIMATION_EPIC_ROAR);
+                this.playSound(this.getRoarSound(), this.getSoundVolume() + 3 + Math.max(0, this.getDragonStage() - 2), this.getSoundPitch() * 0.7F);
+            }
+            if (this.getDragonStage() > 3) {
+                final int size = (this.getDragonStage() - 3) * 30;
+                final List<Entity> entities = world.getEntitiesWithinAABBExcludingEntity(this, this.getBoundingBox().expand(size, size, size));
+                for (final Entity entity : entities) {
+                    final boolean isStrongerDragon = entity instanceof EntityDragonBase && ((EntityDragonBase) entity).getDragonStage() >= this.getDragonStage();
+                    if (entity instanceof LivingEntity && !isStrongerDragon) {
+                        LivingEntity living = (LivingEntity) entity;
+                        if (this.isOwner(living) || this.isOwnersPet(living)) {
+                            living.addPotionEffect(new EffectInstance(Effects.STRENGTH, 50 * size));
+                        } else {
+                            if (living.getItemStackFromSlot(EquipmentSlotType.HEAD).getItem() != IafItemRegistry.EARPLUGS) {
+                                living.addPotionEffect(new EffectInstance(Effects.WEAKNESS, 50 * size));
                             }
-                        });
+                        }
+                    }
+                }
+            }
+        } else {
+            if (this.getAnimation() != ANIMATION_ROAR) {
+                this.setAnimation(ANIMATION_ROAR);
+                this.playSound(this.getRoarSound(), this.getSoundVolume() + 2 + Math.max(0, this.getDragonStage() - 3), this.getSoundPitch());
+            }
+            if (this.getDragonStage() > 3) {
+                final int size = (this.getDragonStage() - 3) * 30;
+                final List<Entity> entities = world.getEntitiesWithinAABBExcludingEntity(this, this.getBoundingBox().expand(size, size, size));
+                for (final Entity entity : entities) {
+                    final boolean isStrongerDragon = entity instanceof EntityDragonBase && ((EntityDragonBase) entity).getDragonStage() >= this.getDragonStage();
+                    if (entity instanceof LivingEntity && !isStrongerDragon) {
+                        LivingEntity living = (LivingEntity) entity;
+                        if (this.isOwner(living) || this.isOwnersPet(living)) {
+                            living.addPotionEffect(new EffectInstance(Effects.STRENGTH, 30 * size));
+                        } else {
+                            living.addPotionEffect(new EffectInstance(Effects.WEAKNESS, 30 * size));
+                        }
                     }
                 }
             }
         }
     }
 
-    @Mixin(targets = "com.github.alexthe666.iceandfire.entity.IafDragonFlightManager$FlightMoveHelper")
-    public abstract static class MixinFlightMoveHelper extends MovementController {
-        public MixinFlightMoveHelper(MobEntity mob) {
-            super(mob);
-        }
-
-        /*
-        Detouring state
-        0: no detour
-        1: climbing
-        2: flying over the terrain
-         */
-        private int detourState;
-        private Vector3d detourTarget;
-
-        private EntityDragonBase dragon;
-
-
-        @Inject(
-                remap = false,
-                method = "<init>(Lcom/github/alexthe666/iceandfire/entity/EntityDragonBase;)V",
-                at = @At(value = "RETURN")
-        )
-        public void $EntityDragonBase(EntityDragonBase dragonBase, CallbackInfo ci) {
-            detourState = 0;
-            detourTarget = null;
-        }
-
-        @Inject(
-                method = "tick",
-                at = @At(value = "HEAD"),
-                cancellable = true
-        )
-        public void $tick(CallbackInfo ci) {
-            roadblock$tick();
-            ci.cancel();
-        }
-        public void roadblock$tick() {
-            util.mixinDebugger();
-            ICapabilityInfoHolder cap = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl());
-            EnumCommandSettingType.CommandStatus commandStatus = cap.getCommandStatus();
-            Vector3d flightTarget = dragon.flightManager.getFlightTarget();
-
-            float distToX = (float) (flightTarget.x - dragon.getPosX());
-            float distToY = (float) (flightTarget.y - dragon.getPosY());
-            float distToZ = (float) (flightTarget.z - dragon.getPosZ());
-
-            // Try to avoid the CFIT issue
-            // Every 1 second (or collided already) the dragon check if there is terrain between her and the target
-            if ((detourState == 0 && dragon.world.getGameTime() % 20 == 0) || dragon.collidedHorizontally) {
-                if (commandStatus != EnumCommandSettingType.CommandStatus.STAY && commandStatus != EnumCommandSettingType.CommandStatus.HOVER
-                        && !util.hasArrived(dragon, new BlockPos(flightTarget), (double) dragon.getRenderSize())) {
-                    BlockRayTraceResult blockRayTraceResult = util.rayTraceBlock(dragon.world, dragon.getPositionVec(), dragon.flightManager.getFlightTarget());
-                    // If there is, she will find a higher place where the target is directly in her sight
-                    if (!dragon.world.isAirBlock(blockRayTraceResult.getPos())) {
-                        BlockPos preferredFlightPos = IafDragonFlightUtil.highestBlockOnPath(dragon.world, dragon.getPositionVec(), flightTarget, 0).add(0, 2 * dragon.getYNavSize(), 0);
-
-                        // And take a detour to reach her target
-                        detourState = 1;
-                        if (preferredFlightPos.getY() <= 400) {
-                            detourTarget = Vector3d.copyCentered(preferredFlightPos);
-                        } else {
-                            detourTarget = new Vector3d(preferredFlightPos.getX(), 400, preferredFlightPos.getZ());
-                        }
-                    }
-                }
-            }
-            if (detourState != 0) {
-                distToX = (float) (detourTarget.x - dragon.getPosX());
-                distToY = (float) (detourTarget.y - dragon.getPosY());
-                distToZ = (float) (detourTarget.z - dragon.getPosZ());
-                // Detour state 1: try reach the top of the terrain
-                if (detourState == 1 && detourTarget != null) {
-                    if (dragon.getPositionVec().y >= detourTarget.y) {
-                        detourState = 2;
-                        detourTarget = detourTarget.add(
-                                (flightTarget.x - detourTarget.x) / 2,
-                                0,
-                                (flightTarget.z - detourTarget.z) / 2
-                        );
-                    }
-                }
-                // Detour state 2: try fly over the terrain (by travel half of the distance in high air)
-                if (detourState == 2 && detourTarget != null) {
-                    if (dragon.getPositionVec().y >= detourTarget.y
-                            && util.hasArrived(dragon, new BlockPos(detourTarget), (double) (dragon.getYNavSize() * 2))) {
-                        detourState = 0;
-                        detourTarget = null;
-                    }
-                }
-            }
-
-            // Following logic makes dragon actually fly to the target, it's not touched except the name
-            // The shortest possible distance to the target plane (parallel to y)
-            double xzPlaneDist = MathHelper.sqrt(distToX * distToX + distToZ * distToZ);
-            // f = 1 - |0.7 * Y| / sqrt(X^2+Y^2)
-            double yDistMod = 1.0D - (double) MathHelper.abs(distToY * 0.7F) / xzPlaneDist;
-            distToX = (float) ((double) distToX * yDistMod);
-            distToZ = (float) ((double) distToZ * yDistMod);
-            xzPlaneDist = MathHelper.sqrt(distToX * distToX + distToZ * distToZ);
-            double distToTarget = MathHelper.sqrt(distToX * distToX + distToZ * distToZ + distToY * distToY);
-            if (distToTarget > 1.0F) {
-                float oldYaw = dragon.rotationYaw;
-                // Theta = atan2(y,x) - the angle of (x,y)
-                float targetYaw = (float) MathHelper.atan2(distToZ, distToX);
-                float currentYawTurn = MathHelper.wrapDegrees(dragon.rotationYaw + 90);
-                // Radian to degree
-                float targetYawDegrees = MathHelper.wrapDegrees(targetYaw * 57.295776F);
-                dragon.rotationYaw = IafDragonFlightManager.approachDegrees(currentYawTurn, targetYawDegrees, dragon.airAttack == IafDragonAttacks.Air.TACKLE && dragon.getAttackTarget() != null ? 10 : 4.0F) - 90.0F;
-                dragon.renderYawOffset = dragon.rotationYaw;
-                if (IafDragonFlightManager.degreesDifferenceAbs(oldYaw, dragon.rotationYaw) < 3.0F) {
-                    speed = IafDragonFlightManager.approach((float) speed, 1.8F, 0.005F * (1.8F / (float) speed));
-                } else {
-                    speed = IafDragonFlightManager.approach((float) speed, 0.2F, 0.025F);
-                    if (distToTarget < 100D && dragon.getAttackTarget() != null) {
-                        speed = speed * (distToTarget / 100D);
-                    }
-                }
-                float finPitch = (float) (-(MathHelper.atan2(-distToY, xzPlaneDist) * 57.2957763671875D));
-                dragon.rotationPitch = finPitch;
-                float yawTurnHead = dragon.rotationYaw + 90.0F;
-                speed *= dragon.getFlightSpeedModifier();
-                speed *= detourState == 0
-                        ? Math.min(1, distToTarget / 50 + 0.3)  //Make the dragon fly slower when close to target
-                        : 1;    // Do not limit speed when detouring
-                double lvt_16_1_ = speed * MathHelper.cos(yawTurnHead * 0.017453292F) * Math.abs((double) distToX / distToTarget);
-                double lvt_18_1_ = speed * MathHelper.sin(yawTurnHead * 0.017453292F) * Math.abs((double) distToZ / distToTarget);
-                double lvt_20_1_ = speed * MathHelper.sin(finPitch * 0.017453292F) * Math.abs((double) distToY / distToTarget);
-                double motionCap = 0.2D;
-                dragon.setMotion(dragon.getMotion().add(Math.min(lvt_16_1_ * 0.2D, motionCap), Math.min(lvt_20_1_ * 0.2D, motionCap), Math.min(lvt_18_1_ * 0.2D, motionCap)));
-            }
-
-        }
+    @Inject(
+            remap = false,
+            method = "isAllowedToTriggerFlight()Z",
+            at = @At(value = "HEAD"),
+            cancellable = true
+    )
+    public void $isAllowedToTriggerFlight(CallbackInfoReturnable<Boolean> cir) {
+        cir.setReturnValue(roadblock$isAllowedToTriggerFlight());
+        cir.cancel();
+    }
+    public boolean roadblock$isAllowedToTriggerFlight() {
+        return (this.hasFlightClearance() && this.onGround || this.isInWater()) && !this.isQueuedToSit() && this.getPassengers().isEmpty() && !this.isChild() && !this.isSleeping() && this.canMove();
     }
 
 }
