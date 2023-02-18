@@ -40,7 +40,7 @@ repositories {
 
 }
 
-version = '0.4.2'
+version = '0.4.3'
 group = 'com.github.quinnfrost' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'dragontongue'
 
@@ -185,6 +185,8 @@ dependencies {
 
 //    implementation fg.deobf("curse.maven:guifollowers_1.16.5-1.9-410911:3693575")
 //    implementation fg.deobf("curse.maven:collective-1.16.5-5.49-342584:4312565")
+
+//    implementation fg.deobf("curse.maven:TrajectoryPreview-289141:3105918")
 
 //    compileOnly fg.deobf("curse.maven:Ping-1.16.4-1.6.9-222967:3172028")
 //    implementation fg.deobf("curse.maven:Ping-1.16.4-1.6.9-222967:3172028")

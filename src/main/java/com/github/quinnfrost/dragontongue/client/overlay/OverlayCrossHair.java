@@ -38,6 +38,7 @@ public class OverlayCrossHair extends AbstractGui {
             return super.equals(o);
         }
     };
+    private static Map<Vector2f, Pair<Integer, IconType>> bufferIconMap = new HashMap<>();
     private static final Object lock = new Object();
 
     public enum IconType {
@@ -198,27 +199,29 @@ public class OverlayCrossHair extends AbstractGui {
 
     public static void renderIconCrossHair(MatrixStack ms) {
         if (crIconTime > 0) {
+            Minecraft minecraft = Minecraft.getInstance();
             int markTextureLength = 16;
-            int scaledWidth = Minecraft.getInstance().getMainWindow().getScaledWidth();
-            int scaledHeight = Minecraft.getInstance().getMainWindow().getScaledHeight();
-//            int screenWidth = event.getWindow().getWidth();
-//            int screenHeight = event.getWindow().getHeight();
-//            double scale = event.getWindow().getGuiScaleFactor();
+            int scaledWidth = minecraft.getMainWindow().getScaledWidth();
+            int scaledHeight = minecraft.getMainWindow().getScaledHeight();
+            int xOffset = 0;
+            int yOffset = 0;
 
-            Minecraft.getInstance().getTextureManager().bindTexture(markTexture);
+            int xPosition = scaledWidth / 2 - markTextureLength / 2 + xOffset;
+            int yPosition = scaledHeight / 2 - markTextureLength / 2 + yOffset;
+            minecraft.getTextureManager().bindTexture(markTexture);
             switch (crIconType) {
 
                 case HIT:
-                    GuiUtils.drawTexturedModalRect(ms, scaledWidth / 2 - markTextureLength / 2, scaledHeight / 2 - markTextureLength / 2, 0, 0, markTextureLength, markTextureLength, 1);
+                    GuiUtils.drawTexturedModalRect(ms, xPosition, yPosition, 0, 0, markTextureLength, markTextureLength, 1);
                     break;
                 case CRITICAL:
-                    GuiUtils.drawTexturedModalRect(ms, scaledWidth / 2 - markTextureLength / 2, scaledHeight / 2 - markTextureLength / 2, markTextureLength, 0, markTextureLength, markTextureLength, 1);
+                    GuiUtils.drawTexturedModalRect(ms, xPosition, yPosition, markTextureLength, 0, markTextureLength, markTextureLength, 1);
                     break;
                 case WARN:
-                    GuiUtils.drawTexturedModalRect(ms, scaledWidth / 2 - markTextureLength / 2, scaledHeight / 2 - markTextureLength / 2, markTextureLength * 2, 0, markTextureLength, markTextureLength, 1);
+                    GuiUtils.drawTexturedModalRect(ms, xPosition, yPosition, markTextureLength * 2, 0, markTextureLength, markTextureLength, 1);
                     break;
                 case TARGET:
-                    GuiUtils.drawTexturedModalRect(ms, scaledWidth / 2 - markTextureLength / 2, scaledHeight / 2 - markTextureLength / 2, markTextureLength * 3, 0, markTextureLength, markTextureLength, 1);
+                    GuiUtils.drawTexturedModalRect(ms, xPosition, yPosition, markTextureLength * 3, 0, markTextureLength, markTextureLength, 1);
                     break;
             }
 

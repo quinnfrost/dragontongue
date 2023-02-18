@@ -139,6 +139,7 @@ public class util {
         float f = 1.0F;
         // 计算结束位置向量构成的区域(Bounding Box)
         AxisAlignedBB axisalignedbb = entity.getBoundingBox().expand(vector3d1.scale(d0)).grow(1.0D, 1.0D, 1.0D);
+
         EntityRayTraceResult entityraytraceresult = ProjectileHelper.rayTraceEntities(entity.world, entity, vector3d, vector3d2,
                 axisalignedbb, ((Predicate<Entity>) notExclude -> !notExclude.isSpectator()
                         && notExclude.canBeCollidedWith())
@@ -159,6 +160,8 @@ public class util {
      * @return Result of ray trace, or RayTraceResult.Type.MISS if nothing within the distance is found
      */
     public static BlockRayTraceResult getTargetBlock(Entity entity, float maxDistance, float partialTicks, RayTraceContext.BlockMode blockMode) {
+        final RayTraceContext.FluidMode fluidMode = RayTraceContext.FluidMode.NONE;
+
         Vector3d vector3d = entity.getEyePosition(partialTicks);
         double d0 = maxDistance;
         double d1 = d0 * d0;
@@ -167,10 +170,14 @@ public class util {
         Vector3d vector3d1 = entity.getLook(1.0F);
         // 结束位置向量
         Vector3d vector3d2 = vector3d.add(vector3d1.x * d0, vector3d1.y * d0, vector3d1.z * d0);
-        return entity.world.rayTraceBlocks(new RayTraceContext(vector3d, vector3d2, blockMode,
-                RayTraceContext.FluidMode.NONE, entity));
+
+        BlockRayTraceResult blockRayTraceResult = entity.world.rayTraceBlocks(
+                new RayTraceContext(vector3d, vector3d2, blockMode, fluidMode, entity)
+        );
+        return blockRayTraceResult;
     }
 
+    @Deprecated
     public static BlockRayTraceResult rayTraceBlock(World world, Vector3d startVec, Vector3d endVec) {
         return world.rayTraceBlocks(new RayTraceContext(startVec, endVec, RayTraceContext.BlockMode.VISUAL,
                 RayTraceContext.FluidMode.NONE, null));

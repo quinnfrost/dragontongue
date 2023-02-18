@@ -82,7 +82,6 @@ public class DragonTongue
         }
 
         // Todo:
-        //  entity ray trace cleanup: server side, through blocks or not
         //  replace dragon AI
         //  dragon flight behavior modification
 
