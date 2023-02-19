@@ -5,6 +5,7 @@
   "refmap": "dragontongue.refmap.json",
   "mixins": [
     "MixinIngameGui",
+    "MixinLivingEntity",
     "iceandfire.MixinDragonAILookIdle",
     "iceandfire.MixinDragonAIWatchClosest",
     "iceandfire.MixinDragonBow",

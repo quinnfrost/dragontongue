@@ -24,7 +24,7 @@ import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 
-public class IafAdvancedMoveController {
+public class IafAdvancedDragonMoveController {
     public static class GroundMoveHelper extends MovementController {
         public GroundMoveHelper(MobEntity LivingEntityIn) {
             super(LivingEntityIn);

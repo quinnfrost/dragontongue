@@ -16,6 +16,8 @@ import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.entity.projectile.ProjectileHelper;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.particles.IParticleData;
+import net.minecraft.potion.Effects;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.vector.Vector3d;
@@ -328,6 +330,20 @@ public class util {
     public static void mixinDebugger() {
         String str = "A breakpoint over here will do the trick";
 //        DragonTongue.LOGGER.debug(str);
+    }
+
+    public static boolean canSwimInLava(Entity entityIn) {
+        if (DragonTongue.isIafPresent && IafHelperClass.canSwimInLava(entityIn)) {
+            return true;
+        }
+        if (entityIn instanceof PlayerEntity) {
+            PlayerEntity playerEntity = (PlayerEntity) entityIn;
+            if (playerEntity.isSpectator() || playerEntity.isCreative()) {
+//                return true;
+            }
+            return playerEntity.areEyesInFluid(FluidTags.LAVA) && playerEntity.isPotionActive(Effects.FIRE_RESISTANCE);
+        }
+        return false;
     }
 
     @OnlyIn(Dist.CLIENT)

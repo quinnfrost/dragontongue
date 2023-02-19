@@ -13,9 +13,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.ColorHandlerEvent;
-import net.minecraftforge.client.event.GuiScreenEvent;
-import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.client.event.*;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
@@ -125,6 +123,33 @@ public class ClientEvents {
     @SubscribeEvent
     public static void onGuiMouseClick(GuiScreenEvent.MouseClickedEvent.Pre event) {
 
+    }
+
+    @SubscribeEvent
+    public static void onSetFogDensity(EntityViewRenderEvent.FogDensity event) {
+        ClientPlayerEntity player = Minecraft.getInstance().player;
+        if (player == null) {
+            return;
+        }
+        if (player.isCreative() || player.isSpectator()) {
+            event.setDensity(0f);
+            event.setCanceled(true);
+        } else if (util.canSwimInLava(player)) {
+            event.setDensity(0.03f);
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void renderOverlay(RenderBlockOverlayEvent event) {
+        if (event.getOverlayType() != RenderBlockOverlayEvent.OverlayType.FIRE) {
+            return;
+        }
+        if (event.getPlayer().isCreative()) {
+            event.setCanceled(true);
+        } else if (util.canSwimInLava(event.getPlayer())) {
+            event.getMatrixStack().translate(0, -0.25, 0);
+        }
     }
 
 }

@@ -1,7 +1,6 @@
 package com.github.quinnfrost.dragontongue.mixin.iceandfire;
 
 import com.github.alexthe666.citadel.animation.Animation;
-import com.github.alexthe666.citadel.animation.AnimationHandler;
 import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.api.event.GenericGriefEvent;
 import com.github.alexthe666.iceandfire.entity.*;
@@ -16,12 +15,10 @@ import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.container.ContainerDragon;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.iceandfire.*;
-import com.github.quinnfrost.dragontongue.utils.util;
 import com.google.common.base.Predicate;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.*;
-import net.minecraft.entity.ai.controller.MovementController;
 import net.minecraft.entity.ai.goal.HurtByTargetGoal;
 import net.minecraft.entity.ai.goal.OwnerHurtByTargetGoal;
 import net.minecraft.entity.ai.goal.OwnerHurtTargetGoal;
@@ -34,10 +31,7 @@ import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.Difficulty;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import org.spongepowered.asm.mixin.Mixin;
@@ -223,17 +217,17 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     }
     protected void roadblock$switchNavigator(int navigatorType) {
         if (navigatorType == 0) {
-            this.moveController = new IafAdvancedMoveController.GroundMoveHelper(this);
+            this.moveController = new IafAdvancedDragonMoveController.GroundMoveHelper(this);
             this.navigator = createNavigator(world, AdvancedPathNavigate.MovementType.WALKING, createStuckHandler().withTeleportSteps(5));
             this.navigatorType = 0;
             this.setFlying(false);
             this.setHovering(false);
         } else if (navigatorType == 1) {
-            this.moveController = new IafAdvancedMoveController.FlightMoveHelper((EntityDragonBase)(Object)this);
+            this.moveController = new IafAdvancedDragonMoveController.FlightMoveHelper((EntityDragonBase)(Object)this);
             this.navigator = createNavigator(world, AdvancedPathNavigate.MovementType.FLYING);
             this.navigatorType = 1;
         } else {
-            this.moveController = new IafAdvancedMoveController.PlayerFlightMoveHelper<>((EntityDragonBase)(Object)this);
+            this.moveController = new IafAdvancedDragonMoveController.PlayerFlightMoveHelper<>((EntityDragonBase)(Object)this);
             this.navigator = createNavigator(world, AdvancedPathNavigate.MovementType.FLYING);
             this.navigatorType = 2;
         }
@@ -362,7 +356,7 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 
     @Inject(
             remap = false,
-            method = "Lcom/github/alexthe666/iceandfire/entity/EntityDragonBase;roar()V",
+            method = "roar()V",
             at = @At(value = "HEAD"),
             cancellable = true
     )

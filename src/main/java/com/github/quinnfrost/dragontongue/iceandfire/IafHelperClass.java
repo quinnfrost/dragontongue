@@ -2,6 +2,7 @@ package com.github.quinnfrost.dragontongue.iceandfire;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.EntityDragonPart;
+import com.github.alexthe666.iceandfire.entity.EntityFireDragon;
 import com.github.alexthe666.iceandfire.entity.EntityHippogryph;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.alexthe666.iceandfire.entity.util.IDeadMob;
@@ -27,6 +28,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -173,9 +175,8 @@ public class IafHelperClass {
      * Determine if player is wearing full set of dragon scale/steel set
      *
      * @param playerEntity
-     * @return For scale set, "ice","fire","lightning". For steel set, "dragonsteel_ice", "dragonsteel_fire", "dragonsteel_lightning".
+     * @return Empty string returned if not a valid set. For scale set, "ice","fire","lightning". For steel set, "dragonsteel_ice", "dragonsteel_fire", "dragonsteel_lightning".
      */
-    @Nullable
     public static String isFullSetOf(PlayerEntity playerEntity) {
         Item headItem = playerEntity.getItemStackFromSlot(EquipmentSlotType.HEAD).getItem();
         Item chestItem = playerEntity.getItemStackFromSlot(EquipmentSlotType.CHEST).getItem();
@@ -183,16 +184,16 @@ public class IafHelperClass {
         Item feetItem = playerEntity.getItemStackFromSlot(EquipmentSlotType.FEET).getItem();
 
         if (!(headItem instanceof ItemScaleArmor) && !(headItem instanceof ItemDragonsteelArmor)) {
-            return null;
+            return "";
         }
         if (!(chestItem instanceof ItemScaleArmor) && !(chestItem instanceof ItemDragonsteelArmor)) {
-            return null;
+            return "";
         }
         if (!(legItem instanceof ItemScaleArmor) && !(legItem instanceof ItemDragonsteelArmor)) {
-            return null;
+            return "";
         }
         if (!(feetItem instanceof ItemScaleArmor) && !(feetItem instanceof ItemDragonsteelArmor)) {
-            return null;
+            return "";
         }
 
         if (headItem instanceof ItemScaleArmor && chestItem instanceof ItemScaleArmor && legItem instanceof ItemScaleArmor && feetItem instanceof ItemScaleArmor) {
@@ -224,7 +225,20 @@ public class IafHelperClass {
             }
         }
 
-        return null;
+        return "";
+    }
+
+    public static boolean canSwimInLava(Entity entityIn) {
+        if (!DragonTongue.isIafPresent) {
+            return false;
+        }
+        if (entityIn instanceof PlayerEntity) {
+            return isFullSetOf((PlayerEntity) entityIn).contains("fire");
+        }
+        if (entityIn instanceof EntityFireDragon) {
+            return true;
+        }
+        return false;
     }
 
 }
