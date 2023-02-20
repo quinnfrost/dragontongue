@@ -16,6 +16,7 @@ import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.message.MessageClientDraw;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
+import com.github.quinnfrost.dragontongue.access.IMixinAdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -23,13 +24,9 @@ import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.Item;
-import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -107,10 +104,25 @@ public class IafHelperClass {
 //        float distY = (float) (currentFlightTarget.y - dragon.getPosY());
 //        float distZ = (float) (currentFlightTarget.z - dragon.getPosZ());
 
+        String reachDestString = "";
+        if (((IMixinAdvancedPathNavigate)navigator).getPathResult() == null) {
+            reachDestString = "null";
+        } else if (((IMixinAdvancedPathNavigate)navigator).getPathResult().isPathReachingDestination()) {
+            reachDestString = "true";
+        } else {
+            reachDestString = "false";
+        }
+        String timeSinceLastPath = "";
+        if (navigator.noPath()) {
+            timeSinceLastPath = String.valueOf(dragon.world.getGameTime() - ((IMixinAdvancedPathNavigate) navigator).getPathStartTime());
+        }
+
         return Arrays.asList(
                 "Render size:" + dragon.getRenderSize() + String.format("(%.2f)", dragon.getRenderScale()),
                 "Flight height:" + IafDragonFlightUtil.getFlightHeight(dragon),
                 "Navigator target:" + (targetPos != null ? targetPos : ""),
+                "ReachDest? " + reachDestString,
+                "TimeSince:" + timeSinceLastPath,
                 "FlightMgr:" + (flightManager.currentFlightTarget == null ? "" : flightManager.currentFlightTarget + "(" + util.getDistance(flightManager.currentFlightTarget, dragon.getPositionVec()) + ")"),
                 "FlightMgrDest:" + (flightManager.finalFlightTarget == null ? "" : flightManager.finalFlightTarget + "(" + util.getDistance(flightManager.finalFlightTarget, dragon.getPositionVec()) + ")"),
                 "FlightXZDistacne:" + util.getDistanceXZ(dragon.getPositionVec(), flightManager.finalFlightTarget),

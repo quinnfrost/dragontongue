@@ -6,13 +6,15 @@ import com.github.alexthe666.iceandfire.entity.EntityDragonCharge;
 import com.github.alexthe666.iceandfire.entity.IafDragonAttacks;
 import com.github.alexthe666.iceandfire.entity.IafDragonLogic;
 import com.github.alexthe666.iceandfire.entity.util.HomePosition;
-import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
+import com.github.alexthe666.iceandfire.pathfinding.raycoms.PathResult;
+import com.github.alexthe666.iceandfire.pathfinding.raycoms.pathjobs.AbstractPathJob;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAIGuard;
 import com.github.quinnfrost.dragontongue.message.MessageSyncCapability;
+import com.github.quinnfrost.dragontongue.access.IMixinAdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -206,7 +208,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         }
         if (attackDecision == EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP && dragon.getAttackTarget() != null &&
                 (commandStatus != EnumCommandSettingType.CommandStatus.NONE
-                || dragon.getCommand() == 1)) {
+                        || dragon.getCommand() == 1)) {
             //
             cap.setCommandStatus(EnumCommandSettingType.CommandStatus.ATTACK);
         }
@@ -229,10 +231,16 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         }
 
         // Bug: In some circumstances elder dragons (125+) fail to sleep even navigator believes it has reached home.
-        if (dragon.lookingForRoostAIFlag && dragon.getDistanceSquared(Vector3d.copyCentered(dragon.getHomePosition())) < dragon.getWidth() * 12) {
-            dragon.lookingForRoostAIFlag = false;
-            if (!dragon.isInWater() && dragon.isOnGround() && !dragon.isFlying() && !dragon.isHovering() && dragon.getAttackTarget() == null) {
-                dragon.setQueuedToSit(true);
+        PathResult<AbstractPathJob> pathResult = ((IMixinAdvancedPathNavigate) dragon.getNavigator()).getPathResult();
+        IafAdvancedDragonPathNavigator navigator = (IafAdvancedDragonPathNavigator) dragon.getNavigator();
+        if (dragon.lookingForRoostAIFlag
+//                && dragon.getDistanceSquared(Vector3d.copyCentered(dragon.getHomePosition())) < dragon.getWidth() * 12
+        ) {
+            if (navigator.noPath() && dragon.world.getGameTime() - ((IMixinAdvancedPathNavigate)navigator).getPathStartTime() < 10) {
+                if (!dragon.isInWater() && dragon.isOnGround() && !dragon.isFlying() && !dragon.isHovering() && dragon.getAttackTarget() == null) {
+                    dragon.lookingForRoostAIFlag = false;
+                    dragon.setQueuedToSit(true);
+                }
             }
         }
         // Bug: lightning dragon won't wake up when command is set to escort

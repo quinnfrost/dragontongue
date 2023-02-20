@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
 @Mixin(ItemDragonBow.class)
-public class MixinDragonBow extends BowItem {
+public abstract class MixinDragonBow extends BowItem {
     public MixinDragonBow(Properties builder) {
         super(builder);
     }
