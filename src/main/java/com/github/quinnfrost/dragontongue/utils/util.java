@@ -4,6 +4,7 @@ import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityPredicate;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.ai.attributes.Attributes;
@@ -79,11 +80,16 @@ public class util {
         }
     }
     //! Not usable
-    public static boolean shouldAttack(@Nullable LivingEntity attacker, @Nullable LivingEntity target) {
+    public static boolean shouldAttack(@Nullable LivingEntity attacker, @Nullable LivingEntity target, double checkDistance) {
         if (attacker == null || target == null) {
             return false;
         }
-        return false;
+        EntityPredicate entityPredicate = EntityPredicate.DEFAULT;
+        entityPredicate.setIgnoresLineOfSight();
+        if (checkDistance > 0) {
+            entityPredicate.setDistance(checkDistance);
+        }
+        return entityPredicate.canTarget(attacker, target);
     }
 
     /**

@@ -56,17 +56,21 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
     public void update() {
         // Periodic check if the target is in sight
         if (finalFlightTarget != null) {
-            flightLevel = Vector3d.copyCenteredHorizontally(
-                    IafDragonFlightUtil.getHighestPosOnPath(dragon, finalFlightTarget).add(0, 0, 0)
-            );
-            if (!dragon.isTargetBlocked(finalFlightTarget)) {
-                if (util.getDistanceXZ(finalFlightTarget, dragon.getPositionVec()) < 30 || flightLevel.y <= finalFlightTarget.y) {
-                    flightPhase = FlightPhase.DIRECT;
-                } else {
-                    flightPhase = FlightPhase.CRUISE;
-                }
+            if (dragon.getBoundingBox().grow(dragon.getRenderSize()).contains(finalFlightTarget)) {
+                flightPhase = FlightPhase.DIRECT;
             } else {
-                flightPhase = FlightPhase.CLIMB;
+                flightLevel = Vector3d.copyCenteredHorizontally(
+                        IafDragonFlightUtil.getHighestPosOnPath(dragon, finalFlightTarget).add(0, 0, 0)
+                );
+                if (!dragon.isTargetBlocked(finalFlightTarget)) {
+                    if (util.getDistanceXZ(finalFlightTarget, dragon.getPositionVec()) < 30 || flightLevel.y <= finalFlightTarget.y) {
+                        flightPhase = FlightPhase.DIRECT;
+                    } else {
+                        flightPhase = FlightPhase.CRUISE;
+                    }
+                } else {
+                    flightPhase = FlightPhase.CLIMB;
+                }
             }
             switch (flightPhase) {
                 case DIRECT:

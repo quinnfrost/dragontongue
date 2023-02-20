@@ -158,6 +158,7 @@ public class MessageCommandEntity {
                     capTargetHolder.removeCommandEntity(target.getUniqueID());
                     target.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                         iCapTargetHolder.setCommandStatus(EnumCommandSettingType.CommandStatus.NONE);
+                        iCapTargetHolder.setDestination(null);
                     });
                 }
                 MessageSyncCapability.syncCapabilityToClients(commander);
@@ -425,12 +426,12 @@ public class MessageCommandEntity {
         ICapabilityInfoHolder capTargetHolder = tamed.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(tamed));
         EnumCommandSettingType.AttackDecisionType attackDecisionType = (EnumCommandSettingType.AttackDecisionType) capTargetHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE);
         PlayerEntity playerEntity = (PlayerEntity) commander;
-        if (attackDecisionType == EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP) {
+        if (attackDecisionType == EnumCommandSettingType.AttackDecisionType.DEFAULT) {
             playerEntity.sendStatusMessage(new StringTextComponent("Guard"), true);
             capTargetHolder.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.GUARD);
         } else if (attackDecisionType == EnumCommandSettingType.AttackDecisionType.GUARD) {
             playerEntity.sendStatusMessage(new StringTextComponent("Default"), true);
-            capTargetHolder.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP);
+            capTargetHolder.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.DEFAULT);
         }
     }
 
@@ -456,6 +457,7 @@ public class MessageCommandEntity {
             }
             target.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                 iCapTargetHolder.setCommandStatus(EnumCommandSettingType.CommandStatus.NONE);
+                iCapTargetHolder.setDestination(null);
             });
         }
     }
@@ -470,6 +472,9 @@ public class MessageCommandEntity {
             ((TameableEntity) target).getNavigator().tryMoveToXYZ(target.getPosX(), target.getPosY(), target.getPosZ(), 1.0f);
             target.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                 iCapTargetHolder.setCommandStatus(EnumCommandSettingType.CommandStatus.NONE);
+                if (iCapTargetHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE) == EnumCommandSettingType.AttackDecisionType.GUARD) {
+                    iCapTargetHolder.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.DEFAULT);
+                }
             });
         }
     }

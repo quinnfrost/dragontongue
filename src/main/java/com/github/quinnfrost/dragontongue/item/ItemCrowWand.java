@@ -54,11 +54,11 @@ public class ItemCrowWand extends Item {
         if (!player.isSneaking() && hand == Hand.MAIN_HAND) {
             RegistryMessages.sendToServer(new MessageCrowWand(EnumCrowWand.TELEPORT));
         } else if (player.isSneaking() && hand == Hand.MAIN_HAND) {
-            RegistryMessages.sendToServer(new MessageCrowWand(EnumCrowWand.LIGHTNING));
+            RegistryMessages.sendToServer(new MessageCrowWand(EnumCrowWand.FANG));
         } else if (!player.isSneaking() && hand == Hand.OFF_HAND) {
             RegistryMessages.sendToServer(new MessageCrowWand(EnumCrowWand.TELEPORT));
         } else if (player.isSneaking() && hand == Hand.OFF_HAND) {
-            RegistryMessages.sendToServer(new MessageCrowWand(EnumCrowWand.FANG));
+            RegistryMessages.sendToServer(new MessageCrowWand(EnumCrowWand.LIGHTNING));
         }
         // Set usage cooldown
         // player.getCooldownTracker().setCooldown(this,20);

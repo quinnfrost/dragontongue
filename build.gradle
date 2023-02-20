@@ -40,7 +40,7 @@ repositories {
 
 }
 
-version = '0.4.3'
+version = '0.5.2'
 group = 'com.github.quinnfrost' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'dragontongue'
 

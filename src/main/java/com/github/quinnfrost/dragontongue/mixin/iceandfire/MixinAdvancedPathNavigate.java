@@ -14,9 +14,9 @@ import javax.annotation.Nullable;
 
 @Mixin(AdvancedPathNavigate.class)
 public abstract class MixinAdvancedPathNavigate extends AbstractAdvancedPathNavigate implements IMixinAdvancedPathNavigate {
-    @Shadow @Nullable private PathResult<AbstractPathJob> pathResult;
+    @Shadow(remap = false) @Nullable private PathResult<AbstractPathJob> pathResult;
 
-    @Shadow private long pathStartTime;
+    @Shadow(remap = false) private long pathStartTime;
 
     public MixinAdvancedPathNavigate(MobEntity entityLiving, World worldIn) {
         super(entityLiving, worldIn);

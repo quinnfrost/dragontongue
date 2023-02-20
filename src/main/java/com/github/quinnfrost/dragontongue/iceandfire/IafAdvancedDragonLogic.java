@@ -18,6 +18,7 @@ import com.github.quinnfrost.dragontongue.access.IMixinAdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -206,11 +207,28 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         if (attackDecision == EnumCommandSettingType.AttackDecisionType.NONE && dragon.getAttackTarget() != null) {
             dragon.setAttackTarget(null);
         }
-        if (attackDecision == EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP && dragon.getAttackTarget() != null &&
-                (commandStatus != EnumCommandSettingType.CommandStatus.NONE
-                        || dragon.getCommand() == 1)) {
-            //
-            cap.setCommandStatus(EnumCommandSettingType.CommandStatus.ATTACK);
+        if (attackDecision == EnumCommandSettingType.AttackDecisionType.DEFAULT) {
+
+        }
+        if (attackDecision == EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP) {
+            if (dragon.isTamed() && dragon.getCommand() == 1) {
+                LivingEntity owner = dragon.getOwner();
+                // +1 for update may happen at next tick
+                if (owner != null
+                        && owner.getLastAttackedEntityTime() + 1 == owner.ticksExisted
+                        && dragon.getAttackTarget() == null
+                        && util.shouldAttack(dragon, owner.getLastAttackedEntity(), dragon.getAttributeValue(Attributes.FOLLOW_RANGE))
+                ) {
+                    cap.setDestination(dragon.getPosition());
+                    dragon.setCommand(0);
+                    dragon.setAttackTarget(owner.getLastAttackedEntity());
+                    cap.setCommandStatus(EnumCommandSettingType.CommandStatus.ATTACK);
+                }
+            }
+            if (dragon.getAttackTarget() != null &&
+                    (commandStatus != EnumCommandSettingType.CommandStatus.NONE)) {
+                cap.setCommandStatus(EnumCommandSettingType.CommandStatus.ATTACK);
+            }
         }
         if (attackDecision == EnumCommandSettingType.AttackDecisionType.GUARD && commandStatus != EnumCommandSettingType.CommandStatus.NONE) {
             if (dragon.getAttackTarget() == null) {
@@ -236,7 +254,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         if (dragon.lookingForRoostAIFlag
 //                && dragon.getDistanceSquared(Vector3d.copyCentered(dragon.getHomePosition())) < dragon.getWidth() * 12
         ) {
-            if (navigator.noPath() && dragon.world.getGameTime() - ((IMixinAdvancedPathNavigate)navigator).getPathStartTime() < 10) {
+            if (navigator.noPath() && dragon.world.getGameTime() - ((IMixinAdvancedPathNavigate) navigator).getPathStartTime() < 10 && dragon.getPositionVec().distanceTo(Vector3d.copyCenteredHorizontally(dragon.getHomePosition())) < 30) {
                 if (!dragon.isInWater() && dragon.isOnGround() && !dragon.isFlying() && !dragon.isHovering() && dragon.getAttackTarget() == null) {
                     dragon.lookingForRoostAIFlag = false;
                     dragon.setQueuedToSit(true);

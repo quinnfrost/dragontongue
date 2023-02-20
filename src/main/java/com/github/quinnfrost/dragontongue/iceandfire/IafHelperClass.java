@@ -116,6 +116,12 @@ public class IafHelperClass {
         if (navigator.noPath()) {
             timeSinceLastPath = String.valueOf(dragon.world.getGameTime() - ((IMixinAdvancedPathNavigate) navigator).getPathStartTime());
         }
+        String ownerAttackTime = "";
+        String ownerTickExisted = "";
+        if (dragon.isTamed()) {
+            ownerAttackTime = String.valueOf(dragon.getOwner().getLastAttackedEntityTime());
+            ownerTickExisted = String.valueOf(dragon.getOwner().ticksExisted);
+        }
 
         return Arrays.asList(
                 "Render size:" + dragon.getRenderSize() + String.format("(%.2f)", dragon.getRenderScale()),
@@ -142,7 +148,9 @@ public class IafHelperClass {
                 "AirAttack:" + dragon.airAttack,
                 "GroundAttack:" + dragon.groundAttack,
                 "UseGroundAttack? " + dragon.usingGroundAttack,
-                "LookingForRoost? " + dragon.lookingForRoostAIFlag
+                "LookingForRoost? " + dragon.lookingForRoostAIFlag,
+                "OwnerAttackTime:" + ownerAttackTime,
+                "OwnerTickExisted:" + ownerTickExisted
         );
 
 
@@ -258,7 +266,7 @@ public class IafHelperClass {
             return false;
         }
         if (entityIn instanceof PlayerEntity) {
-            return isFullSetOf((PlayerEntity) entityIn).contains("fire");
+            return isFullSetOf((PlayerEntity) entityIn).contains("fire") || isFullSetOf((PlayerEntity) entityIn).contains("dragonsteel");
         }
         if (entityIn instanceof EntityFireDragon) {
             return true;

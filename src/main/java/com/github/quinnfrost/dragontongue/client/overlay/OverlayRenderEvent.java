@@ -24,6 +24,8 @@ public class OverlayRenderEvent extends IngameGui {
     public void renderOverlay(RenderGameOverlayEvent.Post event) {
         if (event.getType() == RenderGameOverlayEvent.ElementType.CROSSHAIRS) {
             RenderTrajectory.renderTrajectory(event.getMatrixStack());
+            OverlayCrossHair.renderScope(event.getMatrixStack());
+            OverlayCrossHair.renderScopeSuggestion(event.getMatrixStack());
         }
         if (event.getType() == RenderGameOverlayEvent.ElementType.TEXT) {
             OverlayInfoPanel.renderPanel(event.getMatrixStack());
@@ -31,8 +33,6 @@ public class OverlayRenderEvent extends IngameGui {
         }
         if (event.getType() == RenderGameOverlayEvent.ElementType.ALL) {
             OverlayCrossHair.renderIconCrossHair(event.getMatrixStack());
-            OverlayCrossHair.renderScope(event.getMatrixStack());
-            OverlayCrossHair.renderScopeSuggestion(event.getMatrixStack());
         }
     }
 

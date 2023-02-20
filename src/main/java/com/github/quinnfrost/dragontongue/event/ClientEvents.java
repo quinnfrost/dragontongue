@@ -6,6 +6,7 @@ import com.github.quinnfrost.dragontongue.client.KeyBindRegistry;
 import com.github.quinnfrost.dragontongue.client.overlay.OverlayCrossHair;
 import com.github.quinnfrost.dragontongue.utils.Vector2f;
 import com.github.quinnfrost.dragontongue.utils.util;
+import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.item.Items;
@@ -19,8 +20,10 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 @OnlyIn(Dist.CLIENT)
 public class ClientEvents {
+    public static GameSettings gameSettings = Minecraft.getInstance().gameSettings;
     public static int lastMouseKeyCode = 0;
     public static boolean keySneakPressed = false;
+    public static boolean keySprintPressed = false;
     @SubscribeEvent
     public static void detectScroll(InputEvent.MouseScrollEvent event) {
         if (KeyBindRegistry.scan_scroll) {
@@ -106,22 +109,38 @@ public class ClientEvents {
 //            DragonTongue.aiDebugger.currentTarget = DragonTongue.aiDebugger.target.targetSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString();
 //        }
 //    }
+    @SubscribeEvent
+    public static void onGuiInit(GuiScreenEvent.InitGuiEvent.Post event) {
+        keySneakPressed = false;
+        keySprintPressed = false;
+    }
 
     @SubscribeEvent
     public static void onGuiKeyPressed(GuiScreenEvent.KeyboardKeyPressedEvent event) {
-        if (event.getKeyCode() == Minecraft.getInstance().gameSettings.keyBindSneak.getKey().getKeyCode()) {
+        if (event.getKeyCode() == gameSettings.keyBindSneak.getKey().getKeyCode()) {
             keySneakPressed = true;
+        }
+        if (event.getKeyCode() == gameSettings.keyBindSprint.getKey().getKeyCode()) {
+            keySprintPressed = true;
         }
     }
     @SubscribeEvent
     public static void onGuiKeyReleased(GuiScreenEvent.KeyboardKeyReleasedEvent event) {
-        if (event.getKeyCode() == Minecraft.getInstance().gameSettings.keyBindSneak.getKey().getKeyCode()) {
+        if (event.getKeyCode() == gameSettings.keyBindSneak.getKey().getKeyCode()) {
             keySneakPressed = false;
+        }
+        if (event.getKeyCode() == gameSettings.keyBindSprint.getKey().getKeyCode()) {
+            keySprintPressed = false;
         }
     }
 
     @SubscribeEvent
     public static void onGuiMouseClick(GuiScreenEvent.MouseClickedEvent.Pre event) {
+
+    }
+
+    @SubscribeEvent
+    public static void onGuiMouseRelease(GuiScreenEvent.MouseReleasedEvent.Pre event) {
 
     }
 

@@ -11,6 +11,8 @@
     "iceandfire.MixinDragonAIWatchClosest",
     "iceandfire.MixinDragonBow",
     "iceandfire.MixinEntityDragonBase",
-    "iceandfire.MixinEnumSurfaceType"
+    "iceandfire.MixinEntityHippogryph",
+    "iceandfire.MixinEnumSurfaceType",
+    "iceandfire.MixinHippogryphAITarget"
   ]
 }

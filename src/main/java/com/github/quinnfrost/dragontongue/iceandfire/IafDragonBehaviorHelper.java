@@ -10,15 +10,13 @@ import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.entity.ai.GuardGoal;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAIAsYouWish;
-import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAICalmLook;
-import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAIGuard;
-import com.github.quinnfrost.dragontongue.iceandfire.ai.HippogryphAIFollowCommandAndAttack;
+import com.github.quinnfrost.dragontongue.iceandfire.ai.*;
 import com.github.quinnfrost.dragontongue.iceandfire.event.IafServerEvent;
 import com.github.quinnfrost.dragontongue.utils.util;
 import com.google.common.base.Predicate;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.ai.goal.OwnerHurtTargetGoal;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
@@ -331,6 +329,7 @@ public class IafDragonBehaviorHelper {
         }
 
         dragon.setAttackTarget(null);
+        setDragonTryReach(dragon, blockPos);
         cap.setDestination(blockPos);
         cap.setCommandStatus(EnumCommandSettingType.CommandStatus.REACH);
 

@@ -381,10 +381,10 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
                     if (entity instanceof LivingEntity && !isStrongerDragon) {
                         LivingEntity living = (LivingEntity) entity;
                         if (this.isOwner(living) || this.isOwnersPet(living)) {
-                            living.addPotionEffect(new EffectInstance(Effects.STRENGTH, 50 * size));
+                            living.addPotionEffect(new EffectInstance(Effects.STRENGTH, 50 * size, 0, false, false));
                         } else {
                             if (living.getItemStackFromSlot(EquipmentSlotType.HEAD).getItem() != IafItemRegistry.EARPLUGS) {
-                                living.addPotionEffect(new EffectInstance(Effects.WEAKNESS, 50 * size));
+                                living.addPotionEffect(new EffectInstance(Effects.WEAKNESS, 50 * size, 0, false, false));
                             }
                         }
                     }
@@ -403,9 +403,9 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
                     if (entity instanceof LivingEntity && !isStrongerDragon) {
                         LivingEntity living = (LivingEntity) entity;
                         if (this.isOwner(living) || this.isOwnersPet(living)) {
-                            living.addPotionEffect(new EffectInstance(Effects.STRENGTH, 30 * size));
+                            living.addPotionEffect(new EffectInstance(Effects.STRENGTH, 30 * size, 0, false, false));
                         } else {
-                            living.addPotionEffect(new EffectInstance(Effects.WEAKNESS, 30 * size));
+                            living.addPotionEffect(new EffectInstance(Effects.WEAKNESS, 30 * size, 0, false, false));
                         }
                     }
                 }

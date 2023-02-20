@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(DragonAILookIdle.class)
 public abstract class MixinDragonAILookIdle {
-    @Shadow
+    @Shadow(remap = false)
     private EntityDragonBase dragon;
 
     @Inject(
