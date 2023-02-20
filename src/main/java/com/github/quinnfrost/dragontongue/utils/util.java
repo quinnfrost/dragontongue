@@ -346,6 +346,15 @@ public class util {
         return false;
     }
 
+    public static double getDistanceXZ(Vector3d vector1, Vector3d vector2) {
+        if (vector1 == null || vector2 == null) {
+            return 0;
+        }
+        double f = vector1.x - vector2.x;
+        double f2 = vector1.z - vector2.z;
+        return Math.sqrt(f * f + f2 * f2);
+    }
+
     @OnlyIn(Dist.CLIENT)
     public static PlayerEntity getClientSidePlayer() {
         return Minecraft.getInstance().player;

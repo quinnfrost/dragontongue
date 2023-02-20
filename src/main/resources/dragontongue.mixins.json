@@ -9,6 +9,7 @@
     "iceandfire.MixinDragonAILookIdle",
     "iceandfire.MixinDragonAIWatchClosest",
     "iceandfire.MixinDragonBow",
-    "iceandfire.MixinEntityDragonBase"
+    "iceandfire.MixinEntityDragonBase",
+    "iceandfire.MixinEnumSurfaceType"
   ]
 }

@@ -125,9 +125,21 @@ public class IafAdvancedDragonMoveController {
         }
 
         public void tick() {
+            if (dragon.flightManager.getFlightTarget() == null) {
+                return;
+            }
+
             ICapabilityInfoHolder cap = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl());
             EnumCommandSettingType.CommandStatus commandStatus = cap.getCommandStatus();
-            Vector3d flightTarget = dragon.flightManager.getFlightTarget();
+            IafAdvancedDragonFlightManager dragonFlightManager = (IafAdvancedDragonFlightManager) dragon.flightManager;
+            Vector3d flightTarget = dragonFlightManager.getFlightTarget();
+
+            if (dragon.collidedHorizontally) {
+                if (dragon.getPositionVec().y < IafConfig.maxDragonFlight) {
+                    dragon.setMotion(new Vector3d(dragon.getMotion().scale(-0.5d).x, 0.2, dragon.getMotion().scale(-0.5d).y));
+                    return;
+                }
+            }
 
             float distToX = (float) (flightTarget.x - dragon.getPosX());
             float distToY = (float) (flightTarget.y - dragon.getPosY());
@@ -135,48 +147,48 @@ public class IafAdvancedDragonMoveController {
 
             // Try to avoid the CFIT issue
             // Every 1 second (or collided already) the dragon check if there is terrain between her and the target
-            if ((detourState == 0 && dragon.world.getGameTime() % 20 == 0) || dragon.collidedHorizontally) {
-                if (commandStatus != EnumCommandSettingType.CommandStatus.STAY && commandStatus != EnumCommandSettingType.CommandStatus.HOVER
-                        && !util.hasArrived(dragon, new BlockPos(flightTarget), (double) dragon.getRenderSize())) {
-                    BlockRayTraceResult blockRayTraceResult = util.rayTraceBlock(dragon.world, dragon.getPositionVec(), dragon.flightManager.getFlightTarget());
-                    // If there is, she will find a higher place where the target is directly in her sight
-                    if (!dragon.world.isAirBlock(blockRayTraceResult.getPos())) {
-                        BlockPos preferredFlightPos = IafDragonFlightUtil.highestBlockOnPath(dragon.world, dragon.getPositionVec(), flightTarget, 0).add(0, 2 * dragon.getYNavSize(), 0);
-
-                        // And take a detour to reach her target
-                        detourState = 1;
-                        if (preferredFlightPos.getY() <= 400) {
-                            detourTarget = Vector3d.copyCentered(preferredFlightPos);
-                        } else {
-                            detourTarget = new Vector3d(preferredFlightPos.getX(), 400, preferredFlightPos.getZ());
-                        }
-                    }
-                }
-            }
-            if (detourState != 0) {
-                distToX = (float) (detourTarget.x - dragon.getPosX());
-                distToY = (float) (detourTarget.y - dragon.getPosY());
-                distToZ = (float) (detourTarget.z - dragon.getPosZ());
-                // Detour state 1: try reach the top of the terrain
-                if (detourState == 1 && detourTarget != null) {
-                    if (dragon.getPositionVec().y >= detourTarget.y) {
-                        detourState = 2;
-                        detourTarget = detourTarget.add(
-                                (flightTarget.x - detourTarget.x) / 2,
-                                0,
-                                (flightTarget.z - detourTarget.z) / 2
-                        );
-                    }
-                }
-                // Detour state 2: try fly over the terrain (by travel half of the distance in high air)
-                if (detourState == 2 && detourTarget != null) {
-                    if (dragon.getPositionVec().y >= detourTarget.y
-                            && util.hasArrived(dragon, new BlockPos(detourTarget), (double) (dragon.getYNavSize() * 2))) {
-                        detourState = 0;
-                        detourTarget = null;
-                    }
-                }
-            }
+//            if ((detourState == 0 && dragon.world.getGameTime() % 20 == 0) || dragon.collidedHorizontally) {
+//                if (commandStatus != EnumCommandSettingType.CommandStatus.STAY && commandStatus != EnumCommandSettingType.CommandStatus.HOVER
+//                        && !util.hasArrived(dragon, new BlockPos(flightTarget), (double) dragon.getRenderSize())) {
+//                    BlockRayTraceResult blockRayTraceResult = util.rayTraceBlock(dragon.world, dragon.getPositionVec(), dragon.flightManager.getFlightTarget());
+//                    // If there is, she will find a higher place where the target is directly in her sight
+//                    if (!dragon.world.isAirBlock(blockRayTraceResult.getPos())) {
+//                        BlockPos preferredFlightPos = IafDragonFlightUtil.getHighestPosOnPath(dragon.world, dragon.getPositionVec(), flightTarget, 0).add(0, 2 * dragon.getYNavSize(), 0);
+//
+//                        // And take a detour to reach her target
+//                        detourState = 1;
+//                        if (preferredFlightPos.getY() <= 400) {
+//                            detourTarget = Vector3d.copyCentered(preferredFlightPos);
+//                        } else {
+//                            detourTarget = new Vector3d(preferredFlightPos.getX(), 400, preferredFlightPos.getZ());
+//                        }
+//                    }
+//                }
+//            }
+//            if (detourState != 0) {
+//                distToX = (float) (detourTarget.x - dragon.getPosX());
+//                distToY = (float) (detourTarget.y - dragon.getPosY());
+//                distToZ = (float) (detourTarget.z - dragon.getPosZ());
+//                // Detour state 1: try reach the top of the terrain
+//                if (detourState == 1 && detourTarget != null) {
+//                    if (dragon.getPositionVec().y >= detourTarget.y) {
+//                        detourState = 2;
+//                        detourTarget = detourTarget.add(
+//                                (flightTarget.x - detourTarget.x) / 2,
+//                                0,
+//                                (flightTarget.z - detourTarget.z) / 2
+//                        );
+//                    }
+//                }
+//                // Detour state 2: try fly over the terrain (by travel half of the distance in high air)
+//                if (detourState == 2 && detourTarget != null) {
+//                    if (dragon.getPositionVec().y >= detourTarget.y
+//                            && util.hasArrived(dragon, new BlockPos(detourTarget), (double) (dragon.getYNavSize() * 2))) {
+//                        detourState = 0;
+//                        detourTarget = null;
+//                    }
+//                }
+//            }
 
             // Following logic makes dragon actually fly to the target, it's not touched except the name
             // The shortest possible distance to the target plane (parallel to y)
@@ -208,7 +220,7 @@ public class IafAdvancedDragonMoveController {
                 dragon.rotationPitch = finPitch;
                 float yawTurnHead = dragon.rotationYaw + 90.0F;
                 speed *= dragon.getFlightSpeedModifier();
-                speed *= detourState == 0
+                speed *= dragonFlightManager.getFlightPhase() == IafAdvancedDragonFlightManager.FlightPhase.DIRECT
                         ? Math.min(1, distToTarget / 50 + 0.3)  //Make the dragon fly slower when close to target
                         : 1;    // Do not limit speed when detouring
                 double lvt_16_1_ = speed * MathHelper.cos(yawTurnHead * 0.017453292F) * Math.abs((double) distToX / distToTarget);

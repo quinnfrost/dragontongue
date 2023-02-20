@@ -12,6 +12,7 @@ import net.minecraft.entity.MobEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,9 +20,11 @@ import java.util.stream.Stream;
 
 public class EntityBehaviorDebugger {
     public static List<String> getTargetInfoString(MobEntity mobEntity) {
-        CompoundNBT compoundNBT = new CompoundNBT();
-        DragonTongue.debugTarget.writeAdditional(compoundNBT);
-
+//        CompoundNBT compoundNBT = new CompoundNBT();
+//        DragonTongue.debugTarget.writeAdditional(compoundNBT);
+        if (mobEntity == null) {
+            return new ArrayList<>();
+        }
         ICapabilityInfoHolder capabilityInfoHolder = mobEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(mobEntity));
         BlockPos targetPos = DragonTongue.isIafPresent ? IafHelperClass.getReachTarget(mobEntity) : mobEntity.getNavigator().getTargetPos();
         String targetPosString = (targetPos == null ? "" :

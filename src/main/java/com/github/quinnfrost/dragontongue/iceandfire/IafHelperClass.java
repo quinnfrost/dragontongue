@@ -89,24 +89,34 @@ public class IafHelperClass {
         if (!isDragon(dragonIn)) {
             return new ArrayList<>();
         }
+        if (dragonIn == null) {
+            return new ArrayList<>();
+        }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
         AdvancedPathNavigate navigator = (AdvancedPathNavigate) dragon.getNavigator();
 
-        CompoundNBT compoundNBT = new CompoundNBT();
-        DragonTongue.debugTarget.writeAdditional(compoundNBT);
+//        CompoundNBT compoundNBT = new CompoundNBT();
+//        DragonTongue.debugTarget.writeAdditional(compoundNBT);
 
         ICapabilityInfoHolder capabilityInfoHolder = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
         BlockPos targetPos = getReachTarget(dragon);
 
-        float distX = (float) (dragon.flightManager.getFlightTarget().x - dragon.getPosX());
-        float distY = (float) (dragon.flightManager.getFlightTarget().y - dragon.getPosY());
-        float distZ = (float) (dragon.flightManager.getFlightTarget().z - dragon.getPosZ());
+        IafAdvancedDragonFlightManager flightManager = (IafAdvancedDragonFlightManager) dragon.flightManager;
+        Vector3d currentFlightTarget = dragon.flightManager.getFlightTarget();
+//        float distX = (float) (currentFlightTarget.x - dragon.getPosX());
+//        float distY = (float) (currentFlightTarget.y - dragon.getPosY());
+//        float distZ = (float) (currentFlightTarget.z - dragon.getPosZ());
 
         return Arrays.asList(
                 "Render size:" + dragon.getRenderSize() + String.format("(%.2f)", dragon.getRenderScale()),
                 "Flight height:" + IafDragonFlightUtil.getFlightHeight(dragon),
                 "Navigator target:" + (targetPos != null ? targetPos : ""),
-                "FlightMgr:" + dragon.flightManager.getFlightTarget().toString() + "(" + util.getDistance(dragon.flightManager.getFlightTarget(), dragon.getPositionVec()) + ")",
+                "FlightMgr:" + (flightManager.currentFlightTarget == null ? "" : flightManager.currentFlightTarget + "(" + util.getDistance(flightManager.currentFlightTarget, dragon.getPositionVec()) + ")"),
+                "FlightMgrDest:" + (flightManager.finalFlightTarget == null ? "" : flightManager.finalFlightTarget + "(" + util.getDistance(flightManager.finalFlightTarget, dragon.getPositionVec()) + ")"),
+                "FlightXZDistacne:" + util.getDistanceXZ(dragon.getPositionVec(), flightManager.finalFlightTarget),
+                "FlightLevel:" + flightManager.flightLevel,
+                "FlightPhase:" + flightManager.flightPhase,
+                "TargetBlocked? " + dragon.isTargetBlocked(flightManager.finalFlightTarget),
                 "NavType:" + dragon.navigatorType,
                 "Command:" + dragon.getCommand(),
 //                "Flying:" + compoundNBT.getByte("Flying"),
@@ -117,8 +127,6 @@ public class IafHelperClass {
                 "Hovering:" + dragon.isHovering(),
                 "Pitch: " + dragon.getDragonPitch() + "|" + dragon.rotationPitch,
                 "Yaw: " + dragon.rotationYaw,
-                "PlaneDist:" + (double) MathHelper.sqrt(distX * distX + distZ * distZ),
-                "Distance:" + (double) MathHelper.sqrt(distX * distX + distZ * distZ + distY * distY),
                 "AirAttack:" + dragon.airAttack,
                 "GroundAttack:" + dragon.groundAttack,
                 "UseGroundAttack? " + dragon.usingGroundAttack,
@@ -133,6 +141,11 @@ public class IafHelperClass {
             return false;
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
+
+        if (dragon.flightManager.getFlightTarget() == null) {
+            return false;
+        }
+
         RegistryMessages.sendToAll(new MessageClientDraw(
                 -dragon.getEntityId(), dragon.flightManager.getFlightTarget(),
                 dragon.getPositionVec()
