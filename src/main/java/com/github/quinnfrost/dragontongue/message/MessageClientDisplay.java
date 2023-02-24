@@ -44,8 +44,10 @@ public class MessageClientDisplay {
         this.displayTime = buffer.readInt();
 
         this.size = buffer.readInt();
-        for (int i = 0; i < this.size; i++) {
-            this.message.add(buffer.readString());
+        if (this.size > 0) {
+            for (int i = 0; i < this.size; i++) {
+                this.message.add(buffer.readString());
+            }
         }
     }
     public void encoder(PacketBuffer buffer) {

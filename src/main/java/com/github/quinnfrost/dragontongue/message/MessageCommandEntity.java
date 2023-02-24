@@ -16,6 +16,7 @@ import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -233,13 +234,21 @@ public class MessageCommandEntity {
                 if (target instanceof MobEntity) {
                     if (DragonTongue.debugTarget == null || DragonTongue.debugTarget.getUniqueID() != target.getUniqueID()) {
                         DragonTongue.debugTarget = (MobEntity) target;
+                        DragonTongue.debugger = (PlayerEntity) commander;
+                        if (DragonTongue.isIafPresent) {
+                            IafHelperClass.startIafPathDebug((PlayerEntity) commander, target);
+                        }
                     } else {
-                        DragonTongue.debugTarget = null;
-                        RegistryMessages.sendToAll(new MessageClientDisplay(
+                        RegistryMessages.sendToClient(new MessageClientDisplay(
                                 EnumClientDisplay.ENTITY_DEBUG,
                                 1,
                                 Collections.singletonList("")
-                        ));
+                        ), (ServerPlayerEntity) DragonTongue.debugger);
+                        DragonTongue.debugTarget = null;
+                        DragonTongue.debugger = null;
+                        if (DragonTongue.isIafPresent) {
+                            IafHelperClass.stopIafPathDebug((PlayerEntity) commander);
+                        }
                     }
                 }
                 DragonTongue.LOGGER.debug("Debug triggered, set a breakpoint at MessageCommandEntity#232");

@@ -1,6 +1,7 @@
 package com.github.quinnfrost.dragontongue.client;
 
 import com.github.quinnfrost.dragontongue.DragonTongue;
+import com.github.quinnfrost.dragontongue.client.render.RenderNode;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
@@ -38,6 +39,7 @@ public class ClientGlow {
                     return time - 1;
                 } else if (world.getEntityByID(entityID) != null) {
                     world.getEntityByID(entityID).setGlowing(false);
+                    RenderNode.drawBoundingBox(2, world.getEntityByID(entityID).getRenderBoundingBox(), null);
                 }
                 return 0;
             });

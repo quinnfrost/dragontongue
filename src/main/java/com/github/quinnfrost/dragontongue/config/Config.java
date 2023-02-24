@@ -50,8 +50,6 @@ public class Config {
 
     private static void setupItemConfig(){
 
-
-
     }
 
     public static void loadConfig(ForgeConfigSpec spec, Path path){

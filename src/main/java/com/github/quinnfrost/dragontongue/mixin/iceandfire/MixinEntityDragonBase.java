@@ -104,9 +104,8 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 
     @Shadow(remap = false)
     public IafDragonFlightManager flightManager;
-
     @Shadow
-    public abstract boolean shouldTarget(Entity entity);
+    protected abstract boolean shouldTarget(Entity entity);
 
     @Shadow public int navigatorType;
 

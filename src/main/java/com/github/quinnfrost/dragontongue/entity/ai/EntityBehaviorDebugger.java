@@ -4,17 +4,29 @@ import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
+import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
+import com.github.quinnfrost.dragontongue.iceandfire.event.IafServerEvent;
+import com.github.quinnfrost.dragontongue.message.MessageClientDisplay;
+import com.github.quinnfrost.dragontongue.message.MessageClientDraw;
+import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.server.ServerWorld;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -57,5 +69,51 @@ public class EntityBehaviorDebugger {
         }
 
         return debugMsg;
+    }
+
+    public static void sendDebugMessage() {
+        // Ask all client to display entity debug string
+        if (DragonTongue.debugTarget != null) {
+            MobEntity mobEntity = DragonTongue.debugTarget;
+            RegistryMessages.sendToClient(new MessageClientDisplay(
+                    EnumClientDisplay.ENTITY_DEBUG,
+                    mobEntity.getEntityId(),
+                    1,
+                    EntityBehaviorDebugger.getTargetInfoString(mobEntity)
+            ), (ServerPlayerEntity) DragonTongue.debugger);
+        }
+
+    }
+
+    public static void sendDestinationMessage() {
+        // Ask all clients to draw entity destination
+        if (DragonTongue.debugTarget != null) {
+            PlayerEntity playerEntity = DragonTongue.debugger;
+            ICapabilityInfoHolder cap = playerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(playerEntity));
+
+            for (UUID entityUUID :
+                    cap.getCommandEntities()) {
+                MobEntity mobEntity = (MobEntity) ((ServerWorld) playerEntity.world).getEntityByUuid(entityUUID);
+                if (!DragonTongue.isIafPresent) {
+                    if (mobEntity.getNavigator().getTargetPos() != null) {
+                        RegistryMessages.sendToClient(new MessageClientDraw(
+                                mobEntity.getEntityId(), Vector3d.copyCentered(mobEntity.getNavigator().getTargetPos()),
+                                mobEntity.getPositionVec()
+                        ), (ServerPlayerEntity) DragonTongue.debugger);
+                    }
+                } else {
+                    if (IafHelperClass.isDragon(mobEntity)) {
+                        IafHelperClass.drawDragonFlightDestination(mobEntity);
+                    }
+                    BlockPos pos = IafHelperClass.getReachTarget(mobEntity);
+                    if (pos != null) {
+                        RegistryMessages.sendToClient(new MessageClientDraw(
+                                mobEntity.getEntityId(), Vector3d.copyCentered(pos),
+                                mobEntity.getPositionVec()
+                        ), (ServerPlayerEntity) DragonTongue.debugger);
+                    }
+                }
+            }
+        }
     }
 }

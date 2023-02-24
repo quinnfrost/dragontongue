@@ -19,6 +19,10 @@ public class OverlayInfoPanel extends AbstractGui {
     public static List<String> bufferInfoRight = new ArrayList<>(3);
 
     public static void renderPanel(MatrixStack ms) {
+        if (bufferInfoLeft == null) {
+            return;
+        }
+
         final int maxLineLength = 50;
 
         Minecraft minecraft = Minecraft.getInstance();
@@ -31,6 +35,9 @@ public class OverlayInfoPanel extends AbstractGui {
     }
 
     public static void renderString(MatrixStack ms, List<String> content, Color color, int xOffset, int yOffset, int maxLineLength, boolean rightAlign) {
+        if (bufferInfoLeft == null) {
+            return;
+        }
         FontRenderer fontRenderer = Minecraft.getInstance().fontRenderer;
         int lineHeight = 10;
         int sublineHeight = 8;
@@ -71,6 +78,9 @@ public class OverlayInfoPanel extends AbstractGui {
     }
 
     public static void renderDifference(MatrixStack ms) {
+        if (bufferInfoLeft == null) {
+            return;
+        }
         final int xOffsetLeft = 5;
         final int yOffsetLeft = 5;
         final int xOffsetRight = Minecraft.getInstance().getMainWindow().getScaledWidth();

@@ -82,8 +82,16 @@ public class DragonTongue
         }
 
         // Todo:
-        //  replace dragon AI
-        //  dragon flight behavior modification
+        //  Migrate the Animal Tamer
+        //  Better navigator:
+        //      A navigator, takeover the tryMoveToXYZ and combine the ground navigate and flight navigate
+        //      Refactor command system using interfaces
+        //      A clearer land and takeoff logic
+        //  Fix:
+        //      Distance config should only take effect on server
+        //      Ice dragons ashore from water
+        //      Navigation with no path cause dragon to stay forever
+        //
 
         // Todo: more settings!
         // Todo: settings hot reload

@@ -254,10 +254,14 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         if (dragon.lookingForRoostAIFlag
 //                && dragon.getDistanceSquared(Vector3d.copyCentered(dragon.getHomePosition())) < dragon.getWidth() * 12
         ) {
-            if (navigator.noPath() && dragon.world.getGameTime() - ((IMixinAdvancedPathNavigate) navigator).getPathStartTime() < 10 && dragon.getPositionVec().distanceTo(Vector3d.copyCenteredHorizontally(dragon.getHomePosition())) < 30) {
-                if (!dragon.isInWater() && dragon.isOnGround() && !dragon.isFlying() && !dragon.isHovering() && dragon.getAttackTarget() == null) {
-                    dragon.lookingForRoostAIFlag = false;
-                    dragon.setQueuedToSit(true);
+            if (navigator.noPath() && dragon.world.getGameTime() - ((IMixinAdvancedPathNavigate) navigator).getPathStartTime() < 10) {
+                if (dragon.getPositionVec().distanceTo(Vector3d.copyCenteredHorizontally(dragon.getHomePosition())) < 20) {
+                    if (!dragon.isInWater() && dragon.isOnGround() && !dragon.isFlying() && !dragon.isHovering() && dragon.getAttackTarget() == null) {
+                        dragon.lookingForRoostAIFlag = false;
+                        dragon.setQueuedToSit(true);
+                    }
+                } else if (!IafDragonBehaviorHelper.isDragonInAir(dragon)) {
+                    IafDragonBehaviorHelper.setDragonTakeOff(dragon);
                 }
             }
         }

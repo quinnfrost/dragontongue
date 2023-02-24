@@ -28,8 +28,6 @@ public class OverlayCrossHair extends AbstractGui {
     public static ResourceLocation scopeTexture = new ResourceLocation("dragontongue", "textures/misc/scope.png");
     public static boolean renderScope = false;
     public static float scopeSuggestion = 0;
-    public static int crIconTime = 0;
-    public static IconType crIconType = IconType.HIT;
     public static delayedTimer timer = new delayedTimer();
 
     private static Map<Vector2f, Pair<Integer, String>> bufferStringMap = new HashMap<Vector2f, Pair<Integer, String>>() {
@@ -55,7 +53,7 @@ public class OverlayCrossHair extends AbstractGui {
 
         public void run() {
             while (
-                    crIconTime > 0
+                    !bufferIconMap.isEmpty()
                             || !bufferStringMap.isEmpty()
             ) {
                 try {
@@ -63,7 +61,6 @@ public class OverlayCrossHair extends AbstractGui {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                --crIconTime;
                 synchronized (lock) {
                     bufferStringMap.replaceAll((vector3i, integerStringPair) -> {
                         if (integerStringPair.getFirst() >= 0) {
@@ -71,7 +68,15 @@ public class OverlayCrossHair extends AbstractGui {
                         }
                         return integerStringPair;
                     });
-                    bufferStringMap.entrySet().removeIf(vector3iPairEntry -> vector3iPairEntry.getValue().getFirst() < 0);
+                    bufferStringMap.entrySet().removeIf(vector3iPairEntry -> vector3iPairEntry.getValue().getFirst() <= 0);
+
+                    bufferIconMap.replaceAll((vector2f, integerIconTypePair) -> {
+                        if (integerIconTypePair.getFirst() >= 0) {
+                            return Pair.of(integerIconTypePair.getFirst() - 1, integerIconTypePair.getSecond());
+                        }
+                        return integerIconTypePair;
+                    });
+                    bufferIconMap.entrySet().removeIf(vector2fPairEntry -> vector2fPairEntry.getValue().getFirst() <= 0);
                 }
             }
         }
@@ -87,7 +92,7 @@ public class OverlayCrossHair extends AbstractGui {
      * @param force      Whether to refresh the display time even if content is the same
      */
     public static void setCrossHairDisplay(@Nullable String string, int stringTime, int iconTime, @Nullable IconType type, boolean force) {
-        setCrossHairIcon(type, iconTime);
+        setCrossHairIcon(Vector2f.of(0, 0), iconTime, type);
         setCrossHairString(Vector2f.CR_DAMAGE, string, stringTime, force);
     }
 
@@ -117,10 +122,11 @@ public class OverlayCrossHair extends AbstractGui {
 
     }
 
-    public static void setCrossHairIcon(@Nullable IconType type, int iconTime) {
+    public static void setCrossHairIcon(Vector2f position, int iconTime, @Nullable IconType type) {
         if (iconTime != 0 || type == null) {
-            crIconTime = iconTime;
-            crIconType = type;
+//            crIconTime = iconTime;
+//            crIconType = type;
+            bufferIconMap.put(position, Pair.of(iconTime, type));
         }
 
         if (!timer.isAlive()) {
@@ -184,11 +190,11 @@ public class OverlayCrossHair extends AbstractGui {
 
         GL11.glLineWidth(2.0F);
         vertexBuffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
-        vertexBuffer.pos(0.5 + scaledWidth / 2f - suggestionWidth / 2, 0.5 + scaledHeight / 2f + suggestPos, 0).color(0,0,0,255).endVertex();
-        vertexBuffer.pos(0.5 + scaledWidth / 2f + suggestionWidth / 2, 0.5 + scaledHeight / 2f + suggestPos, 0).color(0,0,0,255).endVertex();
+        vertexBuffer.pos(0.5 + scaledWidth / 2f - suggestionWidth / 2, 0.5 + scaledHeight / 2f + suggestPos, 0).color(0, 0, 0, 255).endVertex();
+        vertexBuffer.pos(0.5 + scaledWidth / 2f + suggestionWidth / 2, 0.5 + scaledHeight / 2f + suggestPos, 0).color(0, 0, 0, 255).endVertex();
 
-        vertexBuffer.pos(scaledWidth / 2f - suggestionWidth / 2, scaledHeight / 2f + suggestPos, 0).color(255,255,255,255).endVertex();
-        vertexBuffer.pos(scaledWidth / 2f + suggestionWidth / 2, scaledHeight / 2f + suggestPos, 0).color(255,255,255,255).endVertex();
+        vertexBuffer.pos(scaledWidth / 2f - suggestionWidth / 2, scaledHeight / 2f + suggestPos, 0).color(255, 255, 255, 255).endVertex();
+        vertexBuffer.pos(scaledWidth / 2f + suggestionWidth / 2, scaledHeight / 2f + suggestPos, 0).color(255, 255, 255, 255).endVertex();
         tessellator.draw();
 
         GL11.glLineWidth(1.0F);
@@ -198,34 +204,42 @@ public class OverlayCrossHair extends AbstractGui {
     }
 
     public static void renderIconCrossHair(MatrixStack ms) {
-        if (crIconTime > 0) {
-            Minecraft minecraft = Minecraft.getInstance();
-            int markTextureLength = 16;
-            int scaledWidth = minecraft.getMainWindow().getScaledWidth();
-            int scaledHeight = minecraft.getMainWindow().getScaledHeight();
-            int xOffset = 0;
-            int yOffset = 0;
+        synchronized (lock) {
+            if (!bufferIconMap.isEmpty()) {
+                bufferIconMap.forEach((vector2f, integerIconTypePair) -> {
+                    Minecraft minecraft = Minecraft.getInstance();
+                    int markTextureLength = 16;
+                    int scaledWidth = minecraft.getMainWindow().getScaledWidth();
+                    int scaledHeight = minecraft.getMainWindow().getScaledHeight();
+                    int xOffset = 0;
+                    int yOffset = 0;
 
-            int xPosition = scaledWidth / 2 - markTextureLength / 2 + xOffset;
-            int yPosition = scaledHeight / 2 - markTextureLength / 2 + yOffset;
-            minecraft.getTextureManager().bindTexture(markTexture);
-            switch (crIconType) {
+                    int xPosition = (int) (scaledWidth / 2 - markTextureLength / 2 + vector2f.x);
+                    int yPosition = (int) (scaledHeight / 2 - markTextureLength / 2 + vector2f.y);
+                    minecraft.getTextureManager().bindTexture(markTexture);
+                    switch (integerIconTypePair.getSecond()) {
 
-                case HIT:
-                    GuiUtils.drawTexturedModalRect(ms, xPosition, yPosition, 0, 0, markTextureLength, markTextureLength, 1);
-                    break;
-                case CRITICAL:
-                    GuiUtils.drawTexturedModalRect(ms, xPosition, yPosition, markTextureLength, 0, markTextureLength, markTextureLength, 1);
-                    break;
-                case WARN:
-                    GuiUtils.drawTexturedModalRect(ms, xPosition, yPosition, markTextureLength * 2, 0, markTextureLength, markTextureLength, 1);
-                    break;
-                case TARGET:
-                    GuiUtils.drawTexturedModalRect(ms, xPosition, yPosition, markTextureLength * 3, 0, markTextureLength, markTextureLength, 1);
-                    break;
+                        case HIT:
+                            GuiUtils.drawTexturedModalRect(ms, xPosition, yPosition, 0, 0, markTextureLength, markTextureLength, 1);
+                            break;
+                        case CRITICAL:
+                            GuiUtils.drawTexturedModalRect(ms, xPosition, yPosition, markTextureLength, 0, markTextureLength, markTextureLength, 1);
+                            break;
+                        case WARN:
+                            GuiUtils.drawTexturedModalRect(ms, xPosition, yPosition, markTextureLength * 2, 0, markTextureLength, markTextureLength, 1);
+                            break;
+                        case TARGET:
+                            GuiUtils.drawTexturedModalRect(ms, xPosition, yPosition, markTextureLength * 3, 0, markTextureLength, markTextureLength, 1);
+                            break;
+                    }
+                });
             }
-
         }
+
+//        if (crIconTime > 0) {
+
+//
+//        }
     }
 
 }
