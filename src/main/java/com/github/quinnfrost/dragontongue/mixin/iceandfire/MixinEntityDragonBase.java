@@ -27,6 +27,7 @@ import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.pathfinding.PathNavigator;
+import net.minecraft.pathfinding.PathNodeType;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.util.SoundEvent;
@@ -142,6 +143,9 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     public void $EntityDragonBase(EntityType t, World world, DragonType type, double minimumDamage, double maximumDamage, double minimumHealth, double maximumHealth, double minimumSpeed, double maximumSpeed, CallbackInfo ci) {
         this.flightManager = new IafAdvancedDragonFlightManager((EntityDragonBase)(Object) this);
         this.logic = new IafAdvancedDragonLogic((EntityDragonBase)(Object) this);
+
+        this.setPathPriority(PathNodeType.FENCE, 0.0F);
+
     }
 
     @Inject(

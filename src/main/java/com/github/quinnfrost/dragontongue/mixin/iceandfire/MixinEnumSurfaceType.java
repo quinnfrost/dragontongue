@@ -8,7 +8,6 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorldReader;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -31,15 +30,13 @@ public abstract class MixinEnumSurfaceType {
             at = @At(value = "HEAD"),
             cancellable = true
     )
-    private static void $getSurfaceType(IBlockReader world, BlockState blockState, BlockPos pos, CallbackInfoReturnable<SurfaceType> cir) {
-        cir.setReturnValue(roadblock$getSurfaceType(world, blockState, pos));
+    private static void roadblock$getSurfaceType(IBlockReader world, BlockState blockState, BlockPos pos, CallbackInfoReturnable<SurfaceType> cir) {
+        cir.setReturnValue(head$getSurfaceType(world, blockState, pos));
         cir.cancel();
     }
-    private static SurfaceType roadblock$getSurfaceType(final IBlockReader world, final BlockState blockState, final BlockPos pos) {
+    private static SurfaceType head$getSurfaceType(final IBlockReader world, final BlockState blockState, final BlockPos pos) {
         final Block block = blockState.getBlock();
-        if (block instanceof FenceBlock
-                || block instanceof FenceGateBlock
-                || block instanceof WallBlock
+        if (block instanceof WallBlock
                 || block instanceof FireBlock
                 || block instanceof CampfireBlock
                 || block instanceof BambooBlock
@@ -47,6 +44,11 @@ public abstract class MixinEnumSurfaceType {
                 || block instanceof MagmaBlock)
         {
             return SurfaceType.NOT_PASSABLE;
+        }
+        if (block instanceof FenceBlock
+                || block instanceof FenceGateBlock)
+        {
+            return SurfaceType.WALKABLE;
         }
 
         final VoxelShape shape = blockState.getShape(world, pos);
@@ -82,4 +84,5 @@ public abstract class MixinEnumSurfaceType {
         return SurfaceType.DROPABLE;
 
     }
+
 }

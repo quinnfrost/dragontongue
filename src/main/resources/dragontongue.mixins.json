@@ -6,6 +6,7 @@
   "mixins": [
     "MixinIngameGui",
     "MixinLivingEntity",
+    "iceandfire.MixinAbstractPathJob",
     "iceandfire.MixinAdvancedPathNavigate",
     "iceandfire.MixinDragonAILookIdle",
     "iceandfire.MixinDragonAIWatchClosest",

@@ -53,10 +53,21 @@ import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
+import net.minecraftforge.fml.event.server.ServerLifecycleEvent;
 
 import java.util.*;
 
 public class ServerEvents {
+    @SubscribeEvent
+    public static void onServerStarted(FMLServerStartedEvent event) {
+        // Resets the debug option, the getChunk() might cause infinite wait
+        if (DragonTongue.debugTarget != null) {
+            DragonTongue.debugTarget = null;
+            DragonTongue.debugger = null;
+        }
+    }
+
     /**
      * Add function
      * Make trident hit a signal for tamed to attack
