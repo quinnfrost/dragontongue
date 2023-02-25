@@ -64,7 +64,7 @@ public enum SurfaceType {
 
         if ((blockState.getMaterial().isSolid() && (shape.getEnd(Direction.Axis.X) - shape.getStart(Direction.Axis.X)) > 0.75
                 && (shape.getEnd(Direction.Axis.Z) - shape.getStart(Direction.Axis.Z)) > 0.75)
-                || (blockState.getBlock() == Blocks.SNOW && blockState.get(SnowBlock.LAYERS) > 1)
+                || (blockState.getBlock() == Blocks.SNOW && blockState.get(SnowBlock.LAYERS) >= 1)
                 || block instanceof CarpetBlock) {
             return SurfaceType.WALKABLE;
         }
