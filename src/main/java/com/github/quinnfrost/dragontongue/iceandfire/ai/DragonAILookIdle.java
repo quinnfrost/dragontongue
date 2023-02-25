@@ -27,6 +27,9 @@ public class DragonAILookIdle extends Goal {
 
     @Override
     public boolean shouldContinueExecuting() {
+        if (!this.dragon.canMove()) {
+            return false;
+        }
         return this.idleTime >= 0;
     }
 

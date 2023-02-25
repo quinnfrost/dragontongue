@@ -27,6 +27,7 @@ import net.minecraft.entity.ai.goal.SitGoal;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.ItemStack;
 import net.minecraft.pathfinding.PathNavigator;
 import net.minecraft.pathfinding.PathNodeType;
 import net.minecraft.potion.EffectInstance;
@@ -150,6 +151,11 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 
     @Shadow protected int flyHovering;
     @Shadow protected int fireTicks;
+    @Shadow public float sleepProgress;
+    @Shadow public static Animation ANIMATION_SHAKEPREY;
+
+    @Shadow public abstract int getArmorOrdinal(ItemStack stack);
+
     public ICapabilityInfoHolder cap = this.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(this));
 
     @Inject(
@@ -279,6 +285,64 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 
     public void roadblock$openGUI(PlayerEntity playerEntity) {
         ContainerDragon.openGui(playerEntity, this);
+    }
+
+    @Inject(
+            remap = false,
+            method = "calculateArmorModifier",
+            at = @At(value = "HEAD"),
+            cancellable = true
+    )
+    public void roadblock$calculateArmorModifier(CallbackInfoReturnable<Double> cir) {
+        cir.setReturnValue(head$calculateArmorModifier());
+        cir.cancel();
+    }
+    private double head$calculateArmorModifier() {
+        double val = 1D;
+        final EquipmentSlotType[] slots = {EquipmentSlotType.HEAD, EquipmentSlotType.CHEST, EquipmentSlotType.LEGS, EquipmentSlotType.FEET};
+        for (EquipmentSlotType slot : slots) {
+            switch (getArmorOrdinal(getItemStackFromSlot(slot))) {
+                case 1:
+                    val += 2D;
+                    break;
+                case 2:
+                case 4:
+                    val += 3D;
+                    break;
+                case 3:
+                    val += 5D;
+                    break;
+                case 5:
+                case 6:
+                case 8:
+                    val += 10D;
+                    break;
+                case 7:
+                    val += 1.5D;
+                    break;
+            }
+        }
+        return val;
+    }
+
+    @Inject(
+            remap = false,
+            method = "canMove",
+            at = @At(value = "HEAD"),
+            cancellable = true
+    )
+    public void roadblock$canMove(CallbackInfoReturnable<Boolean> cir) {
+        cir.setReturnValue(head$canMove());
+        cir.cancel();
+    }
+    public boolean head$canMove() {
+        return !this.isQueuedToSit()
+                && !this.isSleeping()
+                && this.getControllingPassenger() == null
+                && !this.isPassenger()
+                && !this.isModelDead()
+                && sleepProgress == 0
+                && this.getAnimation() != ANIMATION_SHAKEPREY;
     }
 
     @Inject(

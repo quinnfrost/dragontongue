@@ -628,6 +628,9 @@ public abstract class AbstractPathJob implements Callable<Path> {
     }
 
     private void walkCurrentNode(final Node currentNode) {
+        final LivingEntity livingEntity = entity.get();
+        final float stepHeight = livingEntity == null ? 0 : livingEntity.stepHeight;
+
         BlockPos dPos = BLOCKPOS_IDENTITY;
         if (currentNode.parent != null) {
             dPos = currentNode.pos.subtract(currentNode.parent.pos);
@@ -642,7 +645,7 @@ public abstract class AbstractPathJob implements Callable<Path> {
         if (onLadderGoingDown(currentNode, dPos)) {
             walk(currentNode, BLOCKPOS_DOWN);
         }
-        if (pathingOptions.canClimb()) {
+        if (pathingOptions.canClimb() || stepHeight > dPos.getY()) {
             //If the entity can climb and it needs to climb a block higher than 1 block
             //TODO: Add code for climbing downwards
             if (getHighest(currentNode).getFirst() > 1) {

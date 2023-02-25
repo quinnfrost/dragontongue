@@ -10,8 +10,6 @@
     "iceandfire.MixinDragonBow",
     "iceandfire.MixinFoodUtils",
     "iceandfire.behavior.MixinAbstractPathJob",
-    "iceandfire.behavior.MixinDragonAILookIdle",
-    "iceandfire.behavior.MixinDragonAIWatchClosest",
     "iceandfire.behavior.MixinEnumSurfaceType",
     "iceandfire.behavior.MixinHippogryphAITarget",
     "iceandfire.entity.MixinEntityDragonBase",

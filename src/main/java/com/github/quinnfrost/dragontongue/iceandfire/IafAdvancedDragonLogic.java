@@ -273,10 +273,10 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             dragon.setQueuedToSit(false);
         }
         // Bug#4718: Stage 1 dragon can still trigger wander
-        if (dragon.getDragonStage() == 1 && dragon.isPassenger() && dragon.getCommand() == 0) {
-            dragon.setCommand(1);
-            dragon.getNavigator().clearPath();
-        }
+//        if (dragon.getDragonStage() == 1 && dragon.isPassenger() && dragon.getCommand() == 0) {
+//            dragon.setCommand(1);
+//            dragon.getNavigator().clearPath();
+//        }
 
         // Release control if the owner climbs up
         if (dragon.getControllingPassenger() != null) {

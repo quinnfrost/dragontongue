@@ -59,12 +59,18 @@ public class DragonAIWander extends Goal {
 
     @Override
     public boolean shouldContinueExecuting() {
-        return !this.dragon.getNavigator().noPath();
+        return !this.dragon.getNavigator().noPath() && this.dragon.canMove();
     }
 
     @Override
     public void startExecuting() {
         this.dragon.getNavigator().tryMoveToXYZ(this.xPosition, this.yPosition, this.zPosition, this.speed);
+    }
+
+    @Override
+    public void resetTask() {
+        super.resetTask();
+        this.dragon.getNavigator().clearPath();
     }
 
     public void makeUpdate() {
