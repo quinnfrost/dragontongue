@@ -4,6 +4,7 @@ import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.client.render.RenderNode;
 import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
@@ -48,7 +49,7 @@ public class EntityBehaviorDebugger {
                 capabilityInfoHolder.getDestination().get() + "(" + util.getDistance(capabilityInfoHolder.getDestination().get(), mobEntity.getPosition()) + ")" : "";
 
         List<String> debugMsg = Arrays.asList(
-                mobEntity.getEntityString() + "[" + mobEntity.getCustomName() + "]",
+                String.format("%s \"%s\" [%s]", mobEntity.getName().getString(),  mobEntity.getCustomName() == null ? "-" : mobEntity.getCustomName(), mobEntity.getEntityString()),
                 "Pos:" + mobEntity.getPosition(),
                 "Motion:" + mobEntity.getMotion(),
                 "Goals:",

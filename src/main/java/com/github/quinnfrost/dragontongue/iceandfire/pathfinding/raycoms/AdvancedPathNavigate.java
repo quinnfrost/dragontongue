@@ -45,7 +45,7 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
     public static final double MIN_SPEED_ALLOWED = 0.1;
 
     @Nullable
-    private PathResult<AbstractPathJob> pathResult;
+    public PathResult<AbstractPathJob> pathResult;
 
     /**
      * The world time when a path was added.

@@ -3,7 +3,7 @@ package com.github.quinnfrost.dragontongue.iceandfire;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.EntityHippogryph;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
-import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
@@ -29,19 +29,6 @@ public class IafDragonBehaviorHelper {
     public static boolean registerDragonAI(MobEntity mobEntity) {
         if (IafHelperClass.isDragon(mobEntity)) {
             EntityDragonBase dragon = (EntityDragonBase) mobEntity;
-
-            dragon.goalSelector.addGoal(0, new DragonAIAsYouWish(dragon));
-            dragon.goalSelector.addGoal(0, new DragonAICalmLook(dragon));
-
-            dragon.targetSelector.addGoal(3, new DragonAIGuard<>(dragon, LivingEntity.class, false, new Predicate<LivingEntity>() {
-                @Override
-                public boolean apply(@Nullable LivingEntity entity) {
-                    return (!(entity instanceof PlayerEntity) || !((PlayerEntity) entity).isCreative())
-                            && DragonUtils.canHostilesTarget(entity)
-                            && DragonUtils.isAlive(entity)
-                            && util.isHostile(entity);
-                }
-            }));
 
             return true;
         }
@@ -111,7 +98,6 @@ public class IafDragonBehaviorHelper {
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
         ICapabilityInfoHolder cap = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
-        AdvancedPathNavigate navigate = (AdvancedPathNavigate) dragon.getNavigator();
 
         if (cap.getObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE) != EnumCommandSettingType.MovementType.LAND
                 && cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.STAY && IafDragonBehaviorHelper.isOverAir(dragon)) {

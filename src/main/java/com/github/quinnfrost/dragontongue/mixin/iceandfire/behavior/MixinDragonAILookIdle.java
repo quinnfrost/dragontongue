@@ -1,4 +1,4 @@
-package com.github.quinnfrost.dragontongue.mixin.iceandfire;
+package com.github.quinnfrost.dragontongue.mixin.iceandfire.behavior;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.ai.DragonAILookIdle;

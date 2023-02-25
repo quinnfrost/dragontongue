@@ -63,6 +63,11 @@ public class ServerEvents {
     public static void onServerStarted(FMLServerStartedEvent event) {
         // Resets the debug option, the getChunk() might cause infinite wait
         if (DragonTongue.debugTarget != null) {
+            RegistryMessages.sendToClient(new MessageClientDisplay(
+                    EnumClientDisplay.ENTITY_DEBUG,
+                    1,
+                    Collections.singletonList("")
+            ), (ServerPlayerEntity) DragonTongue.debugger);
             DragonTongue.debugTarget = null;
             DragonTongue.debugger = null;
         }

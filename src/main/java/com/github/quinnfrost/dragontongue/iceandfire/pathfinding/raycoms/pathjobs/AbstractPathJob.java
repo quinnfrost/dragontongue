@@ -5,9 +5,10 @@ package com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjo
 
 import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.IceAndFire;
-import com.github.alexthe666.iceandfire.message.MessageSyncPath;
-import com.github.alexthe666.iceandfire.message.MessageSyncPathReached;
+import com.github.quinnfrost.dragontongue.iceandfire.message.MessageSyncPath;
+import com.github.quinnfrost.dragontongue.iceandfire.message.MessageSyncPathReached;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.*;
+import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
@@ -287,7 +288,7 @@ public abstract class AbstractPathJob implements Callable<Path> {
 
         for (final Map.Entry<PlayerEntity, UUID> entry : trackingMap.entrySet()) {
             if (entry.getValue().equals(mob.getUniqueID())) {
-                IceAndFire.sendMSGToPlayer(new MessageSyncPathReached(reached), (ServerPlayerEntity) entry.getKey());
+                RegistryMessages.sendToClient(new MessageSyncPathReached(reached), (ServerPlayerEntity) entry.getKey());
             }
         }
     }
@@ -441,7 +442,7 @@ public abstract class AbstractPathJob implements Callable<Path> {
             if (entry.getKey().removed) {
                 iter.remove();
             } else if (entry.getValue().equals(mob.getUniqueID())) {
-//                IceAndFire.sendMSGToPlayer(new MessageSyncPath(debugNodesVisited, debugNodesNotVisited, debugNodesPath), (ServerPlayerEntity) entry.getKey());
+                RegistryMessages.sendToClient(new MessageSyncPath(debugNodesVisited, debugNodesNotVisited, debugNodesPath), (ServerPlayerEntity) entry.getKey());
             }
         }
     }

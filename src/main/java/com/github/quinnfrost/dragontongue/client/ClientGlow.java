@@ -39,7 +39,6 @@ public class ClientGlow {
                     return time - 1;
                 } else if (world.getEntityByID(entityID) != null) {
                     world.getEntityByID(entityID).setGlowing(false);
-                    RenderNode.drawBoundingBox(2, world.getEntityByID(entityID).getRenderBoundingBox(), null);
                 }
                 return 0;
             });

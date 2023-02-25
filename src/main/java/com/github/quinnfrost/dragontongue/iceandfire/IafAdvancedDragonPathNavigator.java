@@ -2,13 +2,13 @@ package com.github.quinnfrost.dragontongue.iceandfire;
 
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
-import com.github.alexthe666.iceandfire.pathfinding.NodeProcessorFly;
-import com.github.alexthe666.iceandfire.pathfinding.NodeProcessorWalk;
-import com.github.alexthe666.iceandfire.pathfinding.raycoms.*;
-import com.github.alexthe666.iceandfire.pathfinding.raycoms.pathjobs.AbstractPathJob;
-import com.github.alexthe666.iceandfire.pathfinding.raycoms.pathjobs.PathJobMoveAwayFromLocation;
-import com.github.alexthe666.iceandfire.pathfinding.raycoms.pathjobs.PathJobMoveToLocation;
-import com.github.alexthe666.iceandfire.pathfinding.raycoms.pathjobs.PathJobRandomPos;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.NodeProcessorFly;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.NodeProcessorWalk;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.*;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjobs.AbstractPathJob;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjobs.PathJobMoveAwayFromLocation;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjobs.PathJobMoveToLocation;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjobs.PathJobRandomPos;
 import net.minecraft.block.LadderBlock;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MobEntity;
@@ -42,12 +42,12 @@ public class IafAdvancedDragonPathNavigator extends AdvancedPathNavigate {
     public static final double MIN_SPEED_ALLOWED = 0.1;
 
     @Nullable
-    private PathResult<AbstractPathJob> pathResult;
+    public PathResult<AbstractPathJob> pathResult;
 
     /**
      * The world time when a path was added.
      */
-    private long pathStartTime = 0;
+    public long pathStartTime = 0;
 
     /**
      * Spawn pos of minecart.
@@ -93,18 +93,18 @@ public class IafAdvancedDragonPathNavigator extends AdvancedPathNavigate {
      * @param world  the world it is in.
      */
     public IafAdvancedDragonPathNavigator(final MobEntity entity, final World world) {
-        this(entity, world, AdvancedPathNavigate.MovementType.WALKING);
+        this(entity, world, MovementType.WALKING);
     }
 
-    public IafAdvancedDragonPathNavigator(final MobEntity entity, final World world, AdvancedPathNavigate.MovementType type) {
+    public IafAdvancedDragonPathNavigator(final MobEntity entity, final World world, MovementType type) {
         this(entity, world, type, 1, 1);
     }
 
-    public IafAdvancedDragonPathNavigator(final MobEntity entity, final World world, AdvancedPathNavigate.MovementType type, float width, float height) {
+    public IafAdvancedDragonPathNavigator(final MobEntity entity, final World world, MovementType type, float width, float height) {
         this(entity, world, type, width, height, PathingStuckHandler.createStuckHandler().withTeleportSteps(6).withTeleportOnFullStuck());
     }
 
-    public IafAdvancedDragonPathNavigator(final MobEntity entity, final World world, AdvancedPathNavigate.MovementType type, float width, float height, PathingStuckHandler stuckHandler) {
+    public IafAdvancedDragonPathNavigator(final MobEntity entity, final World world, MovementType type, float width, float height, PathingStuckHandler stuckHandler) {
         super(entity, world);
         switch (type) {
             case FLYING:

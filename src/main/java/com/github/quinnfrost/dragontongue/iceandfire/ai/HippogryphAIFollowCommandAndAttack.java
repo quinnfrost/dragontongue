@@ -1,7 +1,7 @@
 package com.github.quinnfrost.dragontongue.iceandfire.ai;
 
 import com.github.alexthe666.iceandfire.entity.EntityHippogryph;
-import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;

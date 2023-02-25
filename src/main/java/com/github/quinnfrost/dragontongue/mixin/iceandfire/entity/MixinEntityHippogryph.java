@@ -1,4 +1,4 @@
-package com.github.quinnfrost.dragontongue.mixin.iceandfire;
+package com.github.quinnfrost.dragontongue.mixin.iceandfire.entity;
 
 import com.github.alexthe666.iceandfire.entity.EntityHippogryph;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;

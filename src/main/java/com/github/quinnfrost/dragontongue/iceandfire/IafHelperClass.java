@@ -1,7 +1,5 @@
 package com.github.quinnfrost.dragontongue.iceandfire;
 
-import com.github.alexthe666.iceandfire.IceAndFire;
-import com.github.alexthe666.iceandfire.client.render.pathfinding.RenderPath;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.EntityDragonPart;
 import com.github.alexthe666.iceandfire.entity.EntityFireDragon;
@@ -11,17 +9,16 @@ import com.github.alexthe666.iceandfire.entity.util.IDeadMob;
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import com.github.alexthe666.iceandfire.item.ItemDragonsteelArmor;
 import com.github.alexthe666.iceandfire.item.ItemScaleArmor;
-import com.github.alexthe666.iceandfire.message.MessageSyncPath;
-import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
-import com.github.alexthe666.iceandfire.pathfinding.raycoms.Pathfinding;
-import com.github.alexthe666.iceandfire.pathfinding.raycoms.pathjobs.AbstractPathJob;
+import com.github.quinnfrost.dragontongue.client.render.RenderPath;
+import com.github.quinnfrost.dragontongue.iceandfire.message.MessageSyncPath;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjobs.AbstractPathJob;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.message.MessageClientDraw;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
-import com.github.quinnfrost.dragontongue.access.IMixinAdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -43,11 +40,11 @@ public class IafHelperClass {
 
     public static void stopIafPathDebug(PlayerEntity playerEntity) {
         AbstractPathJob.trackingMap.remove(playerEntity);
-        IceAndFire.sendMSGToPlayer(new MessageSyncPath(new HashSet<>(), new HashSet<>(), new HashSet<>()), (ServerPlayerEntity) playerEntity);
+        RegistryMessages.sendToClient(new MessageSyncPath(new HashSet<>(), new HashSet<>(), new HashSet<>()), (ServerPlayerEntity) playerEntity);
     }
 
     public static void renderWorldLastEvent(RenderWorldLastEvent event) {
-        if (!Pathfinding.isDebug() && DragonTongue.debugTarget != null) {
+        if (DragonTongue.debugTarget != null) {
             RenderPath.debugDraw(event.getPartialTicks(), event.getMatrixStack());
         }
     }
@@ -110,7 +107,7 @@ public class IafHelperClass {
             return new ArrayList<>();
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-        AdvancedPathNavigate navigator = (AdvancedPathNavigate) dragon.getNavigator();
+        IafAdvancedDragonPathNavigator navigator = (IafAdvancedDragonPathNavigator) dragon.getNavigator();
 
 //        CompoundNBT compoundNBT = new CompoundNBT();
 //        DragonTongue.debugTarget.writeAdditional(compoundNBT);
@@ -125,16 +122,16 @@ public class IafHelperClass {
 //        float distZ = (float) (currentFlightTarget.z - dragon.getPosZ());
 
         String reachDestString = "";
-        if (((IMixinAdvancedPathNavigate) navigator).getPathResult() == null) {
+        if (navigator.pathResult == null) {
             reachDestString = "null";
-        } else if (((IMixinAdvancedPathNavigate) navigator).getPathResult().isPathReachingDestination()) {
+        } else if (navigator.pathResult.isPathReachingDestination()) {
             reachDestString = "true";
         } else {
             reachDestString = "false";
         }
         String timeSinceLastPath = "";
         if (navigator.noPath()) {
-            timeSinceLastPath = String.valueOf(dragon.world.getGameTime() - ((IMixinAdvancedPathNavigate) navigator).getPathStartTime());
+            timeSinceLastPath = String.valueOf(dragon.world.getGameTime() - navigator.pathStartTime);
         }
         String ownerAttackTime = "";
         String ownerTickExisted = "";

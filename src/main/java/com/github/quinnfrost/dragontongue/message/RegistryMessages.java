@@ -1,7 +1,10 @@
 package com.github.quinnfrost.dragontongue.message;
 
+import com.github.quinnfrost.dragontongue.iceandfire.message.MessageSyncPath;
+import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.References;
 import com.github.quinnfrost.dragontongue.iceandfire.message.MessageClientSetReferenceDragon;
+import com.github.quinnfrost.dragontongue.iceandfire.message.MessageSyncPathReached;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.network.NetworkDirection;
@@ -68,11 +71,24 @@ public class RegistryMessages {
                 .consumer(MessageClientDraw::handler)
                 .add();
 
-        CHANNEL.messageBuilder(MessageClientSetReferenceDragon.class, nextID())
-                .encoder(MessageClientSetReferenceDragon::encoder)
-                .decoder(MessageClientSetReferenceDragon::decoder)
-                .consumer(MessageClientSetReferenceDragon::handler)
-                .add();
+        if (DragonTongue.isIafPresent) {
+            CHANNEL.messageBuilder(MessageClientSetReferenceDragon.class, nextID())
+                    .encoder(MessageClientSetReferenceDragon::encoder)
+                    .decoder(MessageClientSetReferenceDragon::decoder)
+                    .consumer(MessageClientSetReferenceDragon::handler)
+                    .add();
+
+            CHANNEL.messageBuilder(MessageSyncPath.class, nextID())
+                    .encoder(MessageSyncPath::write)
+                    .decoder(MessageSyncPath::read)
+                    .consumer(MessageSyncPath.Handler::handle)
+                    .add();
+            CHANNEL.messageBuilder(MessageSyncPathReached.class, nextID())
+                    .encoder(MessageSyncPathReached::write)
+                    .decoder(MessageSyncPathReached::read)
+                    .consumer(MessageSyncPathReached.Handler::handle)
+                    .add();
+        }
     }
 
     /**
