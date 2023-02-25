@@ -5,6 +5,8 @@ package com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjo
 
 import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.IceAndFire;
+import com.github.alexthe666.iceandfire.pathfinding.raycoms.IPassabilityNavigator;
+import com.github.alexthe666.iceandfire.pathfinding.raycoms.pathjobs.ICustomSizeNavigator;
 import com.github.quinnfrost.dragontongue.iceandfire.message.MessageSyncPath;
 import com.github.quinnfrost.dragontongue.iceandfire.message.MessageSyncPathReached;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.*;
@@ -12,6 +14,7 @@ import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -1422,13 +1425,14 @@ public abstract class AbstractPathJob implements Callable<Path> {
 
     protected SurfaceType isWalkableSurface(final BlockState blockState, final BlockPos pos) {
         final Block block = blockState.getBlock();
-        if (block instanceof FenceBlock
-            || block instanceof FenceGateBlock
-            || block instanceof WallBlock
+        final LivingEntity livingEntity = entity.get();
+        final float stepHeight = livingEntity == null ? 1.0f : livingEntity.stepHeight;
+
+        if (block instanceof WallBlock
             || block instanceof FireBlock
             || block instanceof CampfireBlock
             || block instanceof BambooBlock
-            || (blockState.getShape(world, pos).getEnd(Direction.Axis.Y) > 1.0)) {
+            || (blockState.getCollisionShape(world, pos).getEnd(Direction.Axis.Y) > stepHeight)) {
             return SurfaceType.NOT_PASSABLE;
         }
 
@@ -1442,7 +1446,7 @@ public abstract class AbstractPathJob implements Callable<Path> {
         }
 
         if (blockState.getMaterial().isSolid()
-            || (blockState.getBlock() == Blocks.SNOW && blockState.get(SnowBlock.LAYERS) > 1)
+            || (blockState.getBlock() == Blocks.SNOW && blockState.get(SnowBlock.LAYERS) >= 1)
             || block instanceof CarpetBlock) {
             return SurfaceType.WALKABLE;
         }
