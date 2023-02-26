@@ -1,5 +1,6 @@
 package com.github.quinnfrost.dragontongue.client;
 
+import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
@@ -14,6 +15,7 @@ import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.entity.MobEntity;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceContext;
@@ -21,6 +23,7 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 
 import java.lang.reflect.Field;
 import java.util.UUID;
@@ -126,6 +129,13 @@ public class KeyBindRegistry {
                 RegistryMessages.sendToServer(new MessageCommandEntity(
                         EnumCommandType.DEBUG, clientPlayerEntity.getUniqueID(), (EntityRayTraceResult) debugRayTraceResult
                 ));
+                if (!FMLEnvironment.dist.isDedicatedServer()) {
+                    if (DragonTongue.debugTarget == null) {
+                        DragonTongue.debugTarget = (MobEntity) ((EntityRayTraceResult) debugRayTraceResult).getEntity();
+                    } else {
+                        DragonTongue.debugTarget = null;
+                    }
+                }
             }
         }
         if (KeyBindRegistry.debug.isPressed()) {
