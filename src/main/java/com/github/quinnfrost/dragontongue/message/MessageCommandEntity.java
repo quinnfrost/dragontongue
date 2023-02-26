@@ -232,7 +232,8 @@ public class MessageCommandEntity {
                 break;
             case DEBUG:
                 if (target instanceof MobEntity) {
-                    if (DragonTongue.debugTarget == null || DragonTongue.debugTarget.getUniqueID() != target.getUniqueID()) {
+                    // A messy workaround for debugTarget inconsistency on dedicated server and client
+                    if (DragonTongue.debugger == null || (DragonTongue.debugTarget != null && DragonTongue.debugTarget.getUniqueID() != target.getUniqueID())) {
                         DragonTongue.debugTarget = (MobEntity) target;
                         DragonTongue.debugger = (PlayerEntity) commander;
                         if (DragonTongue.isIafPresent) {

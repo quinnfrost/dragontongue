@@ -129,12 +129,10 @@ public class KeyBindRegistry {
                 RegistryMessages.sendToServer(new MessageCommandEntity(
                         EnumCommandType.DEBUG, clientPlayerEntity.getUniqueID(), (EntityRayTraceResult) debugRayTraceResult
                 ));
-                if (!FMLEnvironment.dist.isDedicatedServer()) {
-                    if (DragonTongue.debugTarget == null) {
-                        DragonTongue.debugTarget = (MobEntity) ((EntityRayTraceResult) debugRayTraceResult).getEntity();
-                    } else {
-                        DragonTongue.debugTarget = null;
-                    }
+                if (DragonTongue.debugTarget == null) {
+                    DragonTongue.debugTarget = (MobEntity) ((EntityRayTraceResult) debugRayTraceResult).getEntity();
+                } else {
+                    DragonTongue.debugTarget = null;
                 }
             }
         }

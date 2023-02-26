@@ -12,6 +12,7 @@ import com.github.alexthe666.iceandfire.item.ItemScaleArmor;
 import com.github.quinnfrost.dragontongue.client.render.RenderPath;
 import com.github.quinnfrost.dragontongue.iceandfire.message.MessageSyncPath;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Pathfinding;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjobs.AbstractPathJob;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
@@ -41,6 +42,9 @@ public class IafHelperClass {
     public static void stopIafPathDebug(PlayerEntity playerEntity) {
         AbstractPathJob.trackingMap.remove(playerEntity);
         RegistryMessages.sendToClient(new MessageSyncPath(new HashSet<>(), new HashSet<>(), new HashSet<>()), (ServerPlayerEntity) playerEntity);
+        Pathfinding.lastDebugNodesVisited = new HashSet<>();
+        Pathfinding.lastDebugNodesNotVisited = new HashSet<>();
+        Pathfinding.lastDebugNodesPath = new HashSet<>();
     }
 
     public static void renderWorldLastEvent(RenderWorldLastEvent event) {
