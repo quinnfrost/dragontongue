@@ -2,6 +2,7 @@ package com.github.quinnfrost.dragontongue.mixin.iceandfire.entity;
 
 import com.github.alexthe666.citadel.animation.Animation;
 import com.github.alexthe666.iceandfire.IafConfig;
+import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.api.event.GenericGriefEvent;
 import com.github.alexthe666.iceandfire.entity.*;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
@@ -20,6 +21,9 @@ import com.google.common.base.Predicate;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.*;
+import net.minecraft.entity.ai.attributes.AttributeModifier;
+import net.minecraft.entity.ai.attributes.AttributeModifierMap;
+import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.goal.HurtByTargetGoal;
 import net.minecraft.entity.ai.goal.OwnerHurtByTargetGoal;
 import net.minecraft.entity.ai.goal.OwnerHurtTargetGoal;
@@ -37,6 +41,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -46,6 +51,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.UUID;
 
 @Mixin(EntityDragonBase.class)
 public abstract class MixinEntityDragonBase extends TameableEntity {
@@ -156,6 +162,23 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 
     @Shadow public abstract int getArmorOrdinal(ItemStack stack);
 
+    @Shadow public abstract boolean useFlyingPathFinder();
+
+    @Shadow public String prevArmorResLoc;
+    @Shadow public String armorResLoc;
+    @Shadow public DragonType dragonType;
+    @Shadow public double maximumHealth;
+    @Shadow public double minimumHealth;
+    @Shadow public double minimumDamage;
+    @Shadow public double maximumDamage;
+    @Shadow public double maximumSpeed;
+    @Shadow public double maximumArmor;
+    @Shadow public double minimumSpeed;
+    @Shadow public double minimumArmor;
+    @Shadow @Final private static UUID ARMOR_MODIFIER_UUID;
+
+    @Shadow protected abstract double calculateArmorModifier();
+
     public ICapabilityInfoHolder cap = this.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(this));
 
     @Inject(
@@ -163,11 +186,56 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
             at = @At(value = "RETURN")
     )
     public void $EntityDragonBase(EntityType t, World world, DragonType type, double minimumDamage, double maximumDamage, double minimumHealth, double maximumHealth, double minimumSpeed, double maximumSpeed, CallbackInfo ci) {
+        this.minimumSpeed = 0.18d;
+        this.maximumSpeed = 0.5d;
+        this.minimumArmor = 1D;
+        this.maximumArmor = 20D;
+
         this.flightManager = new IafAdvancedDragonFlightManager((EntityDragonBase) (Object) this);
         this.logic = new IafAdvancedDragonLogic((EntityDragonBase) (Object) this);
 
         this.setPathPriority(PathNodeType.FENCE, 0.0F);
+    }
 
+    @Override
+    public boolean isInWater() {
+        return super.isInWater() && this.eyesInWater;
+//        return super.isInWater();
+    }
+
+    @Override
+    public void travel(Vector3d Vector3d) {
+        if (this.getAnimation() == ANIMATION_SHAKEPREY || !this.canMove() && !this.isBeingRidden() || this.isQueuedToSit()) {
+            if (this.getNavigator().getPath() != null) {
+                this.getNavigator().clearPath();
+            }
+            Vector3d = new Vector3d(0, 0, 0);
+        }
+        super.travel(Vector3d);
+    }
+
+    @Inject(
+            remap = false,
+            method = "bakeAttributes",
+            at = @At(value = "HEAD"),
+            cancellable = true
+    )
+    private static void roadblock$bakeAttributes(CallbackInfoReturnable<AttributeModifierMap.MutableAttribute> cir) {
+        cir.setReturnValue(head$bakeAttributes());
+        cir.cancel();
+    }
+    private static AttributeModifierMap.MutableAttribute head$bakeAttributes() {
+        return MobEntity.func_233666_p_()
+                //HEALTH
+                .createMutableAttribute(Attributes.MAX_HEALTH, 20.0D)
+                //SPEED
+                .createMutableAttribute(Attributes.MOVEMENT_SPEED, 0.3D)
+                //ATTACK
+                .createMutableAttribute(Attributes.ATTACK_DAMAGE, 1)
+                //FOLLOW RANGE
+                .createMutableAttribute(Attributes.FOLLOW_RANGE, Math.min(2048, IafConfig.dragonTargetSearchLength))
+                //ARMOR
+                .createMutableAttribute(Attributes.ARMOR, 4);
     }
 
     @Inject(
@@ -236,9 +304,12 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     }
 
     protected PathNavigator roadblock$createNavigator(World worldIn, AdvancedPathNavigate.MovementType type, PathingStuckHandler stuckHandler, float width, float height) {
-        IafAdvancedDragonPathNavigator newNavigator = new IafAdvancedDragonPathNavigator(this, world, IafAdvancedDragonPathNavigator.MovementType.valueOf(type.name()), width, height);
+        IafAdvancedDragonPathNavigator newNavigator = new IafAdvancedDragonPathNavigator((EntityDragonBase) (Object) this, world, IafAdvancedDragonPathNavigator.MovementType.valueOf(type.name()), width, height);
         this.navigator = newNavigator;
         newNavigator.setCanSwim(true);
+
+        newNavigator.getPathingOptions().withJumpCost(0.7).withSwimCost(0.7);
+
         newNavigator.getNodeProcessor().setCanOpenDoors(true);
         return newNavigator;
     }
@@ -285,6 +356,43 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 
     public void roadblock$openGUI(PlayerEntity playerEntity) {
         ContainerDragon.openGui(playerEntity, this);
+    }
+
+    @Inject(
+            remap = false,
+            method = "updateAttributes",
+            at = @At(value = "HEAD"),
+            cancellable = true
+    )
+    public void roadblock$updateAttributes(CallbackInfo ci) {
+        head$updateAttributes();
+        ci.cancel();
+    }
+    protected void head$updateAttributes() {
+        prevArmorResLoc = armorResLoc;
+        final int armorHead = this.getArmorOrdinal(this.getItemStackFromSlot(EquipmentSlotType.HEAD));
+        final int armorNeck = this.getArmorOrdinal(this.getItemStackFromSlot(EquipmentSlotType.CHEST));
+        final int armorLegs = this.getArmorOrdinal(this.getItemStackFromSlot(EquipmentSlotType.LEGS));
+        final int armorFeet = this.getArmorOrdinal(this.getItemStackFromSlot(EquipmentSlotType.FEET));
+        armorResLoc = dragonType.getName() + "|" + armorHead + "|" + armorNeck + "|" + armorLegs + "|" + armorFeet;
+        IceAndFire.PROXY.updateDragonArmorRender(armorResLoc);
+        if (this.getAgeInDays() <= 125) {
+            final double healthStep = (maximumHealth - minimumHealth) / 125F;
+            final double attackStep = (maximumDamage - minimumDamage) / 125F;
+            final double speedStep = (maximumSpeed - minimumSpeed) / 125F;
+            final double armorStep = (maximumArmor - minimumArmor) / 125F;
+
+            this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(Math.round(minimumHealth + (healthStep * this.getAgeInDays())));
+            this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(Math.round(minimumDamage + (attackStep * this.getAgeInDays())));
+            this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(minimumSpeed + (speedStep * this.getAgeInDays()));
+            final double baseValue = minimumArmor + (armorStep * this.getAgeInDays());
+            this.getAttribute(Attributes.ARMOR).setBaseValue(baseValue);
+            if (!this.world.isRemote) {
+                this.getAttribute(Attributes.ARMOR).removeModifier(ARMOR_MODIFIER_UUID);
+                this.getAttribute(Attributes.ARMOR).applyNonPersistentModifier(new AttributeModifier(ARMOR_MODIFIER_UUID, "Dragon armor bonus", calculateArmorModifier(), AttributeModifier.Operation.ADDITION));
+            }
+        }
+        this.getAttribute(Attributes.FOLLOW_RANGE).setBaseValue(Math.min(2048, IafConfig.dragonTargetSearchLength));
     }
 
     @Inject(
@@ -448,7 +556,7 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
         }
         world.getProfiler().endSection();
         world.getProfiler().startSection("dragonFlight");
-        if (isFlying() && !world.isRemote) {
+        if (useFlyingPathFinder() && !world.isRemote) {
             this.flightManager.update();
         }
         world.getProfiler().endSection();

@@ -21,16 +21,16 @@ public interface IEntityDragonAccess {
     void setFireTicks(int fireTicks);
 
     @Invoker("isOverAir")
-    boolean invoke$isOverAir();
+    boolean isOverAir$invoke();
     @Invoker("updateBurnTarget")
-    void invoke$updateBurnTarget();
+    void updateBurnTarget$invoke();
     @Invoker("updateAttributes")
-    void invoke$updateAttributes();
+    void updateAttributes$invoke();
     @Invoker("switchNavigator")
-    void invoke$switchNavigator(int type);
+    void switchNavigator$invoke(int type);
     @Invoker("getFlightChancePerTick")
-    int invoke$getFlightChancePerTick();
+    int getFlightChancePerTick$invoke();
     @Invoker("isIceInWater")
-    boolean invoke$isIceInWater();
+    boolean isIceInWater$invoke();
 
 }

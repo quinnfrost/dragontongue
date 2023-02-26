@@ -333,7 +333,7 @@ public class util {
         return true;
     }
 
-    public static void mixinDebugger() {
+    public static void mixinDebugger(Object... param) {
         String str = "A breakpoint over here will do the trick";
 //        DragonTongue.LOGGER.debug(str);
     }

@@ -61,7 +61,8 @@ public class EntityBehaviorDebugger {
                 "Command dest:" + destinationString,
                 "AttackDecision:" + capabilityInfoHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE),
                 "StepHeight:" + mobEntity.stepHeight,
-                "isInWater:" + mobEntity.isInWater()
+                "isInWater:" + mobEntity.isInWater(),
+                "Move:" + String.format("%f - %f - %f", mobEntity.moveForward, mobEntity.moveStrafing, mobEntity.moveVertical)
         );
         if (DragonTongue.isIafPresent) {
             List<String> additional = IafHelperClass.getAdditionalDragonDebugStrings(mobEntity);

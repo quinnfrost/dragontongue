@@ -394,6 +394,9 @@ public class IafDragonBehaviorHelper {
 
         if (blockPos != null) {
             ((AdvancedPathNavigate) dragon.getNavigator()).tryMoveToBlockPos(blockPos, 1.0f);
+            if (dragon.isInWater()) {
+                setDragonFlightTarget(dragon, Vector3d.copyCenteredHorizontally(blockPos));
+            }
         } else {
             dragon.getNavigator().clearPath();
         }

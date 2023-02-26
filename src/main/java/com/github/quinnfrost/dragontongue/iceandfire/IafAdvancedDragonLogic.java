@@ -428,7 +428,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         if (dragon.spacebarTicks > 20 && dragon.getOwner() != null && dragon.getPassengers().contains(dragon.getOwner()) && !dragon.isFlying() && !dragon.isHovering()) {
             dragon.setHovering(true);
         }
-        if (iEntityDragon.invoke$isOverAir() && !dragon.isPassenger()) {
+        if (iEntityDragon.isOverAir$invoke() && !dragon.isPassenger()) {
             final double ydist = dragon.prevPosY - dragon.getPosY();//down 0.4 up -0.38
             if (!dragon.isHovering()) {
                 dragon.incrementDragonPitch((float) (ydist) * 10);
@@ -483,13 +483,13 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         if (dragon.isQueuedToSit() && dragon.getControllingPassenger() != null) {
             dragon.setSitting(false);
         }
-        if (dragon.isBeingRidden() && !iEntityDragon.invoke$isOverAir() && dragon.isFlying() && !dragon.isHovering() && dragon.flyTicks > 40) {
+        if (dragon.isBeingRidden() && !iEntityDragon.isOverAir$invoke() && dragon.isFlying() && !dragon.isHovering() && dragon.flyTicks > 40) {
             dragon.setFlying(false);
         }
         if (iEntityDragon.getBlockBreakCounter() <= 0) {
             iEntityDragon.setBlockBreakCounter(IafConfig.dragonBreakBlockCooldown);
         }
-        iEntityDragon.invoke$updateBurnTarget();
+        iEntityDragon.updateBurnTarget$invoke();
         if (dragon.isQueuedToSit()) {
             if (dragon.getCommand() != 1 || dragon.getControllingPassenger() != null)
                 dragon.setSitting(false);
@@ -561,17 +561,20 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         }
         if (ridingPlayer == null) {
             if ((dragon.useFlyingPathFinder() || dragon.isHovering()) && dragon.navigatorType != 1) {
-                iEntityDragon.invoke$switchNavigator(1);
+                if (!dragon.getNavigator().noPath() && dragon.getNavigator().getTargetPos() != null) {
+                    dragon.flightManager.setFlightTarget(Vector3d.copyCenteredHorizontally(dragon.getNavigator().getTargetPos()));
+                }
+                iEntityDragon.switchNavigator$invoke(1);
             }
         } else {
             if ((dragon.useFlyingPathFinder() || dragon.isHovering()) && dragon.navigatorType != 2) {
-                iEntityDragon.invoke$switchNavigator(2);
+                iEntityDragon.switchNavigator$invoke(2);
             }
         }
         if (!dragon.useFlyingPathFinder() && !dragon.isHovering() && dragon.navigatorType != 0) {
-            iEntityDragon.invoke$switchNavigator(0);
+            iEntityDragon.switchNavigator$invoke(0);
         }
-        if (!iEntityDragon.invoke$isOverAir() && dragon.doesWantToLand() && (dragon.isFlying() || dragon.isHovering()) && !dragon.isInWater()) {
+        if (!iEntityDragon.isOverAir$invoke() && dragon.doesWantToLand() && (dragon.isFlying() || dragon.isHovering()) && !dragon.isInWater()) {
             dragon.setFlying(false);
             dragon.setHovering(false);
         }
@@ -612,8 +615,8 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         }
         if (dragon.isAllowedToTriggerFlight() && dragon.isFlying() && dragon.doesWantToLand()) {
             dragon.setFlying(false);
-            dragon.setHovering(iEntityDragon.invoke$isOverAir());
-            if (!iEntityDragon.invoke$isOverAir()) {
+            dragon.setHovering(iEntityDragon.isOverAir$invoke());
+            if (!iEntityDragon.isOverAir$invoke()) {
                 dragon.flyTicks = 0;
                 dragon.setFlying(false);
             }
@@ -627,7 +630,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         }
         if (!dragon.isFlying() && !dragon.isHovering()) {
             if (dragon.isAllowedToTriggerFlight() || dragon.getPosY() < -1) {
-                if (dragon.getRNG().nextInt(iEntityDragon.invoke$getFlightChancePerTick()) == 0 || dragon.getPosY() < -1 || dragon.getAttackTarget() != null && Math.abs(dragon.getAttackTarget().getPosY() - dragon.getPosY()) > 5 || dragon.isInWater() && !iEntityDragon.invoke$isIceInWater()) {
+                if (dragon.getRNG().nextInt(iEntityDragon.getFlightChancePerTick$invoke()) == 0 || dragon.getPosY() < -1 || dragon.getAttackTarget() != null && Math.abs(dragon.getAttackTarget().getPosY() - dragon.getPosY()) > 5 || dragon.isInWater() && !iEntityDragon.isIceInWater$invoke()) {
                     dragon.setHovering(true);
                     dragon.setQueuedToSit(false);
                     dragon.setSitting(false);
@@ -648,7 +651,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         if (!dragon.isAgingDisabled()) {
             dragon.setAgeInTicks(dragon.getAgeInTicks() + 1);
             if (dragon.getAgeInTicks() % 24000 == 0) {
-                iEntityDragon.invoke$updateAttributes();
+                iEntityDragon.updateAttributes$invoke();
                 dragon.growDragon(0);
             }
         }

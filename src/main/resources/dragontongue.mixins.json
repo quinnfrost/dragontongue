@@ -6,13 +6,16 @@
   "mixins": [
     "MixinIngameGui",
     "MixinLivingEntity",
-    "iceandfire.accessor.IEntityDragonAccess",
     "iceandfire.MixinDragonBow",
     "iceandfire.MixinFoodUtils",
+    "iceandfire.accessor.IEntityDragonAccess",
     "iceandfire.behavior.MixinAbstractPathJob",
     "iceandfire.behavior.MixinEnumSurfaceType",
     "iceandfire.behavior.MixinHippogryphAITarget",
+    "iceandfire.entity.EntityLightningDragon",
     "iceandfire.entity.MixinEntityDragonBase",
-    "iceandfire.entity.MixinEntityHippogryph"
+    "iceandfire.entity.MixinEntityFireDragon",
+    "iceandfire.entity.MixinEntityHippogryph",
+    "iceandfire.entity.MixinEntityIceDragon"
   ]
 }

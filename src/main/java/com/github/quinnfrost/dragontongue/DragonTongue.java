@@ -89,7 +89,6 @@ public class DragonTongue
         //      A clearer land and takeoff logic
         //  Fix:
         //      Distance config should only take effect on server
-        //      Ice dragons ashore from water
         //      Navigation with no path cause dragon to stay forever
         //
 

@@ -5,6 +5,7 @@ import com.github.alexthe666.iceandfire.entity.*;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.math.BlockPos;
@@ -21,7 +22,7 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
     private ICapabilityInfoHolder cap;
     public Vector3d currentFlightTarget;
     public Vector3d finalFlightTarget;
-    public FlightPhase flightPhase = FlightPhase.NONE;
+    public FlightPhase flightPhase = FlightPhase.DIRECT;
     public Optional<Double> preferredFlightLevel = Optional.empty();
     public Vector3d flightLevel;
     private IafDragonAttacks.Air prevAirAttack;
@@ -31,7 +32,6 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
     private LivingEntity prevAttackTarget = null;
 
     public enum FlightPhase {
-        NONE,
         CLIMB,
         CRUISE,
         DIRECT
@@ -56,7 +56,7 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
     public void update() {
         // Periodic check if the target is in sight
         if (finalFlightTarget != null) {
-            if (dragon.getBoundingBox().grow(dragon.getRenderSize()).contains(finalFlightTarget)) {
+            if (dragon.getBoundingBox().grow(dragon.getRenderSize()).contains(finalFlightTarget) || dragon.isInWater()) {
                 flightPhase = FlightPhase.DIRECT;
             } else {
                 flightLevel = Vector3d.copyCenteredHorizontally(
@@ -106,7 +106,7 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
         if (dragon.getAttackTarget() != null && dragon.getAttackTarget().isAlive()) {
             flightToAttackTarget();
 //
-        } else if (finalFlightTarget == null || dragon.getDistanceSq(currentFlightTarget.x, currentFlightTarget.y, currentFlightTarget.z) < 4 || !dragon.world.isAirBlock(new BlockPos(currentFlightTarget)) && (dragon.isHovering() || dragon.isFlying()) || dragon.getCommand() == 2 && dragon.shouldTPtoOwner()) {
+        } else if (finalFlightTarget == null || (cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.NONE && dragon.getDistanceSq(currentFlightTarget.x, currentFlightTarget.y, currentFlightTarget.z) < 4) || !(dragon.world.isAirBlock(new BlockPos(finalFlightTarget)) || dragon.world.getBlockState(new BlockPos(finalFlightTarget).up()).getMaterial().isLiquid()) && (dragon.isHovering() || dragon.isFlying()) || dragon.getCommand() == 2 && dragon.shouldTPtoOwner()) {
             flightToNewPosition();
         }
 
@@ -115,7 +115,7 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
             if (currentFlightTarget.y > IafConfig.maxDragonFlight) {
                 currentFlightTarget = new Vector3d(currentFlightTarget.x, IafConfig.maxDragonFlight, currentFlightTarget.z);
             }
-            if (currentFlightTarget.y >= dragon.getPosY() && !dragon.isModelDead()) {
+            if (currentFlightTarget.y >= dragon.getPosY() && !dragon.isModelDead() && !dragon.isInWater()) {
                 dragon.setMotion(dragon.getMotion().add(0, 0.1D, 0));
 
             }

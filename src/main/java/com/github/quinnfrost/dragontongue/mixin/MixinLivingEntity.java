@@ -113,6 +113,7 @@ public abstract class MixinLivingEntity extends Entity {
                     (this.isInWater() && this.func_241208_cS_() && !this.func_230285_a_(fluidstate.getFluid()))
                             || (util.canSwimInLava(this) && this.isInLava() && this.func_241208_cS_() && !this.func_230285_a_(fluidstate.getFluid()))
             ) {
+                util.mixinDebugger(this);
                 double d8 = this.getPosY();
                 float f5 = this.isSprinting() ? 0.9F : this.getWaterSlowDown();
                 float f6 = 0.02F;
