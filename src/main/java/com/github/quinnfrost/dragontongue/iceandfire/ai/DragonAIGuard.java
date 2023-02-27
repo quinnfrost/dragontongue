@@ -6,6 +6,7 @@ import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
+import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.EntityPredicate;
 import net.minecraft.entity.LivingEntity;
@@ -16,14 +17,20 @@ import net.minecraft.entity.ai.goal.NearestAttackableTargetGoal;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3d;
 
 import javax.annotation.Nullable;
 import java.util.EnumSet;
 import java.util.function.Predicate;
 
-public class DragonAIGuard <T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
+public class DragonAIGuard<T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
     private EntityDragonBase dragon;
     private ICapabilityInfoHolder cap;
+    private BlockPos guardPosition;
+    private double guardDistance = 16;
+    private boolean isTooFar = false;
+
     public DragonAIGuard(EntityDragonBase entityIn, Class<T> targetClassIn, int targetChanceIn, boolean checkSight, boolean nearbyOnlyIn, @Nullable Predicate<LivingEntity> targetPredicate) {
         super(entityIn, targetClassIn, targetChanceIn, checkSight, nearbyOnlyIn, targetPredicate);
         this.setMutexFlags(EnumSet.of(Flag.TARGET));
@@ -47,7 +54,10 @@ public class DragonAIGuard <T extends LivingEntity> extends NearestAttackableTar
             return false;
         }
         if (super.shouldExecute() && !nearestTarget.getClass().equals(this.dragon.getClass())) {
-
+            updateGuardPosition();
+            if (nearestTarget.getPositionVec().distanceTo(Vector3d.copyCenteredHorizontally(guardPosition)) > guardDistance) {
+                return false;
+            }
             final float dragonSize = Math.max(this.dragon.getWidth(), this.dragon.getWidth() * dragon.getRenderSize());
             if (dragonSize >= nearestTarget.getWidth()) {
                 if (!dragon.isOwner(nearestTarget) && util.isHostile(nearestTarget)) {
@@ -71,6 +81,69 @@ public class DragonAIGuard <T extends LivingEntity> extends NearestAttackableTar
     }
 
     @Override
+    public boolean shouldContinueExecuting() {
+        if (!dragon.isTamed() || dragon.getOwner() == null || dragon.getControllingPassenger() != null) {
+            return false;
+        }
+        if (cap.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE) != EnumCommandSettingType.AttackDecisionType.GUARD) {
+            return false;
+        }
+        updateGuardPosition();
+//        guardDistance = Math.min(owner.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(owner)).getCommandDistance(), dragon.getAttributeValue(Attributes.FOLLOW_RANGE));
+        if (dragon.getPositionVec().distanceTo(Vector3d.copyCenteredHorizontally(guardPosition)) > guardDistance || isTooFar) {
+            if (!isTooFar) {
+                dragon.setAttackTarget(null);
+                isTooFar = true;
+            }
+            // Waiting for current target eliminated
+            if (dragon.getAttackTarget() == null) {
+                // Escort itself will do
+                if (dragon.getCommand() != 2) {
+                    IafDragonBehaviorHelper.setDragonWalkTarget(dragon, new BlockPos(guardPosition.getX(), guardPosition.getY(), guardPosition.getZ()));
+                    IafDragonBehaviorHelper.setDragonFlightTarget(dragon, Vector3d.copyCenteredHorizontally(guardPosition));
+                }
+            }
+            if (dragon.getPositionVec().distanceTo(Vector3d.copyCenteredHorizontally(guardPosition)) < guardDistance / 2.0f) {
+                isTooFar = false;
+            }
+            return true;
+        } else {
+            return super.shouldContinueExecuting();
+        }
+    }
+
+    private void updateGuardPosition() {
+        if (dragon.getOwner() == null) {
+            return;
+        }
+        guardDistance = dragon.getOwner().getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon.getOwner())).getSelectDistance();
+        guardPosition = cap.getDestination().orElse(dragon.getPosition());
+        if (dragon.getCommand() == 2) {
+            if (IafDragonBehaviorHelper.isDragonInAir(dragon) && dragon.flightManager.getFlightTarget() != null) {
+                Vector3d flightTarget = dragon.flightManager.getFlightTarget();
+                guardPosition = new BlockPos(dragon.getOwner().getPosX(), flightTarget.y, dragon.getOwner().getPosZ());
+            } else {
+                guardPosition = dragon.getOwner().getPosition();
+            }
+        } else {
+            cap.getDestination().ifPresent(blockPos -> {
+                guardPosition = blockPos;
+            });
+        }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+    }
+
+    @Override
+    public void startExecuting() {
+        super.startExecuting();
+        guardPosition = cap.getDestination().orElse(dragon.getPosition());
+    }
+
+    @Override
     protected AxisAlignedBB getTargetableArea(double targetDistance) {
         return this.dragon.getBoundingBox().grow(targetDistance, targetDistance, targetDistance);
     }
@@ -85,9 +158,11 @@ public class DragonAIGuard <T extends LivingEntity> extends NearestAttackableTar
         ModifiableAttributeInstance iattributeinstance = mobEntity.getAttribute(Attributes.FOLLOW_RANGE);
         return iattributeinstance == null ? 128.0D : iattributeinstance.getValue();
     }
+
     public static AxisAlignedBB getTargetableArea(MobEntity mobEntity, double targetDistance) {
         return mobEntity.getBoundingBox().grow(targetDistance, targetDistance, targetDistance);
     }
+
     public static LivingEntity findNearestTarget(MobEntity mobEntity) {
         LivingEntity nearestTarget;
         Predicate<LivingEntity> targetPredicate = new Predicate<LivingEntity>() {

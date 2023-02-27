@@ -3,22 +3,20 @@ package com.github.quinnfrost.dragontongue.iceandfire;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.EntityHippogryph;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
-import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.entity.ai.GuardGoal;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAIAsYouWish;
-import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAICalmLook;
-import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAIGuard;
-import com.github.quinnfrost.dragontongue.iceandfire.ai.HippogryphAIFollowCommandAndAttack;
+import com.github.quinnfrost.dragontongue.iceandfire.ai.*;
 import com.github.quinnfrost.dragontongue.iceandfire.event.IafServerEvent;
 import com.github.quinnfrost.dragontongue.utils.util;
 import com.google.common.base.Predicate;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.ai.goal.OwnerHurtTargetGoal;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
@@ -31,19 +29,6 @@ public class IafDragonBehaviorHelper {
     public static boolean registerDragonAI(MobEntity mobEntity) {
         if (IafHelperClass.isDragon(mobEntity)) {
             EntityDragonBase dragon = (EntityDragonBase) mobEntity;
-
-            dragon.goalSelector.addGoal(0, new DragonAIAsYouWish(dragon));
-            dragon.goalSelector.addGoal(0, new DragonAICalmLook(dragon));
-
-            dragon.targetSelector.addGoal(3, new DragonAIGuard<>(dragon, LivingEntity.class, false, new Predicate<LivingEntity>() {
-                @Override
-                public boolean apply(@Nullable LivingEntity entity) {
-                    return (!(entity instanceof PlayerEntity) || !((PlayerEntity) entity).isCreative())
-                            && DragonUtils.canHostilesTarget(entity)
-                            && DragonUtils.isAlive(entity)
-                            && util.isHostile(entity);
-                }
-            }));
 
             return true;
         }
@@ -113,7 +98,6 @@ public class IafDragonBehaviorHelper {
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
         ICapabilityInfoHolder cap = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
-        AdvancedPathNavigate navigate = (AdvancedPathNavigate) dragon.getNavigator();
 
         if (cap.getObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE) != EnumCommandSettingType.MovementType.LAND
                 && cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.STAY && IafDragonBehaviorHelper.isOverAir(dragon)) {
@@ -331,6 +315,7 @@ public class IafDragonBehaviorHelper {
         }
 
         dragon.setAttackTarget(null);
+        setDragonTryReach(dragon, blockPos);
         cap.setDestination(blockPos);
         cap.setCommandStatus(EnumCommandSettingType.CommandStatus.REACH);
 
@@ -409,6 +394,9 @@ public class IafDragonBehaviorHelper {
 
         if (blockPos != null) {
             ((AdvancedPathNavigate) dragon.getNavigator()).tryMoveToBlockPos(blockPos, 1.0f);
+            if (dragon.isInWater()) {
+                setDragonFlightTarget(dragon, Vector3d.copyCenteredHorizontally(blockPos));
+            }
         } else {
             dragon.getNavigator().clearPath();
         }

@@ -1,5 +1,6 @@
 package com.github.quinnfrost.dragontongue.client.overlay;
 
+import com.github.quinnfrost.dragontongue.client.preview.RenderTrajectory;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.IngameGui;
@@ -21,12 +22,17 @@ public class OverlayRenderEvent extends IngameGui {
 
     @SubscribeEvent(priority = EventPriority.NORMAL)
     public void renderOverlay(RenderGameOverlayEvent.Post event) {
+        if (event.getType() == RenderGameOverlayEvent.ElementType.CROSSHAIRS) {
+            RenderTrajectory.renderTrajectory(event.getMatrixStack());
+            OverlayCrossHair.renderScope(event.getMatrixStack());
+            OverlayCrossHair.renderScopeSuggestion(event.getMatrixStack());
+        }
         if (event.getType() == RenderGameOverlayEvent.ElementType.TEXT) {
-            OverlayCrossHair.renderStringLeftPanel(event);
-            OverlayCrossHair.renderStringCrossHair(event);
+            OverlayInfoPanel.renderPanel(event.getMatrixStack());
+            OverlayCrossHair.renderStringCrossHair(event.getMatrixStack());
         }
         if (event.getType() == RenderGameOverlayEvent.ElementType.ALL) {
-            OverlayCrossHair.renderIconCrossHair(event);
+            OverlayCrossHair.renderIconCrossHair(event.getMatrixStack());
         }
     }
 

@@ -2,13 +2,18 @@ package com.github.quinnfrost.dragontongue.iceandfire;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.EntityDragonPart;
+import com.github.alexthe666.iceandfire.entity.EntityFireDragon;
 import com.github.alexthe666.iceandfire.entity.EntityHippogryph;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.alexthe666.iceandfire.entity.util.IDeadMob;
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import com.github.alexthe666.iceandfire.item.ItemDragonsteelArmor;
 import com.github.alexthe666.iceandfire.item.ItemScaleArmor;
-import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
+import com.github.quinnfrost.dragontongue.client.render.RenderPath;
+import com.github.quinnfrost.dragontongue.iceandfire.message.MessageSyncPath;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Pathfinding;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjobs.AbstractPathJob;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
@@ -20,19 +25,34 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.Item;
-import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraftforge.client.event.RenderWorldLastEvent;
 
-import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class IafHelperClass {
+    public static void startIafPathDebug(PlayerEntity playerEntity, LivingEntity livingEntity) {
+        AbstractPathJob.trackingMap.put(playerEntity, livingEntity.getUniqueID());
+    }
+
+    public static void stopIafPathDebug(PlayerEntity playerEntity) {
+        AbstractPathJob.trackingMap.remove(playerEntity);
+        RegistryMessages.sendToClient(new MessageSyncPath(new HashSet<>(), new HashSet<>(), new HashSet<>()), (ServerPlayerEntity) playerEntity);
+        Pathfinding.lastDebugNodesVisited = new HashSet<>();
+        Pathfinding.lastDebugNodesNotVisited = new HashSet<>();
+        Pathfinding.lastDebugNodesPath = new HashSet<>();
+    }
+
+    public static void renderWorldLastEvent(RenderWorldLastEvent event) {
+        if (DragonTongue.debugTarget != null) {
+            RenderPath.debugDraw(event.getPartialTicks(), event.getMatrixStack());
+        }
+    }
+
     public static boolean isDragon(Entity dragonIn) {
         return DragonTongue.isIafPresent && dragonIn instanceof EntityDragonBase;
     }
@@ -87,40 +107,73 @@ public class IafHelperClass {
         if (!isDragon(dragonIn)) {
             return new ArrayList<>();
         }
+        if (dragonIn == null) {
+            return new ArrayList<>();
+        }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-        AdvancedPathNavigate navigator = (AdvancedPathNavigate) dragon.getNavigator();
+        IafAdvancedDragonPathNavigator navigator = (IafAdvancedDragonPathNavigator) dragon.getNavigator();
 
-        CompoundNBT compoundNBT = new CompoundNBT();
-        DragonTongue.debugTarget.writeAdditional(compoundNBT);
+//        CompoundNBT compoundNBT = new CompoundNBT();
+//        DragonTongue.debugTarget.writeAdditional(compoundNBT);
 
         ICapabilityInfoHolder capabilityInfoHolder = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
         BlockPos targetPos = getReachTarget(dragon);
 
-        float distX = (float) (dragon.flightManager.getFlightTarget().x - dragon.getPosX());
-        float distY = (float) (dragon.flightManager.getFlightTarget().y - dragon.getPosY());
-        float distZ = (float) (dragon.flightManager.getFlightTarget().z - dragon.getPosZ());
+        IafAdvancedDragonFlightManager flightManager = (IafAdvancedDragonFlightManager) dragon.flightManager;
+        Vector3d currentFlightTarget = dragon.flightManager.getFlightTarget();
+//        float distX = (float) (currentFlightTarget.x - dragon.getPosX());
+//        float distY = (float) (currentFlightTarget.y - dragon.getPosY());
+//        float distZ = (float) (currentFlightTarget.z - dragon.getPosZ());
+
+        String reachDestString = "";
+        if (navigator.pathResult == null) {
+            reachDestString = "null";
+        } else if (navigator.pathResult.isPathReachingDestination()) {
+            reachDestString = "true";
+        } else {
+            reachDestString = "false";
+        }
+        String timeSinceLastPath = "";
+        if (navigator.noPath()) {
+            timeSinceLastPath = String.valueOf(dragon.world.getGameTime() - navigator.pathStartTime);
+        }
+        String ownerAttackTime = "";
+        String ownerTickExisted = "";
+        if (dragon.getOwner() != null) {
+            ownerAttackTime = String.valueOf(dragon.getOwner().getLastAttackedEntityTime());
+            ownerTickExisted = String.valueOf(dragon.getOwner().ticksExisted);
+        }
 
         return Arrays.asList(
                 "Render size:" + dragon.getRenderSize() + String.format("(%.2f)", dragon.getRenderScale()),
                 "Flight height:" + IafDragonFlightUtil.getFlightHeight(dragon),
                 "Navigator target:" + (targetPos != null ? targetPos : ""),
-                "FlightMgr:" + dragon.flightManager.getFlightTarget().toString() + "(" + util.getDistance(dragon.flightManager.getFlightTarget(), dragon.getPositionVec()) + ")",
+                "ReachDest? " + reachDestString,
+                "TimeSince:" + timeSinceLastPath,
+                "Speed:" + ((IafAdvancedDragonPathNavigator) dragon.getNavigator()).getSpeedFactor(),
+                "AIMoveSpeed:" + dragon.getAIMoveSpeed(),
+                "FlightCurrent:" + (flightManager.currentFlightTarget == null ? "" : flightManager.currentFlightTarget + "(" + util.getDistance(flightManager.currentFlightTarget, dragon.getPositionVec()) + ")"),
+                "FlightFinal:" + (flightManager.finalFlightTarget == null ? "" : flightManager.finalFlightTarget + "(" + util.getDistance(flightManager.finalFlightTarget, dragon.getPositionVec()) + ")"),
+                "FlightXZDistacne:" + util.getDistanceXZ(dragon.getPositionVec(), flightManager.finalFlightTarget),
+                "FlightLevel:" + flightManager.flightLevel,
+                "FlightPhase:" + flightManager.flightPhase,
+                "TargetBlocked? " + dragon.isTargetBlocked(flightManager.finalFlightTarget),
                 "NavType:" + dragon.navigatorType,
                 "Command:" + dragon.getCommand(),
-//                "Flying:" + compoundNBT.getByte("Flying"),
 //                "HoverTicks:" + dragon.hoverTicks,
 //                "TicksStill:" + dragon.ticksStill,
 //                "LookVec:" + dragon.getLookVec(),
                 "NoPath? " + dragon.getNavigator().noPath(),
+                "Flying:" + dragon.isFlying(),
                 "Hovering:" + dragon.isHovering(),
                 "Pitch: " + dragon.getDragonPitch() + "|" + dragon.rotationPitch,
                 "Yaw: " + dragon.rotationYaw,
-                "PlaneDist:" + (double) MathHelper.sqrt(distX * distX + distZ * distZ),
-                "Distance:" + (double) MathHelper.sqrt(distX * distX + distZ * distZ + distY * distY),
                 "AirAttack:" + dragon.airAttack,
                 "GroundAttack:" + dragon.groundAttack,
                 "UseGroundAttack? " + dragon.usingGroundAttack,
-                "LookingForRoost? " + dragon.lookingForRoostAIFlag
+                "LookingForRoost? " + dragon.lookingForRoostAIFlag,
+                "OwnerAttackTime:" + ownerAttackTime,
+                "OwnerTickExisted:" + ownerTickExisted
         );
 
 
@@ -131,10 +184,15 @@ public class IafHelperClass {
             return false;
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-        RegistryMessages.sendToAll(new MessageClientDraw(
+
+        if (dragon.flightManager.getFlightTarget() == null) {
+            return false;
+        }
+
+        RegistryMessages.sendToClient(new MessageClientDraw(
                 -dragon.getEntityId(), dragon.flightManager.getFlightTarget(),
                 dragon.getPositionVec()
-        ));
+        ), (ServerPlayerEntity) DragonTongue.debugger);
 
         double length = dragon.flightManager.getFlightTarget().distanceTo(dragon.getPositionVec());
         Vector3d direction = dragon.flightManager.getFlightTarget().subtract(dragon.getPositionVec()).normalize();
@@ -148,12 +206,12 @@ public class IafHelperClass {
         Vector3d leftWingTarget = centralTarget.add(directionXZ.rotateYaw(90 * ((float) Math.PI / 180F)).scale(dragon.getRenderSize()));
         Vector3d rightWingTarget = centralTarget.add(directionXZ.rotateYaw(-90 * ((float) Math.PI / 180F)).scale(dragon.getRenderSize()));
 
-        RegistryMessages.sendToAll(new MessageClientDraw(
-                2554, leftWingTarget, leftWing
-        ));
-        RegistryMessages.sendToAll(new MessageClientDraw(
-                2555, rightWingTarget, rightWing
-        ));
+        RegistryMessages.sendToClient(new MessageClientDraw(
+                -dragon.getEntityId() * 10000, leftWingTarget, leftWing
+        ), (ServerPlayerEntity) DragonTongue.debugger);
+        RegistryMessages.sendToClient(new MessageClientDraw(
+                -dragon.getEntityId() * 10000 + 1, rightWingTarget, rightWing
+        ), (ServerPlayerEntity) DragonTongue.debugger);
         return true;
     }
 
@@ -173,9 +231,8 @@ public class IafHelperClass {
      * Determine if player is wearing full set of dragon scale/steel set
      *
      * @param playerEntity
-     * @return For scale set, "ice","fire","lightning". For steel set, "dragonsteel_ice", "dragonsteel_fire", "dragonsteel_lightning".
+     * @return Empty string returned if not a valid set. For scale set, "ice","fire","lightning". For steel set, "dragonsteel_ice", "dragonsteel_fire", "dragonsteel_lightning".
      */
-    @Nullable
     public static String isFullSetOf(PlayerEntity playerEntity) {
         Item headItem = playerEntity.getItemStackFromSlot(EquipmentSlotType.HEAD).getItem();
         Item chestItem = playerEntity.getItemStackFromSlot(EquipmentSlotType.CHEST).getItem();
@@ -183,16 +240,16 @@ public class IafHelperClass {
         Item feetItem = playerEntity.getItemStackFromSlot(EquipmentSlotType.FEET).getItem();
 
         if (!(headItem instanceof ItemScaleArmor) && !(headItem instanceof ItemDragonsteelArmor)) {
-            return null;
+            return "";
         }
         if (!(chestItem instanceof ItemScaleArmor) && !(chestItem instanceof ItemDragonsteelArmor)) {
-            return null;
+            return "";
         }
         if (!(legItem instanceof ItemScaleArmor) && !(legItem instanceof ItemDragonsteelArmor)) {
-            return null;
+            return "";
         }
         if (!(feetItem instanceof ItemScaleArmor) && !(feetItem instanceof ItemDragonsteelArmor)) {
-            return null;
+            return "";
         }
 
         if (headItem instanceof ItemScaleArmor && chestItem instanceof ItemScaleArmor && legItem instanceof ItemScaleArmor && feetItem instanceof ItemScaleArmor) {
@@ -224,7 +281,20 @@ public class IafHelperClass {
             }
         }
 
-        return null;
+        return "";
+    }
+
+    public static boolean canSwimInLava(Entity entityIn) {
+        if (!DragonTongue.isIafPresent) {
+            return false;
+        }
+        if (entityIn instanceof PlayerEntity) {
+            return isFullSetOf((PlayerEntity) entityIn).contains("fire") || isFullSetOf((PlayerEntity) entityIn).contains("dragonsteel");
+        }
+        if (entityIn instanceof EntityFireDragon) {
+            return true;
+        }
+        return false;
     }
 
 }

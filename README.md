@@ -65,3 +65,9 @@ Status key (default H)
 - H + LB: tamed will stand/follow.
 - H + RB: tamed will sit.
 - H + MB: tamed will enter Guarding mode, any hostile in sight will be its target.
+
+
+Reference
+---------
+https://www.curseforge.com/minecraft/mc-mods/trajectory-preview
+https://github.com/Snownee/LavaClearView

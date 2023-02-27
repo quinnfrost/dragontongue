@@ -1,12 +1,21 @@
 {
   "required": false,
-  "package": "com.github.quinnfrost.dragontongue.iceandfire.mixin",
+  "package": "com.github.quinnfrost.dragontongue.mixin",
   "compatibilityLevel": "JAVA_8",
   "refmap": "dragontongue.refmap.json",
-
   "mixins": [
-    "MixinFlightMoveHelper",
-    "MixinEntityDragonBase",
-    "MixinDragonAIWatchClosest"
+    "MixinIngameGui",
+    "MixinLivingEntity",
+    "iceandfire.MixinDragonBow",
+    "iceandfire.MixinFoodUtils",
+    "iceandfire.accessor.IEntityDragonAccess",
+    "iceandfire.behavior.MixinAbstractPathJob",
+    "iceandfire.behavior.MixinEnumSurfaceType",
+    "iceandfire.behavior.MixinHippogryphAITarget",
+    "iceandfire.entity.MixinEntityLightningDragon",
+    "iceandfire.entity.MixinEntityDragonBase",
+    "iceandfire.entity.MixinEntityFireDragon",
+    "iceandfire.entity.MixinEntityHippogryph",
+    "iceandfire.entity.MixinEntityIceDragon"
   ]
 }

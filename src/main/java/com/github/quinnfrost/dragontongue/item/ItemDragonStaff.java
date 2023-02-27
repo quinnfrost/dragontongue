@@ -17,6 +17,7 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
+import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
@@ -55,7 +56,7 @@ public class ItemDragonStaff extends Item {
         EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(playerIn,
                 Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f,
                 null);
-        BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(playerIn, (float) capabilityInfoHolder.getCommandDistance(), 1.0f);
+        BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(playerIn, (float) capabilityInfoHolder.getCommandDistance(), 1.0f, RayTraceContext.BlockMode.COLLIDER);
 
         if (entityRayTraceResult == null || entityRayTraceResult.getType() == RayTraceResult.Type.MISS) {
             return super.onItemRightClick(worldIn, playerIn, handIn);

@@ -5,9 +5,9 @@ import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.config.Config;
+import com.github.quinnfrost.dragontongue.entity.ai.EntityBehaviorDebugger;
 import com.github.quinnfrost.dragontongue.entity.ai.RegistryAI;
 import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
-import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCrowWand;
 import com.github.quinnfrost.dragontongue.iceandfire.IafAdvancedDragonFlightManager;
 import com.github.quinnfrost.dragontongue.iceandfire.IafAdvancedDragonLogic;
@@ -23,8 +23,6 @@ import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.item.TNTEntity;
 import net.minecraft.entity.item.minecart.TNTMinecartEntity;
 import net.minecraft.entity.monster.CreeperEntity;
-import net.minecraft.entity.passive.TameableEntity;
-import net.minecraft.entity.passive.WolfEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
@@ -32,7 +30,6 @@ import net.minecraft.entity.projectile.TridentEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
@@ -56,12 +53,26 @@ import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
+import net.minecraftforge.fml.event.server.ServerLifecycleEvent;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ServerEvents {
+    @SubscribeEvent
+    public static void onServerStarted(FMLServerStartedEvent event) {
+        // Resets the debug option, the getChunk() might cause infinite wait
+        if (DragonTongue.debugTarget != null) {
+            RegistryMessages.sendToClient(new MessageClientDisplay(
+                    EnumClientDisplay.ENTITY_DEBUG,
+                    1,
+                    Collections.singletonList("")
+            ), (ServerPlayerEntity) DragonTongue.debugger);
+            DragonTongue.debugTarget = null;
+            DragonTongue.debugger = null;
+        }
+    }
+
     /**
      * Add function
      * Make trident hit a signal for tamed to attack
@@ -106,7 +117,7 @@ public class ServerEvents {
      * @param event
      */
     @SubscribeEvent
-    public static void updateFallbackTimer(TickEvent.PlayerTickEvent event) {
+    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.player.world.isRemote) {
             return;
         }
@@ -141,92 +152,14 @@ public class ServerEvents {
         if (event.getEntity().world.isRemote) {
             return;
         }
+        if (DragonTongue.debugTarget != null && DragonTongue.debugger != null) {
+            EntityBehaviorDebugger.sendDebugMessage();
+            EntityBehaviorDebugger.sendDestinationMessage();
+        }
 
         if (DragonTongue.isIafPresent) {
             IafServerEvent.onLivingUpdate(event);
-
-            if (IafHelperClass.isDragon(event.getEntityLiving())) {
-                IafDragonBehaviorHelper.applyPatchedDragonLogic(event.getEntityLiving());
-            }
-
-            // Ask all clients to draw entity destination
-            if (event.getEntityLiving() instanceof PlayerEntity && DragonTongue.debugTarget != null) {
-                PlayerEntity playerEntity = (PlayerEntity) event.getEntityLiving();
-                ICapabilityInfoHolder cap = playerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(playerEntity));
-
-//                RegistryMessages.sendToAll(new MessageClientDraw(
-//                        98981,
-//                        util.getDirectionOffset(playerEntity.getPositionVec(), playerEntity.getLookVec(), 10),
-//                        playerEntity.getPositionVec()
-//                ));
-
-                for (UUID entityUUID :
-                        cap.getCommandEntities()) {
-                    MobEntity mobEntity = (MobEntity) ((ServerWorld) playerEntity.world).getEntityByUuid(entityUUID);
-                    BlockPos pos = IafHelperClass.getReachTarget(mobEntity);
-                    if (pos != null) {
-                        RegistryMessages.sendToAll(new MessageClientDraw(
-                                mobEntity.getEntityId(), Vector3d.copyCentered(pos),
-                                mobEntity.getPositionVec()
-                        ));
-                    } else if (IafHelperClass.isDragon(mobEntity)) {
-                        IafHelperClass.drawDragonFlightDestination(mobEntity);
-                    }
-//                    RegistryMessages.sendToAll(new MessageClientDraw(
-//                            mobEntity.getEntityId(),
-//                            new Vector3d(
-//                                    (mobEntity.getPositionVec().x + mobEntity.getMotion().x * 10),
-//                                    (mobEntity.getPositionVec().y + mobEntity.getMotion().y * 10),
-//                                    (mobEntity.getPositionVec().z + mobEntity.getMotion().z * 10)
-//                                    ),
-//                            mobEntity.getPositionVec()
-//                    ));
-                }
-            }
         }
-        // Ask all client to display entity debug string
-        if (event.getEntity() == DragonTongue.debugTarget) {
-            MobEntity mobEntity = (MobEntity) event.getEntity();
-            CompoundNBT compoundNBT = new CompoundNBT();
-            DragonTongue.debugTarget.writeAdditional(compoundNBT);
-
-            ICapabilityInfoHolder capabilityInfoHolder = mobEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(mobEntity));
-            BlockPos targetPos = DragonTongue.isIafPresent ? IafHelperClass.getReachTarget(mobEntity) : mobEntity.getNavigator().getTargetPos();
-            String targetPosString = (targetPos == null ? "" :
-                    targetPos + "(" + String.valueOf(util.getDistance(mobEntity.getPosition(), targetPos)) + ")");
-            Entity targetEntity = mobEntity.getAttackTarget();
-            String targetString = targetEntity == null ? "" :
-                    targetEntity.getEntityString() + " " + mobEntity.getAttackTarget().getPosition();
-            String destinationString = capabilityInfoHolder.getDestination().isPresent() ?
-                    capabilityInfoHolder.getDestination().get() + "(" + util.getDistance(capabilityInfoHolder.getDestination().get(), mobEntity.getPosition()) + ")" : "";
-
-            List<String> debugMsg = Arrays.asList(
-                    mobEntity.getEntityString() + "[" + mobEntity.getCustomName() + "]",
-                    "Pos:" + mobEntity.getPosition(),
-                    "Motion:" + mobEntity.getMotion(),
-                    "Goals:",
-                    mobEntity.goalSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString(),
-                    mobEntity.targetSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString(),
-                    "Targets:" + targetString,
-                    "Current dest:" + targetPosString,
-                    "Command status:" + capabilityInfoHolder.getCommandStatus().toString(),
-                    "Command dest:" + destinationString,
-                    "AttackDecision:" + capabilityInfoHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE),
-                    "StepHeight:" + mobEntity.stepHeight
-            );
-            if (DragonTongue.isIafPresent) {
-                List<String> additional = IafHelperClass.getAdditionalDragonDebugStrings(mobEntity);
-                debugMsg = Stream.concat(debugMsg.stream(), additional.stream())
-                        .collect(Collectors.toList());
-            }
-            RegistryMessages.sendToAll(new MessageClientDisplay(
-                    EnumClientDisplay.ENTITY_DEBUG,
-                    1,
-                    debugMsg
-            ));
-
-        }
-
     }
 
     @SubscribeEvent
@@ -300,7 +233,7 @@ public class ServerEvents {
     }
 
     @SubscribeEvent
-    public static void onExplosion(ExplosionEvent.Start event) {
+    public static void onExplosionStart(ExplosionEvent.Start event) {
         if (event.getWorld().isRemote) {
             return;
         }
@@ -316,7 +249,7 @@ public class ServerEvents {
         Entity exploder = event.getExplosion().getExploder();
         Entity placer = event.getExplosion().getExplosivePlacedBy();
         if ((exploder instanceof TNTEntity)
-        || (exploder instanceof TNTMinecartEntity)) {
+                || (exploder instanceof TNTMinecartEntity)) {
             explosion.clearAffectedBlockPositions();
         }
     }

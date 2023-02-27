@@ -16,6 +16,7 @@ import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -158,6 +159,7 @@ public class MessageCommandEntity {
                     capTargetHolder.removeCommandEntity(target.getUniqueID());
                     target.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                         iCapTargetHolder.setCommandStatus(EnumCommandSettingType.CommandStatus.NONE);
+                        iCapTargetHolder.setDestination(null);
                     });
                 }
                 MessageSyncCapability.syncCapabilityToClients(commander);
@@ -230,15 +232,24 @@ public class MessageCommandEntity {
                 break;
             case DEBUG:
                 if (target instanceof MobEntity) {
-                    if (DragonTongue.debugTarget == null || DragonTongue.debugTarget.getUniqueID() != target.getUniqueID()) {
+                    // A messy workaround for debugTarget inconsistency on dedicated server and client
+                    if (DragonTongue.debugger == null || (DragonTongue.debugTarget != null && DragonTongue.debugTarget.getUniqueID() != target.getUniqueID())) {
                         DragonTongue.debugTarget = (MobEntity) target;
+                        DragonTongue.debugger = (PlayerEntity) commander;
+                        if (DragonTongue.isIafPresent) {
+                            IafHelperClass.startIafPathDebug((PlayerEntity) commander, target);
+                        }
                     } else {
-                        DragonTongue.debugTarget = null;
-                        RegistryMessages.sendToAll(new MessageClientDisplay(
+                        RegistryMessages.sendToClient(new MessageClientDisplay(
                                 EnumClientDisplay.ENTITY_DEBUG,
                                 1,
                                 Collections.singletonList("")
-                        ));
+                        ), (ServerPlayerEntity) DragonTongue.debugger);
+                        DragonTongue.debugTarget = null;
+                        DragonTongue.debugger = null;
+                        if (DragonTongue.isIafPresent) {
+                            IafHelperClass.stopIafPathDebug((PlayerEntity) commander);
+                        }
                     }
                 }
                 DragonTongue.LOGGER.debug("Debug triggered, set a breakpoint at MessageCommandEntity#232");
@@ -425,12 +436,12 @@ public class MessageCommandEntity {
         ICapabilityInfoHolder capTargetHolder = tamed.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(tamed));
         EnumCommandSettingType.AttackDecisionType attackDecisionType = (EnumCommandSettingType.AttackDecisionType) capTargetHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE);
         PlayerEntity playerEntity = (PlayerEntity) commander;
-        if (attackDecisionType == EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP) {
+        if (attackDecisionType == EnumCommandSettingType.AttackDecisionType.DEFAULT) {
             playerEntity.sendStatusMessage(new StringTextComponent("Guard"), true);
             capTargetHolder.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.GUARD);
         } else if (attackDecisionType == EnumCommandSettingType.AttackDecisionType.GUARD) {
             playerEntity.sendStatusMessage(new StringTextComponent("Default"), true);
-            capTargetHolder.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP);
+            capTargetHolder.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.DEFAULT);
         }
     }
 
@@ -456,6 +467,7 @@ public class MessageCommandEntity {
             }
             target.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                 iCapTargetHolder.setCommandStatus(EnumCommandSettingType.CommandStatus.NONE);
+                iCapTargetHolder.setDestination(null);
             });
         }
     }
@@ -470,6 +482,9 @@ public class MessageCommandEntity {
             ((TameableEntity) target).getNavigator().tryMoveToXYZ(target.getPosX(), target.getPosY(), target.getPosZ(), 1.0f);
             target.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                 iCapTargetHolder.setCommandStatus(EnumCommandSettingType.CommandStatus.NONE);
+                if (iCapTargetHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE) == EnumCommandSettingType.AttackDecisionType.GUARD) {
+                    iCapTargetHolder.setObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE, EnumCommandSettingType.AttackDecisionType.DEFAULT);
+                }
             });
         }
     }

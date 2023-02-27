@@ -4,6 +4,7 @@ import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityPredicate;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.ai.attributes.Attributes;
@@ -16,6 +17,8 @@ import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.entity.projectile.ProjectileHelper;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.particles.IParticleData;
+import net.minecraft.potion.Effects;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.vector.Vector3d;
@@ -77,11 +80,16 @@ public class util {
         }
     }
     //! Not usable
-    public static boolean shouldAttack(@Nullable LivingEntity attacker, @Nullable LivingEntity target) {
+    public static boolean shouldAttack(@Nullable LivingEntity attacker, @Nullable LivingEntity target, double checkDistance) {
         if (attacker == null || target == null) {
             return false;
         }
-        return false;
+        EntityPredicate entityPredicate = EntityPredicate.DEFAULT;
+        entityPredicate.setIgnoresLineOfSight();
+        if (checkDistance > 0) {
+            entityPredicate.setDistance(checkDistance);
+        }
+        return entityPredicate.canTarget(attacker, target);
     }
 
     /**
@@ -95,7 +103,7 @@ public class util {
      * @return  A BlockRayTraceResult or EntityRayTraceResult, separated by its type
      */
     public static RayTraceResult getTargetBlockOrEntity(Entity entity, float maxDistance, @Nullable Predicate<? super Entity> excludeEntity) {
-        BlockRayTraceResult blockRayTraceResult = getTargetBlock(entity, maxDistance, 1.0f);
+        BlockRayTraceResult blockRayTraceResult = getTargetBlock(entity, maxDistance, 1.0f, RayTraceContext.BlockMode.COLLIDER);
         float entityRayTraceDistance = maxDistance;
         if (blockRayTraceResult.getType() != RayTraceResult.Type.MISS) {
             entityRayTraceDistance = (float) Math.sqrt(entity.getDistanceSq(blockRayTraceResult.getHitVec()));
@@ -139,6 +147,7 @@ public class util {
         float f = 1.0F;
         // 计算结束位置向量构成的区域(Bounding Box)
         AxisAlignedBB axisalignedbb = entity.getBoundingBox().expand(vector3d1.scale(d0)).grow(1.0D, 1.0D, 1.0D);
+
         EntityRayTraceResult entityraytraceresult = ProjectileHelper.rayTraceEntities(entity.world, entity, vector3d, vector3d2,
                 axisalignedbb, ((Predicate<Entity>) notExclude -> !notExclude.isSpectator()
                         && notExclude.canBeCollidedWith())
@@ -155,9 +164,12 @@ public class util {
      * @param maxDistance  Only blocks within the distance in block is traced
      * @param partialTicks Time in ticks to smooth the movement(linear interpolation
      *                     or 'lerp'), use 1.0F to disable
+     * @param blockMode
      * @return Result of ray trace, or RayTraceResult.Type.MISS if nothing within the distance is found
      */
-    public static BlockRayTraceResult getTargetBlock(Entity entity, float maxDistance, float partialTicks) {
+    public static BlockRayTraceResult getTargetBlock(Entity entity, float maxDistance, float partialTicks, RayTraceContext.BlockMode blockMode) {
+        final RayTraceContext.FluidMode fluidMode = RayTraceContext.FluidMode.NONE;
+
         Vector3d vector3d = entity.getEyePosition(partialTicks);
         double d0 = maxDistance;
         double d1 = d0 * d0;
@@ -166,10 +178,14 @@ public class util {
         Vector3d vector3d1 = entity.getLook(1.0F);
         // 结束位置向量
         Vector3d vector3d2 = vector3d.add(vector3d1.x * d0, vector3d1.y * d0, vector3d1.z * d0);
-        return entity.world.rayTraceBlocks(new RayTraceContext(vector3d, vector3d2, RayTraceContext.BlockMode.VISUAL,
-                RayTraceContext.FluidMode.NONE, entity));
+
+        BlockRayTraceResult blockRayTraceResult = entity.world.rayTraceBlocks(
+                new RayTraceContext(vector3d, vector3d2, blockMode, fluidMode, entity)
+        );
+        return blockRayTraceResult;
     }
 
+    @Deprecated
     public static BlockRayTraceResult rayTraceBlock(World world, Vector3d startVec, Vector3d endVec) {
         return world.rayTraceBlocks(new RayTraceContext(startVec, endVec, RayTraceContext.BlockMode.VISUAL,
                 RayTraceContext.FluidMode.NONE, null));
@@ -317,9 +333,32 @@ public class util {
         return true;
     }
 
-    public static void mixinDebugger() {
+    public static void mixinDebugger(Object... param) {
         String str = "A breakpoint over here will do the trick";
 //        DragonTongue.LOGGER.debug(str);
+    }
+
+    public static boolean canSwimInLava(Entity entityIn) {
+        if (DragonTongue.isIafPresent && IafHelperClass.canSwimInLava(entityIn)) {
+            return true;
+        }
+        if (entityIn instanceof PlayerEntity) {
+            PlayerEntity playerEntity = (PlayerEntity) entityIn;
+            if (playerEntity.isSpectator() || playerEntity.isCreative()) {
+//                return true;
+            }
+            return playerEntity.areEyesInFluid(FluidTags.LAVA) && playerEntity.isPotionActive(Effects.FIRE_RESISTANCE);
+        }
+        return false;
+    }
+
+    public static double getDistanceXZ(Vector3d vector1, Vector3d vector2) {
+        if (vector1 == null || vector2 == null) {
+            return 0;
+        }
+        double f = vector1.x - vector2.x;
+        double f2 = vector1.z - vector2.z;
+        return Math.sqrt(f * f + f2 * f2);
     }
 
     @OnlyIn(Dist.CLIENT)

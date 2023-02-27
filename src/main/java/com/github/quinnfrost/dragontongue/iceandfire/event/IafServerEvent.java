@@ -412,21 +412,26 @@ public class IafServerEvent {
             if (setName != null) {
                 switch (setName) {
                     case "ice":
-                    case "dragonsteel_ice":
                         if (iceDamage) {
                             event.setCanceled(true);
                         }
                         break;
                     case "fire":
-                    case "dragonsteel_fire":
                         if (fireDamage) {
                             playerEntity.forceFireTicks(0);
                             event.setCanceled(true);
                         }
                         break;
-                    case "dragonsteel_lightning":
                     case "lightning":
                         if (lightningDamage) {
+                            event.setCanceled(true);
+                        }
+                        break;
+                    case "dragonsteel_lightning":
+                    case "dragonsteel_ice":
+                    case "dragonsteel_fire":
+                        if (iceDamage || fireDamage || lightningDamage ) {
+                            playerEntity.forceFireTicks(0);
                             event.setCanceled(true);
                         }
                         break;

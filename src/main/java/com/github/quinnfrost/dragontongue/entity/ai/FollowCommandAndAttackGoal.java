@@ -27,8 +27,7 @@ public class FollowCommandAndAttackGoal extends MeleeAttackGoal {
         if (super.shouldExecute()) {
             return true;
         }
-        if (capabilityInfoHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE) == EnumCommandSettingType.AttackDecisionType.GUARD
-                || capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE)
+        if (capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE)
         {
             return true;
         }
@@ -39,8 +38,7 @@ public class FollowCommandAndAttackGoal extends MeleeAttackGoal {
         if (super.shouldContinueExecuting()) {
             return true;
         }
-        if (capabilityInfoHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE) == EnumCommandSettingType.AttackDecisionType.GUARD
-                || capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE)
+        if (capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE)
         {
             return true;
         }

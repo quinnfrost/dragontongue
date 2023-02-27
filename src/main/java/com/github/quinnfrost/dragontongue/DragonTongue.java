@@ -17,6 +17,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScreenManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
@@ -46,6 +47,7 @@ public class DragonTongue
 //    public static CommonProxy PROXY = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> CommonProxy::new);
     public static boolean isIafPresent = false;
     public static MobEntity debugTarget;
+    public static PlayerEntity debugger;
     public DragonTongue() {
         // Register the setup method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
@@ -78,6 +80,17 @@ public class DragonTongue
         if (isIafPresent) {
             IafServerEvent.register(MinecraftForge.EVENT_BUS);
         }
+
+        // Todo:
+        //  Migrate the Animal Tamer
+        //  Better navigator:
+        //      A navigator, takeover the tryMoveToXYZ and combine the ground navigate and flight navigate
+        //      Refactor command system using interfaces
+        //      A clearer land and takeoff logic
+        //  Fix:
+        //      Distance config should only take effect on server
+        //      Navigation with no path cause dragon to stay forever
+        //
 
         // Todo: more settings!
         // Todo: settings hot reload

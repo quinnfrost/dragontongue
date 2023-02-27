@@ -40,6 +40,7 @@
 
   "dragontongue.gui.attack_decision.GUARD": "Guard",
   "dragontongue.gui.attack_decision.ALWAYS_HELP": "Always help",
+  "dragontongue.gui.attack_decision.DEFAULT": "Default",
   "dragontongue.gui.attack_decision.DONT_HELP": "Don't help",
   "dragontongue.gui.attack_decision.NONE": "None",
 

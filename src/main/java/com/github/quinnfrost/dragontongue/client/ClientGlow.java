@@ -1,6 +1,7 @@
 package com.github.quinnfrost.dragontongue.client;
 
 import com.github.quinnfrost.dragontongue.DragonTongue;
+import com.github.quinnfrost.dragontongue.client.render.RenderNode;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
