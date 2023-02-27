@@ -55,6 +55,8 @@ public class EntityBehaviorDebugger {
                 "Goals:",
                 mobEntity.goalSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString(),
                 mobEntity.targetSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString(),
+                "Tasks:",
+                mobEntity.getBrain().getRunningTasks().toString(),
                 "Targets:" + targetString,
                 "Current dest:" + targetPosString,
                 "Command status:" + capabilityInfoHolder.getCommandStatus().toString(),

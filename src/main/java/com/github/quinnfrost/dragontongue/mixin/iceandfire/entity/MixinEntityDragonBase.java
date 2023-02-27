@@ -16,14 +16,27 @@ import com.github.quinnfrost.dragontongue.container.ContainerDragon;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.*;
 import com.github.quinnfrost.dragontongue.iceandfire.*;
+import com.github.quinnfrost.dragontongue.iceandfire.ai.task.DragonTasks;
 import com.github.quinnfrost.dragontongue.utils.util;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Dynamic;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.*;
+import net.minecraft.entity.ai.EntitySenses;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
+import net.minecraft.entity.ai.brain.Brain;
+import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
+import net.minecraft.entity.ai.brain.schedule.Activity;
+import net.minecraft.entity.ai.brain.sensor.Sensor;
+import net.minecraft.entity.ai.brain.sensor.SensorType;
+import net.minecraft.entity.ai.brain.task.LookTask;
 import net.minecraft.entity.ai.goal.HurtByTargetGoal;
 import net.minecraft.entity.ai.goal.OwnerHurtByTargetGoal;
 import net.minecraft.entity.ai.goal.OwnerHurtTargetGoal;
@@ -32,14 +45,18 @@ import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTDynamicOps;
 import net.minecraft.pathfinding.PathNavigator;
 import net.minecraft.pathfinding.PathNodeType;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
+import net.minecraft.util.RegistryKey;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.MinecraftForge;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -179,7 +196,15 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 
     @Shadow protected abstract double calculateArmorModifier();
 
+    @Shadow public abstract void breakBlock();
+
+    @Shadow public abstract BlockPos getHomePosition();
+
     public ICapabilityInfoHolder cap = this.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(this));
+
+    private static final ImmutableList<MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(MemoryModuleType.MOBS, MemoryModuleType.VISIBLE_MOBS, MemoryModuleType.NEAREST_VISIBLE_PLAYER, MemoryModuleType.NEAREST_VISIBLE_TARGETABLE_PLAYER, MemoryModuleType.LOOK_TARGET, MemoryModuleType.WALK_TARGET, MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, MemoryModuleType.PATH, MemoryModuleType.ATTACK_TARGET, MemoryModuleType.ATTACK_COOLING_DOWN);
+    private static final ImmutableList<SensorType<? extends Sensor<? super EntityDragonBase>>> SENSOR_TYPES = ImmutableList.of(SensorType.NEAREST_LIVING_ENTITIES, SensorType.NEAREST_PLAYERS);
+
 
     @Inject(
             method = "<init>",
@@ -191,10 +216,41 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
         this.minimumArmor = 1D;
         this.maximumArmor = 20D;
 
+        this.senses = new EntitySenses(this);
+
+        NBTDynamicOps nbtdynamicops = NBTDynamicOps.INSTANCE;
+        this.brain = this.createBrain(new Dynamic<>(nbtdynamicops, nbtdynamicops.createMap(ImmutableMap.of(nbtdynamicops.createString("memories"), nbtdynamicops.emptyMap()))));
+
         this.flightManager = new IafAdvancedDragonFlightManager((EntityDragonBase) (Object) this);
         this.logic = new IafAdvancedDragonLogic((EntityDragonBase) (Object) this);
 
         this.setPathPriority(PathNodeType.FENCE, 0.0F);
+
+    }
+
+    public Brain<EntityDragonBase> getBrain() {
+        return (Brain<EntityDragonBase>)super.getBrain();
+    }
+
+    protected Brain.BrainCodec<EntityDragonBase> getBrainCodec() {
+        return Brain.createCodec(MEMORY_TYPES, SENSOR_TYPES);
+    }
+    @Override
+    protected Brain<?> createBrain(Dynamic<?> dynamicIn) {
+        Brain<EntityDragonBase> brain = this.getBrainCodec().deserialize(dynamicIn);
+        this.initBrain(brain);
+        return brain;
+    }
+
+    private void initBrain(Brain<EntityDragonBase> dragonBrain) {
+        dragonBrain.registerActivity(Activity.CORE, 0, DragonTasks.core(1.0f));
+        dragonBrain.registerActivity(Activity.IDLE, 10, DragonTasks.idle());
+
+        dragonBrain.setPersistentActivities(ImmutableSet.of(Activity.CORE));
+        dragonBrain.setFallbackActivity(Activity.IDLE);
+        dragonBrain.switchToFallbackActivity();
+
+        dragonBrain.updateActivity(this.world.getDayTime(), this.world.getGameTime());
     }
 
     @Override
@@ -341,6 +397,24 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
             this.navigator = createNavigator(world, AdvancedPathNavigate.MovementType.FLYING);
             this.navigatorType = 2;
         }
+    }
+
+    @Inject(
+            method = "updateAITasks",
+            at = @At(value = "HEAD"),
+            cancellable = true
+    )
+    public void roadblock$updateAITasks(CallbackInfo ci) {
+        head$updateAITasks();
+        ci.cancel();
+    }
+    protected void head$updateAITasks() {
+        super.updateAITasks();
+        breakBlock();
+
+        this.world.getProfiler().startSection("dragonBrain");
+        this.getBrain().tick((ServerWorld) this.world, (EntityDragonBase) (Object) this);
+        this.world.getProfiler().endSection();
     }
 
     @Inject(

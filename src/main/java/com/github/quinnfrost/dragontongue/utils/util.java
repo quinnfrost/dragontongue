@@ -210,6 +210,7 @@ public class util {
      * @param value     Tag value
      * @return
      */
+    @Deprecated
     public static boolean setByteTag(LivingEntity target, String path, byte value) {
         try {
             CompoundNBT compoundNBT = new CompoundNBT();
@@ -228,6 +229,7 @@ public class util {
      * @param path
      * @return
      */
+    @Deprecated
     public static Optional<Byte> getByteTag(LivingEntity target, String path) {
         try {
             CompoundNBT compoundNBT = new CompoundNBT();

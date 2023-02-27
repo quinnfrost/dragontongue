@@ -268,9 +268,7 @@ public class IafDragonBehaviorHelper {
             dragon.setMotion(dragon.getMotion().add(0.0, -0.25, 0.0));
         }
 
-        if (util.getByteTag(dragon, "Flying").isPresent()) {
-            util.setByteTag(dragon, "Flying", (byte) 0);
-        }
+        dragon.setFlying(false);
 
         return true;
     }
