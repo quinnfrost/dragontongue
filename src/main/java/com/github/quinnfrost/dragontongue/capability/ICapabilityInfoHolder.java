@@ -1,6 +1,7 @@
 package com.github.quinnfrost.dragontongue.capability;
 
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.List;
@@ -9,6 +10,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ICapabilityInfoHolder {
+    static ICapabilityInfoHolder getCapability(Entity entity) {
+        return entity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(entity));
+    }
     void copy(ICapabilityInfoHolder cap);
     List<UUID> getCommandEntities();
     void setCommandEntities(List<UUID> uuids);

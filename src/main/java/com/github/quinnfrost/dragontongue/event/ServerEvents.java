@@ -135,8 +135,8 @@ public class ServerEvents {
             if (iCapTargetHolder.getFallbackTimer() != 0 && player.isSneaking()) {
                 MessageCrowWand.crowWandAction(EnumCrowWand.FALLBACK, player, serverWorld);
             } else if (iCapTargetHolder.getFallbackTimer() != 0 && !(
-                    mainhandItem.equals(RegistryItems.CROW_WAND.get())
-                            || offhandItem.equals(RegistryItems.CROW_WAND.get())
+                    mainhandItem.equals(RegistryItems.CROW_WAND)
+                            || offhandItem.equals(RegistryItems.CROW_WAND)
             )) {
                 iCapTargetHolder.setFallbackTimer(0);
             }

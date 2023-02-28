@@ -50,7 +50,7 @@ public class DragonAIMate extends Goal {
     }
 
     /**
-     * Resets the task
+     * Resets the brain
      */
     @Override
     public void resetTask() {
@@ -59,7 +59,7 @@ public class DragonAIMate extends Goal {
     }
 
     /**
-     * Updates the task
+     * Updates the brain
      */
     @Override
     public void tick() {

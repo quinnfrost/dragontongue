@@ -16,13 +16,12 @@ import com.github.quinnfrost.dragontongue.container.ContainerDragon;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.*;
 import com.github.quinnfrost.dragontongue.iceandfire.*;
-import com.github.quinnfrost.dragontongue.iceandfire.ai.task.DragonTasks;
+import com.github.quinnfrost.dragontongue.iceandfire.ai.brain.RegistryBrains;
 import com.github.quinnfrost.dragontongue.utils.util;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Dynamic;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -36,7 +35,6 @@ import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.schedule.Activity;
 import net.minecraft.entity.ai.brain.sensor.Sensor;
 import net.minecraft.entity.ai.brain.sensor.SensorType;
-import net.minecraft.entity.ai.brain.task.LookTask;
 import net.minecraft.entity.ai.goal.HurtByTargetGoal;
 import net.minecraft.entity.ai.goal.OwnerHurtByTargetGoal;
 import net.minecraft.entity.ai.goal.OwnerHurtTargetGoal;
@@ -50,7 +48,6 @@ import net.minecraft.pathfinding.PathNavigator;
 import net.minecraft.pathfinding.PathNodeType;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
-import net.minecraft.util.RegistryKey;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
@@ -202,8 +199,28 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 
     public ICapabilityInfoHolder cap = this.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(this));
 
-    private static final ImmutableList<MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(MemoryModuleType.MOBS, MemoryModuleType.VISIBLE_MOBS, MemoryModuleType.NEAREST_VISIBLE_PLAYER, MemoryModuleType.NEAREST_VISIBLE_TARGETABLE_PLAYER, MemoryModuleType.LOOK_TARGET, MemoryModuleType.WALK_TARGET, MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, MemoryModuleType.PATH, MemoryModuleType.ATTACK_TARGET, MemoryModuleType.ATTACK_COOLING_DOWN);
-    private static final ImmutableList<SensorType<? extends Sensor<? super EntityDragonBase>>> SENSOR_TYPES = ImmutableList.of(SensorType.NEAREST_LIVING_ENTITIES, SensorType.NEAREST_PLAYERS);
+    private static final ImmutableList<MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(
+            MemoryModuleType.HOME,
+            MemoryModuleType.LOOK_TARGET,
+            MemoryModuleType.MOBS,
+            MemoryModuleType.VISIBLE_MOBS,
+            MemoryModuleType.NEAREST_VISIBLE_PLAYER,
+            MemoryModuleType.NEAREST_VISIBLE_TARGETABLE_PLAYER,
+            MemoryModuleType.LOOK_TARGET,
+            MemoryModuleType.WALK_TARGET,
+            MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
+            MemoryModuleType.PATH,
+            MemoryModuleType.ATTACK_TARGET,
+            MemoryModuleType.ATTACK_COOLING_DOWN,
+
+            RegistryBrains.MEMORY_TEST
+    );
+    private static final ImmutableList<SensorType<? extends Sensor<? super EntityDragonBase>>> SENSOR_TYPES = ImmutableList.of(
+            SensorType.NEAREST_LIVING_ENTITIES,
+            SensorType.NEAREST_PLAYERS,
+
+            RegistryBrains.SENSOR_TEST
+    );
 
 
     @Inject(
@@ -228,6 +245,18 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 
     }
 
+    @Override
+    protected void updateAITasks() {
+        super.updateAITasks();
+        breakBlock();
+
+        this.getBrain().setMemory(MemoryModuleType.HOME, GlobalPos.getPosition(this.world.getDimensionKey(), this.getHomePosition()));
+
+        this.world.getProfiler().startSection("dragonBrain");
+        this.getBrain().tick((ServerWorld) this.world, (EntityDragonBase) (Object) this);
+        this.world.getProfiler().endSection();
+    }
+
     public Brain<EntityDragonBase> getBrain() {
         return (Brain<EntityDragonBase>)super.getBrain();
     }
@@ -243,20 +272,31 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     }
 
     private void initBrain(Brain<EntityDragonBase> dragonBrain) {
-        dragonBrain.registerActivity(Activity.CORE, 0, DragonTasks.core(1.0f));
-        dragonBrain.registerActivity(Activity.IDLE, 10, DragonTasks.idle());
+        dragonBrain.setMemory(RegistryBrains.MEMORY_TEST, "dt");
+
+//        dragonBrain.setSchedule(RegistryBrains.TEST);
+
+        // Core activity should be the very basic activity, handles the basic movement when the specific memory item is set
+        dragonBrain.registerActivity(Activity.CORE, RegistryBrains.core());
+        // Other activities should only set correspond memory item base on condition
+        dragonBrain.registerActivity(Activity.IDLE, RegistryBrains.idle());
 
         dragonBrain.setPersistentActivities(ImmutableSet.of(Activity.CORE));
         dragonBrain.setFallbackActivity(Activity.IDLE);
         dragonBrain.switchToFallbackActivity();
 
-        dragonBrain.updateActivity(this.world.getDayTime(), this.world.getGameTime());
+//        dragonBrain.updateActivity(this.world.getDayTime(), this.world.getGameTime());
     }
 
     @Override
     public boolean isInWater() {
         return super.isInWater() && this.eyesInWater;
 //        return super.isInWater();
+    }
+
+    @Override
+    public boolean isMovementBlocked() {
+        return this.getHealth() <= 0.0F || isQueuedToSit() && !this.isBeingRidden() || this.isModelDead() || this.isPassenger();
     }
 
     @Override
@@ -317,16 +357,16 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
             }
         }));
 
-        this.goalSelector.addGoal(0, new DragonAIRide<>((EntityDragonBase) (Object) this));
-        this.goalSelector.addGoal(1, new SitGoal(this));
-        this.goalSelector.addGoal(2, new DragonAIMate((EntityDragonBase) (Object) this, 1.0D));
-        this.goalSelector.addGoal(3, new DragonAIReturnToRoost((EntityDragonBase) (Object) this, 1.0D));
-        this.goalSelector.addGoal(4, new DragonAIEscort((EntityDragonBase) (Object) this, 1.0D));
-        this.goalSelector.addGoal(5, new DragonAIAttackMelee((EntityDragonBase) (Object) this, 1.5D, false));
-        this.goalSelector.addGoal(6, new AquaticAITempt(this, 1.0D, IafItemRegistry.FIRE_STEW, false));
-        this.goalSelector.addGoal(7, new DragonAIWander((EntityDragonBase) (Object) this, 1.0D));
-        this.goalSelector.addGoal(8, new DragonAIWatchClosest(this, LivingEntity.class, 6.0F));
-        this.goalSelector.addGoal(8, new DragonAILookIdle((EntityDragonBase) (Object) this));
+//        this.goalSelector.addGoal(0, new DragonAIRide<>((EntityDragonBase) (Object) this));
+//        this.goalSelector.addGoal(1, new SitGoal(this));
+//        this.goalSelector.addGoal(2, new DragonAIMate((EntityDragonBase) (Object) this, 1.0D));
+//        this.goalSelector.addGoal(3, new DragonAIReturnToRoost((EntityDragonBase) (Object) this, 1.0D));
+//        this.goalSelector.addGoal(4, new DragonAIEscort((EntityDragonBase) (Object) this, 1.0D));
+//        this.goalSelector.addGoal(5, new DragonAIAttackMelee((EntityDragonBase) (Object) this, 1.5D, false));
+//        this.goalSelector.addGoal(6, new AquaticAITempt(this, 1.0D, IafItemRegistry.FIRE_STEW, false));
+//        this.goalSelector.addGoal(7, new DragonAIWander((EntityDragonBase) (Object) this, 1.0D));
+//        this.goalSelector.addGoal(8, new DragonAIWatchClosest(this, LivingEntity.class, 6.0F));
+//        this.goalSelector.addGoal(8, new DragonAILookIdle((EntityDragonBase) (Object) this));
 
         this.targetSelector.addGoal(1, new OwnerHurtTargetGoal(this));
         this.targetSelector.addGoal(2, new OwnerHurtByTargetGoal(this));
@@ -405,8 +445,8 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
             cancellable = true
     )
     public void roadblock$updateAITasks(CallbackInfo ci) {
-        head$updateAITasks();
-        ci.cancel();
+//        head$updateAITasks();
+//        ci.cancel();
     }
     protected void head$updateAITasks() {
         super.updateAITasks();

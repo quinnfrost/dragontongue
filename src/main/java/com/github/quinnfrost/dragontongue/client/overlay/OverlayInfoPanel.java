@@ -30,12 +30,12 @@ public class OverlayInfoPanel extends AbstractGui {
         FontRenderer fontRender = minecraft.fontRenderer;
         Color colour = new Color(255, 255, 255, 255);
 
-        renderDifference(ms);
+        renderString(ms, bufferInfoLeft, colour, 5, 5, maxLineLength, false);
 
     }
 
     public static void renderString(MatrixStack ms, List<String> content, Color color, int xOffset, int yOffset, int maxLineLength, boolean rightAlign) {
-        if (bufferInfoLeft == null) {
+        if (content == null) {
             return;
         }
         FontRenderer fontRenderer = Minecraft.getInstance().fontRenderer;
@@ -50,7 +50,7 @@ public class OverlayInfoPanel extends AbstractGui {
                     fontRenderer.drawString(ms, currentString, xOffset, yOffset + lineHeight * lineIndex + sublineHeight * sublineCount, color.getRGB());
                 } else {
                     while (currentString.length() >= maxLineLength) {
-                        fontRenderer.drawString(ms, currentString.substring(0, maxLineLength - 1), xOffset, yOffset + lineHeight * lineIndex + sublineHeight * sublineCount, color.getRGB());
+                        fontRenderer.drawString(ms, currentString.substring(0, maxLineLength), xOffset, yOffset + lineHeight * lineIndex + sublineHeight * sublineCount, color.getRGB());
                         currentString = currentString.substring(maxLineLength);
                         sublineCount += 1;
                     }

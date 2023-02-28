@@ -1,17 +1,22 @@
-package com.github.quinnfrost.dragontongue.iceandfire.ai;
+package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks;
 
+import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
+import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
+import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.world.server.ServerWorld;
 
-import java.util.EnumSet;
+import java.util.Map;
 import java.util.Set;
 
-public class AquaticAITempt extends Goal {
-    private final MobEntity temptedEntity;
+public class DragonTaskAquaticTempt extends Task<EntityDragonBase> {
     private final double speed;
     private final Set<Item> temptItem;
     private final boolean scaredByPlayerMovement;
@@ -24,28 +29,26 @@ public class AquaticAITempt extends Goal {
     private int delayTemptCounter;
     private boolean isRunning;
 
-    public AquaticAITempt(MobEntity temptedEntityIn, double speedIn, Item temptItemIn, boolean scaredByPlayerMovementIn) {
-        this(temptedEntityIn, speedIn, scaredByPlayerMovementIn, Sets.newHashSet(temptItemIn));
+    public DragonTaskAquaticTempt(double speedIn, Item temptItemIn, boolean scaredByPlayerMovementIn) {
+        this(60, 60, speedIn, scaredByPlayerMovementIn, Sets.newHashSet(temptItemIn));
     }
 
-    public AquaticAITempt(MobEntity temptedEntityIn, double speedIn, boolean scaredByPlayerMovementIn, Set<Item> temptItemIn) {
-        this.temptedEntity = temptedEntityIn;
+    public DragonTaskAquaticTempt(int durationMinIn, int durationMaxIn, double speedIn, boolean scaredByPlayerMovementIn, Set<Item> temptItemIn) {
+        super(ImmutableMap.of(
+                MemoryModuleType.NEAREST_VISIBLE_PLAYER, MemoryModuleStatus.VALUE_PRESENT
+        ), durationMinIn, durationMaxIn);
         this.speed = speedIn;
         this.temptItem = temptItemIn;
         this.scaredByPlayerMovement = scaredByPlayerMovementIn;
-        this.setMutexFlags(EnumSet.of(Flag.MOVE));
     }
 
-    /**
-     * Returns whether the Goal should begin execution.
-     */
     @Override
-    public boolean shouldExecute() {
+    protected boolean shouldExecute(ServerWorld worldIn, EntityDragonBase owner) {
         if (this.delayTemptCounter > 0) {
             --this.delayTemptCounter;
             return false;
         } else {
-            this.temptingPlayer = this.temptedEntity.world.getClosestPlayer(this.temptedEntity, 10.0D);
+            this.temptingPlayer = owner.world.getClosestPlayer(owner, 10.0D);
 
             if (this.temptingPlayer == null) {
                 return false;
@@ -59,19 +62,16 @@ public class AquaticAITempt extends Goal {
         return this.temptItem.contains(stack.getItem());
     }
 
-    /**
-     * Returns whether an in-progress Goal should continue executing
-     */
     @Override
-    public boolean shouldContinueExecuting() {
+    protected boolean shouldContinueExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
         if (this.scaredByPlayerMovement) {
-            if (this.temptedEntity.getDistanceSq(this.temptingPlayer) < 36.0D) {
+            if (entityIn.getDistanceSq(this.temptingPlayer) < 36.0D) {
                 if (this.temptingPlayer.getDistanceSq(this.targetX, this.targetY, this.targetZ) > 0.010000000000000002D) {
                     return false;
                 }
 
                 if (Math.abs(this.temptingPlayer.rotationPitch - this.pitch) > 5.0D
-                    || Math.abs(this.temptingPlayer.rotationYaw - this.yaw) > 5.0D) {
+                        || Math.abs(this.temptingPlayer.rotationYaw - this.yaw) > 5.0D) {
                     return false;
                 }
             } else {
@@ -84,50 +84,34 @@ public class AquaticAITempt extends Goal {
             this.yaw = this.temptingPlayer.rotationYaw;
         }
 
-        return this.shouldExecute();
+        return this.shouldExecute(worldIn, entityIn);
     }
 
-    /**
-     * Execute a one shot brain or start executing a continuous brain
-     */
     @Override
-    public void startExecuting() {
+    protected void startExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
         this.targetX = this.temptingPlayer.getPosX();
         this.targetY = this.temptingPlayer.getPosY();
         this.targetZ = this.temptingPlayer.getPosZ();
         this.isRunning = true;
     }
 
-    /**
-     * Reset the brain's internal state. Called when this brain is interrupted by another one
-     */
     @Override
-    public void resetTask() {
+    protected void resetTask(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
         this.temptingPlayer = null;
-        this.temptedEntity.getNavigator().clearPath();
+        entityIn.getNavigator().clearPath();
         this.delayTemptCounter = 100;
         this.isRunning = false;
     }
 
-    /**
-     * Keep ticking a continuous brain that has already been started
-     */
     @Override
-    public void tick() {
-        this.temptedEntity.getLookController().setLookPositionWithEntity(this.temptingPlayer,
-            this.temptedEntity.getHorizontalFaceSpeed() + 20, this.temptedEntity.getVerticalFaceSpeed());
+    protected void updateTask(ServerWorld worldIn, EntityDragonBase owner, long gameTime) {
+        owner.getLookController().setLookPositionWithEntity(this.temptingPlayer,
+                owner.getHorizontalFaceSpeed() + 20, owner.getVerticalFaceSpeed());
 
-        if (this.temptedEntity.getDistanceSq(this.temptingPlayer) < 6.25D) {
-            this.temptedEntity.getNavigator().clearPath();
+        if (owner.getDistanceSq(this.temptingPlayer) < 6.25D) {
+            owner.getNavigator().clearPath();
         } else {
-            this.temptedEntity.getNavigator().tryMoveToEntityLiving(this.temptingPlayer, this.speed);
+            owner.getNavigator().tryMoveToEntityLiving(this.temptingPlayer, this.speed);
         }
-    }
-
-    /**
-     * @see #isRunning
-     */
-    public boolean isRunning() {
-        return this.isRunning;
     }
 }
