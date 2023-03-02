@@ -38,7 +38,6 @@ import net.minecraft.entity.ai.brain.sensor.SensorType;
 import net.minecraft.entity.ai.goal.HurtByTargetGoal;
 import net.minecraft.entity.ai.goal.OwnerHurtByTargetGoal;
 import net.minecraft.entity.ai.goal.OwnerHurtTargetGoal;
-import net.minecraft.entity.ai.goal.SitGoal;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
@@ -199,6 +198,8 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     public ICapabilityInfoHolder cap = this.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(this));
 
     private static final ImmutableList<MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(
+//            RegistryBrains.MEMORY_TEST,
+
             MemoryModuleType.HOME,
             MemoryModuleType.LOOK_TARGET,
             MemoryModuleType.MOBS,
@@ -210,15 +211,14 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
             MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
             MemoryModuleType.PATH,
             MemoryModuleType.ATTACK_TARGET,
-            MemoryModuleType.ATTACK_COOLING_DOWN,
+            MemoryModuleType.ATTACK_COOLING_DOWN
 
-            RegistryBrains.MEMORY_TEST
     );
     private static final ImmutableList<SensorType<? extends Sensor<? super EntityDragonBase>>> SENSOR_TYPES = ImmutableList.of(
+//            RegistryBrains.SENSOR_TEST,
             SensorType.NEAREST_LIVING_ENTITIES,
-            SensorType.NEAREST_PLAYERS,
+            SensorType.NEAREST_PLAYERS
 
-            RegistryBrains.SENSOR_TEST
     );
 
 
@@ -271,17 +271,15 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     }
 
     private void initBrain(Brain<EntityDragonBase> dragonBrain) {
-        dragonBrain.setMemory(RegistryBrains.MEMORY_TEST, "dt");
-
-//        dragonBrain.setSchedule(RegistryBrains.TEST);
+        dragonBrain.setSchedule(RegistryBrains.SCHEDULE_DEFAULT);
 
         // Core activity should be the very basic activity, handles the basic movement when the specific memory item is set
         dragonBrain.registerActivity(Activity.CORE, RegistryBrains.core());
         // Other activities should only set correspond memory item base on condition
-        dragonBrain.registerActivity(Activity.IDLE, RegistryBrains.idle());
+        dragonBrain.registerActivity(RegistryBrains.ACTIVITY_DRAGON_DEFAULT, RegistryBrains.idle());
 
         dragonBrain.setPersistentActivities(ImmutableSet.of(Activity.CORE));
-        dragonBrain.setFallbackActivity(Activity.IDLE);
+        dragonBrain.setFallbackActivity(RegistryBrains.ACTIVITY_DRAGON_DEFAULT);
         dragonBrain.switchToFallbackActivity();
 
 //        dragonBrain.updateActivity(this.world.getDayTime(), this.world.getGameTime());

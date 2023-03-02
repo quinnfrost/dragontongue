@@ -744,30 +744,38 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             if (!dragon.isHovering()) {
                 dragon.incrementDragonPitch((float) (ydist) * 10);
             }
+            // Clamp the pitch into 40 ~ -60, 40 is the max for Y- (down), -60 is the max for Y+ (up)
             dragon.setDragonPitch(MathHelper.clamp(dragon.getDragonPitch(), -60, 40));
+            // The plane flight range
             final float plateau = 2;
-            final float planeDist = (float) ((Math.abs(dragon.getMotion().x) + Math.abs(dragon.getMotion().z)) * 6F);
-
+            final float speedXZ = (float) ((Math.abs(dragon.getMotion().x) + Math.abs(dragon.getMotion().z)) * 6F);
+            // 0 ± 2 is considered as plane flight
             if (dragon.getDragonPitch() > plateau) {
                 //down
                 //this.motionY -= 0.2D;
-                dragon.decrementDragonPitch(planeDist * Math.abs(dragon.getDragonPitch()) / 90);
+                // Try to go back to plane flight
+                dragon.decrementDragonPitch(speedXZ * Math.abs(dragon.getDragonPitch()) / 90);
             }
             if (dragon.getDragonPitch() < -plateau) {//-2
                 //up
-                dragon.incrementDragonPitch(planeDist * Math.abs(dragon.getDragonPitch()) / 90);
+                // Try to go back to plane flight
+                dragon.incrementDragonPitch(speedXZ * Math.abs(dragon.getDragonPitch()) / 90);
             }
+            // Same as above?
             if (dragon.getDragonPitch() > 2F) {
                 dragon.decrementDragonPitch(1);
             } else if (dragon.getDragonPitch() < -2F) {
                 dragon.incrementDragonPitch(1);
             }
-            if (dragon.getDragonPitch() < -45 && planeDist < 3) {
+            // Climbing with slow speed is considered as hovering?
+            if (dragon.getDragonPitch() < -45 && speedXZ < 3) {
                 if (dragon.isFlying() && !dragon.isHovering()) {
                     dragon.setHovering(true);
                 }
             }
-        } else {
+        }
+        // On ground, or on shoulder
+        else {
             dragon.setDragonPitch(0);
         }
     }

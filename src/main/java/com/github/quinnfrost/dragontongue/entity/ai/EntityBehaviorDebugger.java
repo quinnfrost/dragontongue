@@ -50,12 +50,16 @@ public class EntityBehaviorDebugger {
         Brain<?> brain = mobEntity.getBrain();
         List<String> stringList = new ArrayList<>();
         try {
-            brain.getMemory(MemoryModuleType.WALK_TARGET).ifPresent(walkTarget -> {
-                stringList.add("WalkTarget: " + formatBlockPos(walkTarget.getTarget().getBlockPos()));
-            });
-            brain.getMemory(MemoryModuleType.LOOK_TARGET).ifPresent(iPosWrapper -> {
-                stringList.add("LookTarget: " + formatBlockPos(iPosWrapper.getBlockPos()));
-            });
+            if (brain.hasMemory(MemoryModuleType.WALK_TARGET)) {
+                brain.getMemory(MemoryModuleType.WALK_TARGET).ifPresent(walkTarget -> {
+                    stringList.add("WalkTarget: " + formatBlockPos(walkTarget.getTarget().getBlockPos()));
+                });
+            }
+            if (brain.hasMemory(MemoryModuleType.LOOK_TARGET)) {
+                brain.getMemory(MemoryModuleType.LOOK_TARGET).ifPresent(iPosWrapper -> {
+                    stringList.add("LookTarget: " + formatBlockPos(iPosWrapper.getBlockPos()));
+                });
+            }
             return stringList;
         } catch (Exception ignored) {
             return new ArrayList<>();
@@ -97,7 +101,9 @@ public class EntityBehaviorDebugger {
             reachesTarget = "false";
         }
 
-        List<String> debugMsg = Arrays.asList(
+        List<String> debugMsg = new ArrayList<>();
+
+        debugMsg.addAll(Arrays.asList(
                 String.format("%s \"%s\" [%s]", mobEntity.getName().getString(), mobEntity.getCustomName() == null ? "-" : mobEntity.getCustomName(), mobEntity.getEntityString()),
                 "Pos: " + String.format("%.5f, %.5f, %.5f ", mobEntity.getPositionVec().x, mobEntity.getPositionVec().y, mobEntity.getPositionVec().z) + String.format("[%d, %d, %d]", mobEntity.getPosition().getX(), mobEntity.getPosition().getY(), mobEntity.getPosition().getZ()),
                 "Motion: " + String.format("%.5f, %.5f, %.5f ", mobEntity.getMotion().x, mobEntity.getMotion().y, mobEntity.getMotion().z),
@@ -110,21 +116,19 @@ public class EntityBehaviorDebugger {
                 "- Running",
                 mobEntity.getBrain().getRunningTasks().toString(),
                 "- Memory"
-        );
-        debugMsg = Stream.concat(debugMsg.stream(), getMemoryInfoString(mobEntity).stream())
-                .collect(Collectors.toList());
-        debugMsg = Stream.concat(debugMsg.stream(), Arrays.asList(
-                        "Targets: " + targetString,
-                        "AttackDecision:" + capabilityInfoHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE),
-                        "StepHeight:" + mobEntity.stepHeight,
-                        "isInWater:" + mobEntity.isInWater(),
+        ));
+        debugMsg.addAll(getMemoryInfoString(mobEntity));
+        debugMsg.addAll(Arrays.asList(
+                "Targets: " + targetString,
+                "StepHeight:" + mobEntity.stepHeight,
+                "isInWater:" + mobEntity.isInWater(),
 //                "Move:" + String.format("%f - %f - %f", mobEntity.moveForward, mobEntity.moveStrafing, mobEntity.moveVertical),
-                        "Current dest: " + targetPosString,
-                        "ReachesTarget? " + reachesTarget,
-                        "Command status:" + capabilityInfoHolder.getCommandStatus().toString(),
-                        "Command dest:" + destinationString
-                ).stream())
-                .collect(Collectors.toList());
+                "Current dest: " + targetPosString,
+                "ReachesTarget? " + reachesTarget,
+                "Command status:" + capabilityInfoHolder.getCommandStatus().toString(),
+                "Command dest:" + destinationString,
+                "AttackDecision:" + capabilityInfoHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE)
+        ));
         if (DragonTongue.isIafPresent) {
             List<String> additional = IafHelperClass.getAdditionalDragonDebugStrings(mobEntity);
             debugMsg = Stream.concat(debugMsg.stream(), additional.stream())

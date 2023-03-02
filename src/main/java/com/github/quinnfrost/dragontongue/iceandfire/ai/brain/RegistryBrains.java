@@ -14,7 +14,6 @@ import net.minecraft.entity.ai.brain.schedule.Activity;
 import net.minecraft.entity.ai.brain.schedule.Schedule;
 import net.minecraft.entity.ai.brain.schedule.ScheduleBuilder;
 import net.minecraft.entity.ai.brain.sensor.SensorType;
-import net.minecraft.entity.ai.brain.task.FirstShuffledTask;
 import net.minecraft.entity.ai.brain.task.MultiTask;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -37,13 +36,13 @@ public class RegistryBrains extends Schedule {
 
                 ), MultiTask.Ordering.ORDERED, MultiTask.RunType.RUN_ONE,
                         ImmutableList.of(
-                                Pair.of(new DragonTaskRide<>(10, 10), 0),
-                                Pair.of(new DragonTaskSit(10, 10), 1),
-                                Pair.of(new DragonTaskMate(10, 10, 1.0f), 2),
-                                Pair.of(new DragonTaskReturnToRoost(10, 10), 3),
+                                Pair.of(new DragonTaskRide<>(60, 60), 0),
+                                Pair.of(new DragonTaskSit(60, 60), 1),
+                                Pair.of(new DragonTaskMate(60, 60, 1.0f), 2),
+                                Pair.of(new DragonTaskReturnToRoost(60, 60), 3),
 
-                                Pair.of(new DragonTaskEscort(10, 10), 4),
-                                Pair.of(new DragonTaskAttackMelee(10, 10, 1.0f, true), 5),
+                                Pair.of(new DragonTaskEscort(60, 60), 4),
+                                Pair.of(new DragonTaskAttackMelee(60, 60, 1.0f, true), 5),
                                 Pair.of(new DragonTaskWander(1.0f), 5),
                                 Pair.of(new DragonTaskLookIdle(), 6)
                         )
@@ -90,10 +89,23 @@ public class RegistryBrains extends Schedule {
         );
     }
 
+    // Our custom memory items
     public static final MemoryModuleType<String> MEMORY_TEST = new MemoryModuleType<>(Optional.of(Codec.STRING));
+
+    // Our custom sensors
     public static final SensorType<DragonFlightSensor> SENSOR_TEST = new SensorType<>(DragonFlightSensor::new);
-    public static final Schedule SCHEDULE_TEST = getScheduleBuilder().add(1000, Activity.IDLE).build();
-    public static final Schedule DEFAULT = getScheduleBuilder().build();
+
+    // Our custom activities
+    public static final Activity ACTIVITY_DRAGON_DEFAULT = new Activity("activity_default");
+
+    // Our schedules
+    public static final Schedule SCHEDULE_DEFAULT = getScheduleBuilder().add(24000, ACTIVITY_DRAGON_DEFAULT).build();
+    public static final Schedule FROST_WILD = getScheduleBuilder().build();
+    public static final Schedule FIRE_WILD = getScheduleBuilder().build();
+    public static final Schedule LIGHTNING_WILD = getScheduleBuilder().build();
+    public static final Schedule FROST_TAMED = getScheduleBuilder().build();
+    public static final Schedule FIRE_TAMED = getScheduleBuilder().build();
+    public static final Schedule LIGHTNING_TAMED = getScheduleBuilder().build();
     public static ScheduleBuilder getScheduleBuilder() {
         return new ScheduleBuilder(new Schedule());
     }
@@ -105,12 +117,15 @@ public class RegistryBrains extends Schedule {
     }
 
     public static void register(IEventBus eventBus) {
-        Registration.SCHEDULES.register("schedule_test", () -> SCHEDULE_TEST);
-        Registration.SCHEDULES.register("default", () -> DEFAULT);
+        Registration.ACTIVITY.register(ACTIVITY_DRAGON_DEFAULT.getKey(), () -> ACTIVITY_DRAGON_DEFAULT);
+
+        Registration.SCHEDULES.register("schedule_default", () -> SCHEDULE_DEFAULT);
 
         Registration.MEMORY.register("memory_test", () -> MEMORY_TEST);
+
         Registration.SENSOR.register("sensor_test", () -> SENSOR_TEST);
 
+        Registration.ACTIVITY.register(eventBus);
         Registration.SCHEDULES.register(eventBus);
         Registration.MEMORY.register(eventBus);
         Registration.SENSOR.register(eventBus);

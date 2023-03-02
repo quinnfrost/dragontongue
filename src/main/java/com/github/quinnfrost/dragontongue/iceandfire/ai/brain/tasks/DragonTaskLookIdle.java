@@ -17,7 +17,7 @@ public class DragonTaskLookIdle extends Task<EntityDragonBase> {
     public DragonTaskLookIdle(int durationMinIn, int durationMaxIn) {
         super(ImmutableMap.of(
                 MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.VALUE_ABSENT
-        ));
+        ), 60, 60);
     }
     public DragonTaskLookIdle() {
         this(60, 60);

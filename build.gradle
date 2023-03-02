@@ -18,9 +18,9 @@ repositories {
     flatDir {
         dirs("libs")
     }
-    flatDir {
-        dirs("../Ice_and_Fire/build/libs")
-    }
+//    flatDir {
+//        dirs("../Ice_and_Fire/build/libs")
+//    }
     maven {
         url "https://cursemaven.com"
         content {
@@ -44,7 +44,7 @@ repositories {
 
 }
 
-version = '0.6.2'
+version = '0.7.0'
 group = 'com.github.quinnfrost' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'dragontongue'
 

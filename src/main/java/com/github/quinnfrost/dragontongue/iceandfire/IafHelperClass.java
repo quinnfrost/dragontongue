@@ -145,6 +145,12 @@ public class IafHelperClass {
         }
 
         return Arrays.asList(
+                "Pitch: " + String.format("%.4f", dragon.getDragonPitch()),
+                "Yaw: " + String.format("%.4f", dragon.rotationYaw),
+                "PlaneDist: " + String.format("%.4f", (float) ((Math.abs(dragon.getMotion().x) + Math.abs(dragon.getMotion().z)) * 6F)),
+                "NoPath? " + dragon.getNavigator().noPath(),
+                "Flying:" + dragon.isFlying(),
+                "Hovering:" + dragon.isHovering(),
                 "Render size:" + dragon.getRenderSize() + String.format("(%.2f)", dragon.getRenderScale()),
                 "Flight height:" + IafDragonFlightUtil.getFlightHeight(dragon),
                 "Navigator target:" + (targetPos != null ? targetPos : ""),
@@ -160,14 +166,6 @@ public class IafHelperClass {
                 "TargetBlocked? " + dragon.isTargetBlocked(flightManager.finalFlightTarget),
                 "NavType:" + dragon.navigatorType,
                 "Command:" + dragon.getCommand(),
-//                "HoverTicks:" + dragon.hoverTicks,
-//                "TicksStill:" + dragon.ticksStill,
-//                "LookVec:" + dragon.getLookVec(),
-                "NoPath? " + dragon.getNavigator().noPath(),
-                "Flying:" + dragon.isFlying(),
-                "Hovering:" + dragon.isHovering(),
-                "Pitch: " + dragon.getDragonPitch() + "|" + dragon.rotationPitch,
-                "Yaw: " + dragon.rotationYaw,
                 "AirAttack:" + dragon.airAttack,
                 "GroundAttack:" + dragon.groundAttack,
                 "UseGroundAttack? " + dragon.usingGroundAttack,

@@ -29,6 +29,11 @@ public class DragonTaskRide<T extends MobEntity & IFlyingMount> extends Task<Ent
     }
 
     @Override
+    protected boolean shouldContinueExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+        return shouldExecute(worldIn, entityIn);
+    }
+
+    @Override
     protected void startExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
         entityIn.getNavigator().clearPath();
     }
