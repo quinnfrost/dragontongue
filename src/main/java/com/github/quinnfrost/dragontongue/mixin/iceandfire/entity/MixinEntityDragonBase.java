@@ -74,9 +74,6 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     }
 
     @Shadow(remap = false)
-    public abstract int getAgeInDays();
-
-    @Shadow(remap = false)
     protected int blockBreakCounter;
 
     @Shadow(remap = false)
@@ -197,6 +194,8 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 
     @Shadow public abstract BlockPos getHomePosition();
 
+    @Shadow public abstract int getAgeInDays();
+
     public ICapabilityInfoHolder cap = this.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(this));
 
     private static final ImmutableList<MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(
@@ -229,7 +228,7 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     )
     public void $EntityDragonBase(EntityType t, World world, DragonType type, double minimumDamage, double maximumDamage, double minimumHealth, double maximumHealth, double minimumSpeed, double maximumSpeed, CallbackInfo ci) {
         this.minimumSpeed = 0.18d;
-        this.maximumSpeed = 0.5d;
+        this.maximumSpeed = 0.45d;
         this.minimumArmor = 1D;
         this.maximumArmor = 20D;
 
@@ -292,11 +291,6 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     public boolean isInWater() {
         return super.isInWater() && this.eyesInWater;
 //        return super.isInWater();
-    }
-
-    @Override
-    public boolean isMovementBlocked() {
-        return this.getHealth() <= 0.0F || isQueuedToSit() && !this.isBeingRidden() || this.isModelDead() || this.isPassenger();
     }
 
     @Override
@@ -459,7 +453,7 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 
     @Inject(
             remap = false,
-            method = "openGUI",
+            method = "openInventory",
             at = @At(value = "HEAD"),
             cancellable = true
     )
@@ -545,26 +539,6 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
             }
         }
         return val;
-    }
-
-    @Inject(
-            remap = false,
-            method = "canMove",
-            at = @At(value = "HEAD"),
-            cancellable = true
-    )
-    public void roadblock$canMove(CallbackInfoReturnable<Boolean> cir) {
-        cir.setReturnValue(head$canMove());
-        cir.cancel();
-    }
-    public boolean head$canMove() {
-        return !this.isQueuedToSit()
-                && !this.isSleeping()
-                && this.getControllingPassenger() == null
-                && !this.isPassenger()
-                && !this.isModelDead()
-                && sleepProgress == 0
-                && this.getAnimation() != ANIMATION_SHAKEPREY;
     }
 
     @Inject(

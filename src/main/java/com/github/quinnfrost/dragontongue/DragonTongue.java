@@ -59,7 +59,7 @@ public class DragonTongue
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::doClientStuff);
 
         // Test if Ice-And-Fire is installed
-        if(util.isClassPresent(References.IAF_CLASS_NAME)) {
+        if(util.isModPresent(References.IAF_MOD_ID)) {
             LOGGER.info("Ice and fire mod found, let's roll.");
             isIafPresent = true;
         } else {

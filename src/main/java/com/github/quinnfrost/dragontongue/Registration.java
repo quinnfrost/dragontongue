@@ -28,10 +28,12 @@ public class Registration {
 //    };
 
     public static void registerModContent(IEventBus eventBus) {
+        RegistryMessages.registerMessages();
         RegistryBrains.register(eventBus);
         RegistryItems.registerItems(eventBus);
-        RegistryContainers.registerContainers(eventBus);
-        RegistryMessages.registerMessages();
+        if (DragonTongue.isIafPresent) {
+            RegistryContainers.registerContainers(eventBus);
+        }
     }
 
 }

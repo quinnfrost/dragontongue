@@ -1,2 +1,3 @@
-include ':Ice_and_Fire-1.16.3'
-project(':Ice_and_Fire-1.16.3').projectDir = new File('../Ice_and_Fire-1.16.3')
+include ':Ice_and_Fire'
+//includeBuild("../Ice_and_Fire")
+project(':Ice_and_Fire').projectDir = new File('../Ice_and_Fire')

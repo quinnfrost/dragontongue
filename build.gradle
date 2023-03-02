@@ -15,9 +15,12 @@ apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
 repositories {
-//    flatDir {
-//        dirs("libs")
-//    }
+    flatDir {
+        dirs("libs")
+    }
+    flatDir {
+        dirs("../Ice_and_Fire/build/libs")
+    }
     maven {
         url "https://cursemaven.com"
         content {
@@ -89,7 +92,7 @@ minecraft {
             property 'forge.logging.console.level', 'debug'
 
             mods {
-                examplemod {
+                dragontongue {
                     source sourceSets.main
                 }
             }
@@ -114,7 +117,7 @@ minecraft {
             property 'forge.logging.console.level', 'debug'
 
             mods {
-                examplemod {
+                dragontongue {
                     source sourceSets.main
                 }
             }
@@ -139,10 +142,10 @@ minecraft {
             property 'forge.logging.console.level', 'debug'
 
             // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
-            args '--mod', 'examplemod', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+            args '--mod', 'dragontongue', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
 
             mods {
-                examplemod {
+                dragontongue {
                     source sourceSets.main
                 }
             }
@@ -174,10 +177,15 @@ dependencies {
     implementation "curse.maven:citadel-331936:3441030"
 //    implementation fg.deobf("curse.maven:iceandfire-264231:3948661")
 //    compileOnly "curse.maven:citadel-331936:3441030"
+//    runtimeOnly files("..\\Ice_and_Fire\\build\\libs\\iceandfire-2.1.12-1.16.5.jar")
+    compileOnly project(":Ice_and_Fire")
+    implementation fg.deobf("file:iceandfire:2.1.12-1.16.5")
 
 //    compileOnly fg.deobf("curse.maven:iceandfire-264231:3948661")
-    compileOnly project(":Ice_and_Fire-1.16.3")
-    runtimeOnly fg.deobf("curse.maven:iceandfire-264231:3948661")
+
+//    compileOnly project(":Ice_and_Fire-1.16.3")
+//    runtimeOnly fg.deobf("curse.maven:iceandfire-264231:3948661")
+
 //    runtimeOnly project(":Ice_and_Fire-1.16.3")
 
 //    implementation fg.deobf(files('libs/Ice_and_Fire-2.1.12-1.16.5.jar'))

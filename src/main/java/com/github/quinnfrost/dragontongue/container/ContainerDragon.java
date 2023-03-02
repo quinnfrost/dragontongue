@@ -189,7 +189,7 @@ public class ContainerDragon extends Container {
                         return new ContainerDragon(
                                 p_createMenu_1_,
                                 p_createMenu_2_,
-                                dragon.dragonInventory,
+                                dragon.inventory,
                                 dragon
                         );
                     }

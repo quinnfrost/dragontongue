@@ -26,6 +26,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.fml.ModList;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -43,6 +44,14 @@ public class util {
         try {
             Class.forName(className);
             return true;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    public static boolean isModPresent(String modName) {
+        try {
+            return ModList.get().isLoaded(modName);
         } catch (Exception ignored) {
             return false;
         }
