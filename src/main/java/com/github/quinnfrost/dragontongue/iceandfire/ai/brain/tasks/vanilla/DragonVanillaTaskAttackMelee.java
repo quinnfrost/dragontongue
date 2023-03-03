@@ -1,19 +1,15 @@
-package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks;
+package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks.vanilla;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Hand;
 import net.minecraft.world.server.ServerWorld;
 
-import java.util.Map;
-
-public class DragonTaskAttackMelee extends Task<EntityDragonBase> {
+public class DragonVanillaTaskAttackMelee extends Task<EntityDragonBase> {
     private int attackTick;
     private boolean longMemory;
     private int delayCounter;
@@ -23,7 +19,7 @@ public class DragonTaskAttackMelee extends Task<EntityDragonBase> {
     private int failedPathFindingPenalty = 0;
     private boolean canPenalize = false;
     private double speedTowardsTarget;
-    public DragonTaskAttackMelee(int durationMinIn, int durationMaxIn, double speedIn, boolean useLongMemory) {
+    public DragonVanillaTaskAttackMelee(int durationMinIn, int durationMaxIn, double speedIn, boolean useLongMemory) {
         super(ImmutableMap.of(
 
         ), durationMinIn, durationMaxIn);

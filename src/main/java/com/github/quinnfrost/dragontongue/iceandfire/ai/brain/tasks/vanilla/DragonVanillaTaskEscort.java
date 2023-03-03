@@ -1,19 +1,15 @@
-package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks;
+package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks.vanilla;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.google.common.collect.ImmutableMap;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.server.ServerWorld;
 
-import java.util.Map;
-
-public class DragonTaskEscort extends Task<EntityDragonBase> {
+public class DragonVanillaTaskEscort extends Task<EntityDragonBase> {
     private BlockPos previousPosition;
     private final float maxRange = 2000F;
-    public DragonTaskEscort(int durationMinIn, int durationMaxIn) {
+    public DragonVanillaTaskEscort(int durationMinIn, int durationMaxIn) {
         super(ImmutableMap.of(
 
         ), durationMinIn, durationMaxIn);

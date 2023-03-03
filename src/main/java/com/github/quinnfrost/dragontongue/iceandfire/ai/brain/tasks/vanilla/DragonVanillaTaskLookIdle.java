@@ -1,4 +1,4 @@
-package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks;
+package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks.vanilla;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.google.common.collect.ImmutableMap;
@@ -6,23 +6,21 @@ import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPosWrapper;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.server.ServerWorld;
 
-public class DragonTaskLookIdle extends Task<EntityDragonBase> {
+public class DragonVanillaTaskLookIdle extends Task<EntityDragonBase> {
     private double lookX;
     private double lookZ;
     private int idleTime;
-    public DragonTaskLookIdle(int durationMinIn, int durationMaxIn) {
+    public DragonVanillaTaskLookIdle(int durationMinIn, int durationMaxIn) {
         super(ImmutableMap.of(
-                MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.VALUE_ABSENT
-        ), durationMinIn, durationMaxIn);
+
+        ), 60, 60);
     }
-    public DragonTaskLookIdle() {
+    public DragonVanillaTaskLookIdle() {
         this(60, 60);
     }
-
     @Override
     protected boolean shouldExecute(ServerWorld worldIn, EntityDragonBase owner) {
         if (!owner.canMove() || owner.getAnimation() == EntityDragonBase.ANIMATION_SHAKEPREY || owner.isFuelingForge()) {
@@ -53,6 +51,7 @@ public class DragonTaskLookIdle extends Task<EntityDragonBase> {
             --this.idleTime;
         }
         BlockPos lookPos = new BlockPos(owner.getPosX() + this.lookX, owner.getPosY() + owner.getEyeHeight(), owner.getPosZ() + this.lookZ);
-        owner.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, new BlockPosWrapper(lookPos));
+        owner.getLookController().setLookPosition(owner.getPosX() + this.lookX, owner.getPosY() + owner.getEyeHeight(), owner.getPosZ() + this.lookZ, owner.getHorizontalFaceSpeed(), owner.getVerticalFaceSpeed());
+//        owner.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, new BlockPosWrapper(lookPos));
     }
 }

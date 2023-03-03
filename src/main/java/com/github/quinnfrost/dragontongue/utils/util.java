@@ -88,7 +88,7 @@ public class util {
             return false;
         }
     }
-    //! Not usable
+
     public static boolean shouldAttack(@Nullable LivingEntity attacker, @Nullable LivingEntity target, double checkDistance) {
         if (attacker == null || target == null) {
             return false;
@@ -285,6 +285,7 @@ public class util {
         double targetZ = pos.getZ();
 
         AxisAlignedBB axisAlignedBB = new AxisAlignedBB(targetX,targetY,targetZ,targetX,targetY,targetZ).grow(accuracy == null ? entity.getBoundingBox().getAverageEdgeLength() : accuracy);
+//        AxisAlignedBB axisAlignedBB = new AxisAlignedBB(targetX,targetY,targetZ,targetX,targetY,targetZ).grow(accuracy == null ? (float) Math.sqrt(2f) : accuracy);
         if (axisAlignedBB.intersects(entity.getBoundingBox())) {
             return true;
         } else {

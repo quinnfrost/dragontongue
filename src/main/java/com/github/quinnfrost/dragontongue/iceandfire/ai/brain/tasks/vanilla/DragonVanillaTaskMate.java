@@ -1,4 +1,4 @@
-package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks;
+package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks.vanilla;
 
 import com.github.alexthe666.iceandfire.block.IafBlockRegistry;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
@@ -7,26 +7,22 @@ import com.google.common.collect.ImmutableMap;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.material.Material;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.entity.item.ExperienceOrbEntity;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.GameRules;
-import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
-public class DragonTaskMate extends Task<EntityDragonBase> {
+public class DragonVanillaTaskMate extends Task<EntityDragonBase> {
     private static final BlockState NEST = IafBlockRegistry.NEST.getDefaultState();
     int spawnBabyDelay;
     double moveSpeed;
     private EntityDragonBase targetMate;
-    public DragonTaskMate(int durationMinIn, int durationMaxIn, double speedIn) {
+    public DragonVanillaTaskMate(int durationMinIn, int durationMaxIn, double speedIn) {
         super(ImmutableMap.of(
 
         ), durationMinIn, durationMaxIn);

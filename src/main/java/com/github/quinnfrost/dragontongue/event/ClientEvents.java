@@ -153,7 +153,7 @@ public class ClientEvents {
         if (player.isCreative() || player.isSpectator()) {
             event.setDensity(0f);
             event.setCanceled(true);
-        } else if (util.canSwimInLava(player)) {
+        } else if (player.isInLava() && util.canSwimInLava(player)) {
             event.setDensity(0.03f);
             event.setCanceled(true);
         }
@@ -161,12 +161,16 @@ public class ClientEvents {
 
     @SubscribeEvent
     public static void renderOverlay(RenderBlockOverlayEvent event) {
+        ClientPlayerEntity player = Minecraft.getInstance().player;
+        if (player == null) {
+            return;
+        }
         if (event.getOverlayType() != RenderBlockOverlayEvent.OverlayType.FIRE) {
             return;
         }
         if (event.getPlayer().isCreative()) {
             event.setCanceled(true);
-        } else if (util.canSwimInLava(event.getPlayer())) {
+        } else if (player.isInLava() && util.canSwimInLava(event.getPlayer())) {
             event.getMatrixStack().translate(0, -0.25, 0);
         }
     }

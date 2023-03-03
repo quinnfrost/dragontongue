@@ -32,5 +32,7 @@ public interface IEntityDragonAccess {
     int getFlightChancePerTick$invoke();
     @Invoker("isIceInWater")
     boolean isIceInWater$invoke();
+    @Invoker("isPlayingAttackAnimation")
+    boolean isPlayingAttackAnimation$invoke();
 
 }

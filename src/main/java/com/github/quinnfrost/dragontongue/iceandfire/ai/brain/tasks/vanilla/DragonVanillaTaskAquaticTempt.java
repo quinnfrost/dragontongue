@@ -1,10 +1,8 @@
-package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks;
+package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks.vanilla;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.task.Task;
@@ -13,10 +11,9 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.server.ServerWorld;
 
-import java.util.Map;
 import java.util.Set;
 
-public class DragonTaskAquaticTempt extends Task<EntityDragonBase> {
+public class DragonVanillaTaskAquaticTempt extends Task<EntityDragonBase> {
     private final double speed;
     private final Set<Item> temptItem;
     private final boolean scaredByPlayerMovement;
@@ -29,13 +26,13 @@ public class DragonTaskAquaticTempt extends Task<EntityDragonBase> {
     private int delayTemptCounter;
     private boolean isRunning;
 
-    public DragonTaskAquaticTempt(double speedIn, Item temptItemIn, boolean scaredByPlayerMovementIn) {
+    public DragonVanillaTaskAquaticTempt(double speedIn, Item temptItemIn, boolean scaredByPlayerMovementIn) {
         this(60, 60, speedIn, scaredByPlayerMovementIn, Sets.newHashSet(temptItemIn));
     }
 
-    public DragonTaskAquaticTempt(int durationMinIn, int durationMaxIn, double speedIn, boolean scaredByPlayerMovementIn, Set<Item> temptItemIn) {
+    public DragonVanillaTaskAquaticTempt(int durationMinIn, int durationMaxIn, double speedIn, boolean scaredByPlayerMovementIn, Set<Item> temptItemIn) {
         super(ImmutableMap.of(
-                MemoryModuleType.NEAREST_VISIBLE_PLAYER, MemoryModuleStatus.VALUE_PRESENT
+
         ), durationMinIn, durationMaxIn);
         this.speed = speedIn;
         this.temptItem = temptItemIn;

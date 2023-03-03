@@ -106,7 +106,14 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
         if (dragon.getAttackTarget() != null && dragon.getAttackTarget().isAlive()) {
             flightToAttackTarget();
 //
-        } else if (finalFlightTarget == null || (cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.NONE && dragon.getDistanceSq(currentFlightTarget.x, currentFlightTarget.y, currentFlightTarget.z) < 4) || !(dragon.world.isAirBlock(new BlockPos(finalFlightTarget)) || dragon.world.getBlockState(new BlockPos(finalFlightTarget).up()).getMaterial().isLiquid()) && (dragon.isHovering() || dragon.isFlying()) || dragon.getCommand() == 2 && dragon.shouldTPtoOwner()) {
+        } else if (finalFlightTarget == null ||
+                (cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.NONE
+                        && dragon.getDistanceSq(currentFlightTarget.x, currentFlightTarget.y, currentFlightTarget.z) < 4)
+                || !(dragon.world.isAirBlock(new BlockPos(finalFlightTarget))
+                        || dragon.world.getBlockState(new BlockPos(finalFlightTarget).up()).getMaterial().isLiquid())
+                && (dragon.isHovering() || dragon.isFlying())
+                || dragon.getCommand() == 2 && dragon.shouldTPtoOwner()
+        ) {
             flightToNewPosition();
         }
 
@@ -160,7 +167,7 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
             viewBlock = upPos;
 
         } else if (viewBlock == null) {
-            viewBlock = IafDragonFlightUtil.getBlockInView(dragon);
+//            viewBlock = IafDragonFlightUtil.getBlockInView(dragon);
         }
         if (viewBlock != null) {
             setFlightTarget(new Vector3d(viewBlock.getX() + 0.5, viewBlock.getY() + 0.5, viewBlock.getZ() + 0.5));

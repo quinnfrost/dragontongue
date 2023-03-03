@@ -15,13 +15,16 @@ import net.minecraft.world.server.ServerWorld;
  */
 public class DragonBehaviorLook extends Task<EntityDragonBase> {
     /**
-     * @param durationMin The duration is the period of grace for the task to run, when the {@link Task#shouldContinueExecuting(ServerWorld, LivingEntity, long)} criteria is meet while the {@link Task#shouldExecute(ServerWorld, LivingEntity)} doesn't. This is the lower boundary.
-     * @param durationMax The maximum period of grace. The actual period of grace is a random number between the two.
+     * @param durationMin
+     * @param durationMax
      */
     public DragonBehaviorLook(int durationMin, int durationMax) {
         super(ImmutableMap.of(
                 MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.VALUE_PRESENT
         ), durationMin, durationMax);
+    }
+    public DragonBehaviorLook() {
+        this(60,60);
     }
 
     @Override
@@ -37,13 +40,18 @@ public class DragonBehaviorLook extends Task<EntityDragonBase> {
     }
 
     @Override
-    protected void startExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
-        super.startExecuting(worldIn, entityIn, gameTimeIn);
+    protected void resetTask(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+        super.resetTask(worldIn, entityIn, gameTimeIn);
     }
 
     @Override
-    protected void resetTask(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
-        entityIn.getBrain().removeMemory(MemoryModuleType.LOOK_TARGET);
+    protected boolean isTimedOut(long gameTime) {
+        return false;
+    }
+
+    @Override
+    protected void startExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+
     }
 
     @Override

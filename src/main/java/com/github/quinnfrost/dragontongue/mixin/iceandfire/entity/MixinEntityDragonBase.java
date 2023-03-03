@@ -165,49 +165,72 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     @Shadow
     public abstract boolean hasFlightClearance();
 
-    @Shadow protected int flyHovering;
-    @Shadow protected int fireTicks;
-    @Shadow public float sleepProgress;
-    @Shadow public static Animation ANIMATION_SHAKEPREY;
+    @Shadow
+    protected int flyHovering;
+    @Shadow
+    protected int fireTicks;
+    @Shadow
+    public float sleepProgress;
+    @Shadow
+    public static Animation ANIMATION_SHAKEPREY;
 
-    @Shadow public abstract int getArmorOrdinal(ItemStack stack);
+    @Shadow
+    public abstract int getArmorOrdinal(ItemStack stack);
 
-    @Shadow public abstract boolean useFlyingPathFinder();
+    @Shadow
+    public abstract boolean useFlyingPathFinder();
 
-    @Shadow public String prevArmorResLoc;
-    @Shadow public String armorResLoc;
-    @Shadow public DragonType dragonType;
-    @Shadow public double maximumHealth;
-    @Shadow public double minimumHealth;
-    @Shadow public double minimumDamage;
-    @Shadow public double maximumDamage;
-    @Shadow public double maximumSpeed;
-    @Shadow public double maximumArmor;
-    @Shadow public double minimumSpeed;
-    @Shadow public double minimumArmor;
-    @Shadow @Final private static UUID ARMOR_MODIFIER_UUID;
+    @Shadow
+    public String prevArmorResLoc;
+    @Shadow
+    public String armorResLoc;
+    @Shadow
+    public DragonType dragonType;
+    @Shadow
+    public double maximumHealth;
+    @Shadow
+    public double minimumHealth;
+    @Shadow
+    public double minimumDamage;
+    @Shadow
+    public double maximumDamage;
+    @Shadow
+    public double maximumSpeed;
+    @Shadow
+    public double maximumArmor;
+    @Shadow
+    public double minimumSpeed;
+    @Shadow
+    public double minimumArmor;
+    @Shadow
+    @Final
+    private static UUID ARMOR_MODIFIER_UUID;
 
-    @Shadow protected abstract double calculateArmorModifier();
+    @Shadow
+    protected abstract double calculateArmorModifier();
 
-    @Shadow public abstract void breakBlock();
+    @Shadow
+    public abstract void breakBlock();
 
-    @Shadow public abstract BlockPos getHomePosition();
+    @Shadow
+    public abstract BlockPos getHomePosition();
 
-    @Shadow public abstract int getAgeInDays();
+    @Shadow
+    public abstract int getAgeInDays();
 
+    @Shadow
+    public boolean hasHomePosition;
     public ICapabilityInfoHolder cap = this.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(this));
 
     private static final ImmutableList<MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(
-//            RegistryBrains.MEMORY_TEST,
+            MemoryModuleType.WALK_TARGET,
 
             MemoryModuleType.HOME,
-            MemoryModuleType.LOOK_TARGET,
             MemoryModuleType.MOBS,
             MemoryModuleType.VISIBLE_MOBS,
             MemoryModuleType.NEAREST_VISIBLE_PLAYER,
             MemoryModuleType.NEAREST_VISIBLE_TARGETABLE_PLAYER,
             MemoryModuleType.LOOK_TARGET,
-            MemoryModuleType.WALK_TARGET,
             MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
             MemoryModuleType.PATH,
             MemoryModuleType.ATTACK_TARGET,
@@ -245,11 +268,18 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     }
 
     @Override
+    public boolean isMovementBlocked() {
+        return this.getHealth() <= 0.0F || this.isModelDead() || this.isPassenger();
+    }
+
+    @Override
     protected void updateAITasks() {
         super.updateAITasks();
         breakBlock();
 
-        this.getBrain().setMemory(MemoryModuleType.HOME, GlobalPos.getPosition(this.world.getDimensionKey(), this.getHomePosition()));
+        if (this.hasHomePosition) {
+            this.getBrain().setMemory(MemoryModuleType.HOME, GlobalPos.getPosition(this.world.getDimensionKey(), this.getHomePosition()));
+        }
 
         this.world.getProfiler().startSection("dragonBrain");
         this.getBrain().tick((ServerWorld) this.world, (EntityDragonBase) (Object) this);
@@ -257,12 +287,13 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     }
 
     public Brain<EntityDragonBase> getBrain() {
-        return (Brain<EntityDragonBase>)super.getBrain();
+        return (Brain<EntityDragonBase>) super.getBrain();
     }
 
     protected Brain.BrainCodec<EntityDragonBase> getBrainCodec() {
         return Brain.createCodec(MEMORY_TYPES, SENSOR_TYPES);
     }
+
     @Override
     protected Brain<?> createBrain(Dynamic<?> dynamicIn) {
         Brain<EntityDragonBase> brain = this.getBrainCodec().deserialize(dynamicIn);
@@ -276,13 +307,15 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
         // Core activity should be the very basic activity, handles the basic movement when the specific memory item is set
         dragonBrain.registerActivity(Activity.CORE, RegistryBrains.core());
         // Other activities should only set correspond memory item base on condition
-        dragonBrain.registerActivity(RegistryBrains.ACTIVITY_DRAGON_DEFAULT, RegistryBrains.idle());
+//        dragonBrain.registerActivity(RegistryBrains.ACTIVITY_DRAGON_DEFAULT, RegistryBrains.vanilla());
+        dragonBrain.registerActivity(RegistryBrains.ACTIVITY_IDLE, RegistryBrains.idle());
+        dragonBrain.registerActivity(RegistryBrains.ACTIVITY_ATTACK, RegistryBrains.attack());
 
         dragonBrain.setPersistentActivities(ImmutableSet.of(Activity.CORE));
-        dragonBrain.setFallbackActivity(RegistryBrains.ACTIVITY_DRAGON_DEFAULT);
+        dragonBrain.setFallbackActivity(RegistryBrains.ACTIVITY_IDLE);
         dragonBrain.switchToFallbackActivity();
 
-//        dragonBrain.updateActivity(this.world.getDayTime(), this.world.getGameTime());
+        dragonBrain.updateActivity(this.world.getDayTime(), this.world.getGameTime());
     }
 
     @Override
@@ -312,6 +345,7 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
         cir.setReturnValue(head$bakeAttributes());
         cir.cancel();
     }
+
     private static AttributeModifierMap.MutableAttribute head$bakeAttributes() {
         return MobEntity.func_233666_p_()
                 //HEALTH
@@ -360,24 +394,24 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 //        this.goalSelector.addGoal(8, new DragonAIWatchClosest(this, LivingEntity.class, 6.0F));
 //        this.goalSelector.addGoal(8, new DragonAILookIdle((EntityDragonBase) (Object) this));
 
-        this.targetSelector.addGoal(1, new OwnerHurtTargetGoal(this));
-        this.targetSelector.addGoal(2, new OwnerHurtByTargetGoal(this));
-        this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(4, new DragonAITargetNonTamed((EntityDragonBase) (Object) this, LivingEntity.class, false, new Predicate<LivingEntity>() {
-            @Override
-            public boolean apply(@Nullable LivingEntity entity) {
-//                DragonTongue.LOGGER.debug("Getting inner class instance: " + this);
-//                DragonTongue.LOGGER.debug("Getting outer class instance: " + MixinEntityDragonBase.this);
-                return (!(entity instanceof PlayerEntity) || !((PlayerEntity) entity).isCreative()) && DragonUtils.canHostilesTarget(entity) && entity.getType() != MixinEntityDragonBase.this.getType() && MixinEntityDragonBase.this.shouldTarget(entity) && DragonUtils.isAlive(entity);
-            }
-        }));
-        this.targetSelector.addGoal(5, new DragonAITarget((EntityDragonBase) (Object) this, LivingEntity.class, true, new Predicate<LivingEntity>() {
-            @Override
-            public boolean apply(@Nullable LivingEntity entity) {
-                return entity instanceof LivingEntity && DragonUtils.canHostilesTarget(entity) && entity.getType() != MixinEntityDragonBase.this.getType() && MixinEntityDragonBase.this.shouldTarget(entity) && DragonUtils.isAlive(entity);
-            }
-        }));
-        this.targetSelector.addGoal(6, new DragonAITargetItems((EntityDragonBase) (Object) this, false));
+//        this.targetSelector.addGoal(1, new OwnerHurtTargetGoal(this));
+//        this.targetSelector.addGoal(2, new OwnerHurtByTargetGoal(this));
+//        this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
+//        this.targetSelector.addGoal(4, new DragonAITargetNonTamed((EntityDragonBase) (Object) this, LivingEntity.class, false, new Predicate<LivingEntity>() {
+//            @Override
+//            public boolean apply(@Nullable LivingEntity entity) {
+////                DragonTongue.LOGGER.debug("Getting inner class instance: " + this);
+////                DragonTongue.LOGGER.debug("Getting outer class instance: " + MixinEntityDragonBase.this);
+//                return (!(entity instanceof PlayerEntity) || !((PlayerEntity) entity).isCreative()) && DragonUtils.canHostilesTarget(entity) && entity.getType() != MixinEntityDragonBase.this.getType() && MixinEntityDragonBase.this.shouldTarget(entity) && DragonUtils.isAlive(entity);
+//            }
+//        }));
+//        this.targetSelector.addGoal(5, new DragonAITarget((EntityDragonBase) (Object) this, LivingEntity.class, true, new Predicate<LivingEntity>() {
+//            @Override
+//            public boolean apply(@Nullable LivingEntity entity) {
+//                return entity instanceof LivingEntity && DragonUtils.canHostilesTarget(entity) && entity.getType() != MixinEntityDragonBase.this.getType() && MixinEntityDragonBase.this.shouldTarget(entity) && DragonUtils.isAlive(entity);
+//            }
+//        }));
+//        this.targetSelector.addGoal(6, new DragonAITargetItems((EntityDragonBase) (Object) this, false));
     }
 
     @Inject(
@@ -440,6 +474,7 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 //        head$updateAITasks();
 //        ci.cancel();
     }
+
     protected void head$updateAITasks() {
         super.updateAITasks();
         breakBlock();
@@ -474,6 +509,7 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
         head$updateAttributes();
         ci.cancel();
     }
+
     protected void head$updateAttributes() {
         prevArmorResLoc = armorResLoc;
         final int armorHead = this.getArmorOrdinal(this.getItemStackFromSlot(EquipmentSlotType.HEAD));
@@ -511,6 +547,7 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
         cir.setReturnValue(head$calculateArmorModifier());
         cir.cancel();
     }
+
     private double head$calculateArmorModifier() {
         double val = 1D;
         final EquipmentSlotType[] slots = {EquipmentSlotType.HEAD, EquipmentSlotType.CHEST, EquipmentSlotType.LEGS, EquipmentSlotType.FEET};

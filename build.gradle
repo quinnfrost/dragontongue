@@ -178,7 +178,7 @@ dependencies {
 //    implementation fg.deobf("curse.maven:iceandfire-264231:3948661")
 //    compileOnly "curse.maven:citadel-331936:3441030"
 //    runtimeOnly files("..\\Ice_and_Fire\\build\\libs\\iceandfire-2.1.12-1.16.5.jar")
-    compileOnly project(":Ice_and_Fire")
+//    compileOnly project(":Ice_and_Fire")
     implementation fg.deobf("file:iceandfire:2.1.12-1.16.5")
 
 //    compileOnly fg.deobf("curse.maven:iceandfire-264231:3948661")

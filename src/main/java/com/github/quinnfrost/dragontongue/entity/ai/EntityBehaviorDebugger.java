@@ -7,6 +7,7 @@ import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
+import com.github.quinnfrost.dragontongue.iceandfire.ai.brain.RegistryBrains;
 import com.github.quinnfrost.dragontongue.message.MessageClientDisplay;
 import com.github.quinnfrost.dragontongue.message.MessageClientDraw;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
@@ -51,13 +52,23 @@ public class EntityBehaviorDebugger {
         List<String> stringList = new ArrayList<>();
         try {
             if (brain.hasMemory(MemoryModuleType.WALK_TARGET)) {
-                brain.getMemory(MemoryModuleType.WALK_TARGET).ifPresent(walkTarget -> {
-                    stringList.add("WalkTarget: " + formatBlockPos(walkTarget.getTarget().getBlockPos()));
+                brain.getMemory(MemoryModuleType.WALK_TARGET).ifPresent(target -> {
+                    stringList.add("Destination: " + formatBlockPos(target.getTarget().getBlockPos()));
+                });
+            }
+            if (brain.hasMemory(MemoryModuleType.ATTACK_TARGET)) {
+                brain.getMemory(MemoryModuleType.ATTACK_TARGET).ifPresent(target -> {
+                    stringList.add("AttackTarget: " + target.getName().getUnformattedComponentText());
                 });
             }
             if (brain.hasMemory(MemoryModuleType.LOOK_TARGET)) {
                 brain.getMemory(MemoryModuleType.LOOK_TARGET).ifPresent(iPosWrapper -> {
                     stringList.add("LookTarget: " + formatBlockPos(iPosWrapper.getBlockPos()));
+                });
+            }
+            if (brain.hasMemory(MemoryModuleType.VISIBLE_MOBS)) {
+                brain.getMemory(MemoryModuleType.VISIBLE_MOBS).ifPresent(entityList -> {
+                    stringList.add("VisibleMobs: " + entityList);
                 });
             }
             return stringList;
@@ -179,6 +190,27 @@ public class EntityBehaviorDebugger {
                                 mobEntity.getPositionVec()
                         ), (ServerPlayerEntity) DragonTongue.debugger);
                     }
+                }
+            }
+
+            MobEntity mobEntity = DragonTongue.debugTarget;
+            if (!DragonTongue.isIafPresent) {
+                if (mobEntity.getNavigator().getTargetPos() != null) {
+                    RegistryMessages.sendToClient(new MessageClientDraw(
+                            mobEntity.getEntityId(), Vector3d.copyCentered(mobEntity.getNavigator().getTargetPos()),
+                            mobEntity.getPositionVec()
+                    ), (ServerPlayerEntity) DragonTongue.debugger);
+                }
+            } else {
+                if (IafHelperClass.isDragon(mobEntity)) {
+                    IafHelperClass.drawDragonFlightDestination(mobEntity);
+                }
+                BlockPos pos = IafHelperClass.getReachTarget(mobEntity);
+                if (pos != null) {
+                    RegistryMessages.sendToClient(new MessageClientDraw(
+                            mobEntity.getEntityId(), Vector3d.copyCentered(pos),
+                            mobEntity.getPositionVec()
+                    ), (ServerPlayerEntity) DragonTongue.debugger);
                 }
             }
         }

@@ -1,4 +1,4 @@
-package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks;
+package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks.vanilla;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.google.common.collect.ImmutableMap;
@@ -6,8 +6,8 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.world.server.ServerWorld;
 
-public class DragonTaskSit extends Task<EntityDragonBase> {
-    public DragonTaskSit(int durationMinIn, int durationMaxIn) {
+public class DragonVanillaTaskSit extends Task<EntityDragonBase> {
+    public DragonVanillaTaskSit(int durationMinIn, int durationMaxIn) {
         super(ImmutableMap.of(
 
         ), durationMinIn, durationMaxIn);

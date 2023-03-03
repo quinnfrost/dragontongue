@@ -1,18 +1,14 @@
-package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks;
+package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks.vanilla;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.google.common.collect.ImmutableMap;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.server.ServerWorld;
 
-import java.util.Map;
-
-public class DragonTaskReturnToRoost extends Task<EntityDragonBase> {
-    public DragonTaskReturnToRoost(int durationMinIn, int durationMaxIn) {
+public class DragonVanillaTaskReturnToRoost extends Task<EntityDragonBase> {
+    public DragonVanillaTaskReturnToRoost(int durationMinIn, int durationMaxIn) {
         super(ImmutableMap.of(
 
         ), durationMinIn, durationMaxIn);

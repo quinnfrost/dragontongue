@@ -48,6 +48,38 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
     }
 
     @Override
+    public void updateDragonAttack() {
+        PlayerEntity ridingPlayer = dragon.getRidingPlayer();
+        if (iEntityDragon.isPlayingAttackAnimation$invoke() && dragon.getAttackTarget() != null && dragon.canEntityBeSeen(dragon.getAttackTarget())) {
+            LivingEntity target = dragon.getAttackTarget();
+            final double dist = dragon.getDistance(target);
+            if (dist < dragon.getRenderSize() * 0.2574 * 2 + 2) {
+                if (dragon.getAnimation() == EntityDragonBase.ANIMATION_BITE) {
+                    if (dragon.getAnimationTick() > 15 && dragon.getAnimationTick() < 25) {
+                        attackTarget(target, ridingPlayer, (int) dragon.getAttribute(Attributes.ATTACK_DAMAGE).getValue());
+                        dragon.usingGroundAttack = dragon.getRNG().nextBoolean();
+                        dragon.randomizeAttacks();
+                    }
+                } else if (dragon.getAnimation() == EntityDragonBase.ANIMATION_TAILWHACK) {
+                    if (dragon.getAnimationTick() > 20 && dragon.getAnimationTick() < 30) {
+                        attackTarget(target, ridingPlayer, (int) dragon.getAttribute(Attributes.ATTACK_DAMAGE).getValue());
+                        target.applyKnockback( dragon.getDragonStage() * 0.6F, MathHelper.sin(dragon.rotationYaw * 0.017453292F), -MathHelper.cos(dragon.rotationYaw * 0.017453292F));
+                        dragon.usingGroundAttack = dragon.getRNG().nextBoolean();
+                        dragon.randomizeAttacks();
+                    }
+                } else if (dragon.getAnimation() == EntityDragonBase.ANIMATION_WINGBLAST) {
+                    if ((dragon.getAnimationTick() == 15 || dragon.getAnimationTick() == 25 || dragon.getAnimationTick() == 35)) {
+                        attackTarget(target, ridingPlayer, (int) dragon.getAttribute(Attributes.ATTACK_DAMAGE).getValue());
+                        target.applyKnockback( dragon.getDragonStage() * 0.6F, MathHelper.sin(dragon.rotationYaw * 0.017453292F), -MathHelper.cos(dragon.rotationYaw * 0.017453292F));
+                        dragon.usingGroundAttack = dragon.getRNG().nextBoolean();
+                        dragon.randomizeAttacks();
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
     public void updateDragonServer() {
         ICapabilityInfoHolder cap = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
         LivingEntity attackTarget = dragon.getAttackTarget();
@@ -103,7 +135,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
 
         $updateDragonServer();
 
-        // At IafDragonLogic#320, dragon takes random chance to flight if she is idle on ground
+        // At IafDragonLogic#320, dragon takes random chance to flight if she is vanilla on ground
         if (movementType != EnumCommandSettingType.MovementType.AIR && cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.STAY) {
             // Prevent flying
             dragon.setHovering(false);
@@ -575,18 +607,18 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             dragon.setHovering(false);
         }
         // When dragon is landed, take random chances to take flight, or, emergency take off when below the world
-        if (!dragon.isFlying() && !dragon.isHovering()) {
-            if (dragon.isAllowedToTriggerFlight() || dragon.getPosY() < -1) {
-                if (dragon.getRNG().nextInt(iEntityDragon.getFlightChancePerTick$invoke()) == 0 || dragon.getPosY() < -1 || dragon.getAttackTarget() != null && Math.abs(dragon.getAttackTarget().getPosY() - dragon.getPosY()) > 5 || dragon.isInWater() && !iEntityDragon.isIceInWater$invoke()) {
-                    dragon.setHovering(true);
-                    dragon.setQueuedToSit(false);
-                    dragon.setSitting(false);
-                    iEntityDragon.setFlyHovering(0);
-                    dragon.hoverTicks = 0;
-                    dragon.flyTicks = 0;
-                }
-            }
-        }
+//        if (!dragon.isFlying() && !dragon.isHovering()) {
+//            if (dragon.isAllowedToTriggerFlight() || dragon.getPosY() < -1) {
+//                if (dragon.getRNG().nextInt(iEntityDragon.getFlightChancePerTick$invoke()) == 0 || dragon.getPosY() < -1 || dragon.getAttackTarget() != null && Math.abs(dragon.getAttackTarget().getPosY() - dragon.getPosY()) > 5 || dragon.isInWater() && !iEntityDragon.isIceInWater$invoke()) {
+//                    dragon.setHovering(true);
+//                    dragon.setQueuedToSit(false);
+//                    dragon.setSitting(false);
+//                    iEntityDragon.setFlyHovering(0);
+//                    dragon.hoverTicks = 0;
+//                    dragon.flyTicks = 0;
+//                }
+//            }
+//        }
         // Conditions that attack target should be invalidated
         if (dragon.getAttackTarget() != null) {
             // When rider climbs up

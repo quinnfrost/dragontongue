@@ -54,6 +54,7 @@ public class IafDragonFlightUtil {
     }
 
     public static BlockPos getBlockInView(EntityDragonBase dragon) {
+        // Get flight level
         int preferredFlightHeight = getPreferredFlightLevel(dragon);
 
         float radius = 12 * (0.7F * dragon.getRenderSize() / 3);
@@ -66,6 +67,7 @@ public class IafDragonFlightUtil {
             int distFromGround = (int) dragon.getPosY() - ground.getY();
             for (int i = 0; i < 10; i++) {
                 BlockPos homePos = dragon.homePos.getPosition();
+                // Get a random position
                 BlockPos pos = new BlockPos(
                         homePos.getX() + dragon.getRNG().nextInt(IafConfig.dragonWanderFromHomeDistance * 2) - IafConfig.dragonWanderFromHomeDistance,
                         (distFromGround > preferredFlightHeight

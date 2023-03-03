@@ -498,6 +498,9 @@ public class IafDragonBehaviorHelper {
         if (movementType == EnumCommandSettingType.MovementType.AIR) {
             return true;
         }
+        if (IafDragonBehaviorHelper.isOverAir(dragon)) {
+            return true;
+        }
         for (int i = 0; i < dragon.getDragonStage() + 1; i++) {
             if (!dragon.world.isAirBlock(blockPos.add(0, -i, 0))) {
                 return false;
