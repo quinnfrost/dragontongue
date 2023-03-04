@@ -58,7 +58,7 @@ public class IafServerEvent {
         BlockPos destroyCenter = new BlockPos(event.getTargetX(), event.getTargetY(), event.getTargetZ());
         World world = destroyerDragon.world;
         ICapabilityInfoHolder cap = destroyerDragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(destroyerDragon));
-        if (!IafDragonBehaviorHelper.shouldDestroy(destroyerDragon, destroyCenter)) {
+        if (!IafDragonBehaviorHelper.shouldDestroy(destroyerDragon, destroyCenter) || destroyerDragon instanceof EntityIceDragon && ((EntityIceDragon) destroyerDragon).isInMaterialWater()) {
             // From IafDragonDestructionManager#destroyAreaFire
             DamageSource source = destroyerDragon.getRidingPlayer() != null ?
                     IafDamageRegistry.causeIndirectDragonIceDamage(destroyerDragon, destroyerDragon.getRidingPlayer()) :
@@ -182,14 +182,14 @@ public class IafServerEvent {
                     event.setCanceled(true);
                 } else if (itemStackMainhand.isEmpty() || itemStackOffhand.isEmpty()) {
                     // Hijack empty hand right click dragon in sneaking
-                    if (event.getHand() == event.getPlayer().getActiveHand() && playerEntity.getDistance(dragon) < 6) {
-                        RegistryMessages.sendToClient(new MessageClientSetReferenceDragon(
-                                dragon.getEntityId()
-                        ), (ServerPlayerEntity) playerEntity);
-                        ContainerDragon.openGui(playerEntity, dragon);
-                    }
-                    event.setCancellationResult(ActionResultType.SUCCESS);
-                    event.setCanceled(true);
+//                    if (event.getHand() == event.getPlayer().getActiveHand() && playerEntity.getDistance(dragon) < 6) {
+//                        RegistryMessages.sendToClient(new MessageClientSetReferenceDragon(
+//                                dragon.getEntityId()
+//                        ), (ServerPlayerEntity) playerEntity);
+//                        ContainerDragon.openGui(playerEntity, dragon);
+//                    }
+//                    event.setCancellationResult(ActionResultType.SUCCESS);
+//                    event.setCanceled(true);
                 }
             }
 

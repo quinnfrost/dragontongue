@@ -400,8 +400,8 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
         this.goalSelector.addGoal(8, new DragonAIWatchClosest(this, LivingEntity.class, 6.0F));
         this.goalSelector.addGoal(8, new DragonAILookIdle((EntityDragonBase) (Object) this));
 
-        this.targetSelector.addGoal(1, new OwnerHurtTargetGoal(this));
-        this.targetSelector.addGoal(2, new OwnerHurtByTargetGoal(this));
+        this.targetSelector.addGoal(1, new DragonAIOwnerTarget(this));
+        this.targetSelector.addGoal(2, new DragonAIDefendOwner(this));
         this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(4, new DragonAITargetNonTamed<>((EntityDragonBase) (Object) this, LivingEntity.class, false, new Predicate<LivingEntity>() {
             @Override
@@ -497,8 +497,8 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
             cancellable = true
     )
     public void $openGUI(PlayerEntity playerEntity, CallbackInfo ci) {
-        roadblock$openGUI(playerEntity);
-        ci.cancel();
+//        roadblock$openGUI(playerEntity);
+//        ci.cancel();
     }
 
     public void roadblock$openGUI(PlayerEntity playerEntity) {
@@ -596,7 +596,7 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     public void roadblock$breakBlock() {
         if (this.blockBreakCounter > 0 || IafConfig.dragonBreakBlockCooldown == 0) {
             --this.blockBreakCounter;
-            if (!this.isIceInWater() && (this.blockBreakCounter == 0 || IafConfig.dragonBreakBlockCooldown == 0) && net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.world, this)) {
+            if ((this.blockBreakCounter == 0 || IafConfig.dragonBreakBlockCooldown == 0) && net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.world, this)) {
                 if (IafConfig.dragonGriefing != 2 && (!this.isTamed() || IafConfig.tamedDragonGriefing)) {
                     if (!isModelDead() && this.getDragonStage() >= 3 && (this.canMove() || this.getControllingPassenger() != null)) {
                         final int bounds = 1;//(int)Math.ceil(this.getRenderSize() * 0.1);

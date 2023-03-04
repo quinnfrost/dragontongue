@@ -281,7 +281,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
 //                && dragon.getDistanceSquared(Vector3d.copyCentered(dragon.getHomePosition())) < dragon.getWidth() * 12
         ) {
             if (navigator.noPath() && dragon.world.getGameTime() - navigator.pathStartTime < 10) {
-                if (dragon.getPositionVec().distanceTo(Vector3d.copyCenteredHorizontally(dragon.getHomePosition())) < 20) {
+                if (dragon.getPositionVec().distanceTo(Vector3d.copyCenteredHorizontally(dragon.getHomePosition())) < 12) {
                     if (!dragon.isInWater() && dragon.isOnGround() && !dragon.isFlying() && !dragon.isHovering() && dragon.getAttackTarget() == null) {
                         dragon.lookingForRoostAIFlag = false;
                         dragon.setQueuedToSit(true);
@@ -609,7 +609,8 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         // When dragon is landed, take off for, random chances, when below the world, target is running far, or in water
         if (!dragon.isFlying() && !dragon.isHovering()) {
             if (dragon.isAllowedToTriggerFlight() || dragon.getPosY() < -1) {
-                if (dragon.getPosY() < -1 || dragon.getAttackTarget() != null && Math.abs(dragon.getAttackTarget().getPosY() - dragon.getPosY()) > 5 || dragon.isInWater() && !iEntityDragon.isIceInWater$invoke()) {
+                if (dragon.getRNG().nextInt(iEntityDragon.getFlightChancePerTick$invoke()) == 0 && ICapabilityInfoHolder.getCapability(dragon).getCommandStatus() == EnumCommandSettingType.CommandStatus.NONE && dragon.getCommand() == 0
+                        || dragon.getPosY() < -1 || dragon.getAttackTarget() != null && Math.abs(dragon.getAttackTarget().getPosY() - dragon.getPosY()) > 5 || dragon.isInWater() && !iEntityDragon.isIceInWater$invoke()) {
                     dragon.setHovering(true);
                     dragon.setQueuedToSit(false);
                     dragon.setSitting(false);
