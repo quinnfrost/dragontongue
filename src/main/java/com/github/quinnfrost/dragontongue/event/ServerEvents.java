@@ -152,7 +152,7 @@ public class ServerEvents {
         if (event.getEntity().world.isRemote) {
             return;
         }
-        if (DragonTongue.debugTarget != null && DragonTongue.debugger != null) {
+        if (DragonTongue.debugTarget != null && DragonTongue.debugger != null && event.getEntityLiving() == DragonTongue.debugTarget) {
             EntityBehaviorDebugger.sendDebugMessage();
             EntityBehaviorDebugger.sendDestinationMessage();
         }

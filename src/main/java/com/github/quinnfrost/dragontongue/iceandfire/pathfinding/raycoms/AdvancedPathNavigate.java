@@ -711,7 +711,7 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
             Vector3d next = this.currentPath.getVectorFromIndex(this.entity, i);
             if (Math.abs(this.entity.getPosX() - next.x) < (double) this.maxDistanceToWaypoint - Math.abs(this.entity.getPosY() - (next.y)) * 0.1
                     && Math.abs(this.entity.getPosZ() - next.z) < (double) this.maxDistanceToWaypoint - Math.abs(this.entity.getPosY() - (next.y)) * 0.1 &&
-                    Math.abs(this.entity.getPosY() - next.y) <= Math.min(Math.ceil(this.entity.getHeight() / 2.0F), Math.ceil(this.entity.getHeight() / 2.0F))) {
+                    Math.abs(this.entity.getPosY() - next.y) <= Math.max(this.entity.stepHeight, Math.ceil(this.entity.getHeight() / 2.0F))) {
                 this.currentPath.incrementPathIndex();
                 wentAhead = true;
 

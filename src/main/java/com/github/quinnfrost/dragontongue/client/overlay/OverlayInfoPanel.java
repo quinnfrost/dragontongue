@@ -30,8 +30,8 @@ public class OverlayInfoPanel extends AbstractGui {
         FontRenderer fontRender = minecraft.fontRenderer;
         Color colour = new Color(255, 255, 255, 255);
 
-        renderString(ms, bufferInfoLeft, colour, 5, 5, maxLineLength, false);
-
+//        renderString(ms, bufferInfoLeft, colour, 5, 5, maxLineLength, false);
+        renderDifference(ms);
     }
 
     public static void renderString(MatrixStack ms, List<String> content, Color color, int xOffset, int yOffset, int maxLineLength, boolean rightAlign) {

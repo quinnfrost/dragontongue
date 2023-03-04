@@ -1,5 +1,6 @@
 package com.github.quinnfrost.dragontongue.entity.ai;
 
+import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
@@ -81,6 +82,8 @@ public class EntityBehaviorDebugger {
         if (mobEntity == null) {
             return new ArrayList<>();
         }
+        mobEntity.world.getProfiler().startSection("debugString");
+
         ICapabilityInfoHolder capabilityInfoHolder = mobEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(mobEntity));
 
         String scheduleString = (mobEntity.getBrain().getSchedule() == null ? "" : mobEntity.getBrain().getSchedule().getRegistryName().getPath()) + String.format(" [%s]", (mobEntity.getBrain().getSchedule() == null ? "-" : mobEntity.getBrain().getSchedule().getScheduledActivity((int) mobEntity.world.getDayTime())));
@@ -116,6 +119,7 @@ public class EntityBehaviorDebugger {
                 String.format("%s \"%s\" [%s] (%.1f/%s)", mobEntity.getName().getString(), mobEntity.getCustomName() == null ? "-" : mobEntity.getCustomName(), mobEntity.getEntityString(), mobEntity.getHealth(), Objects.toString((mobEntity.getAttribute(Attributes.MAX_HEALTH).getValue()), "-")),
                 "Pos: " + String.format("%.5f, %.5f, %.5f ", mobEntity.getPositionVec().x, mobEntity.getPositionVec().y, mobEntity.getPositionVec().z) + String.format("[%d, %d, %d]", mobEntity.getPosition().getX(), mobEntity.getPosition().getY(), mobEntity.getPosition().getZ()),
                 "Motion: " + String.format("%.5f, %.5f, %.5f ", mobEntity.getMotion().x, mobEntity.getMotion().y, mobEntity.getMotion().z),
+                "Facing: " + String.format(" %s", formatVector(mobEntity.getLookVec())),
                 "Goals:",
                 mobEntity.goalSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString(),
                 mobEntity.targetSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString(),
@@ -143,6 +147,8 @@ public class EntityBehaviorDebugger {
             debugMsg = Stream.concat(debugMsg.stream(), additional.stream())
                     .collect(Collectors.toList());
         }
+
+        mobEntity.world.getProfiler().endSection();
 
         return debugMsg;
     }

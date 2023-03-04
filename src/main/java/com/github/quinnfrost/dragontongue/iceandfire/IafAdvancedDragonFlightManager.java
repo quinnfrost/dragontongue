@@ -166,8 +166,8 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
             }
             viewBlock = upPos;
 
-        } else if (viewBlock == null) {
-//            viewBlock = IafDragonFlightUtil.getBlockInView(dragon);
+        } else if (viewBlock == null && dragon.getCommand() == 0 && cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.NONE) {
+            viewBlock = IafDragonFlightUtil.getBlockInView(dragon);
         }
         if (viewBlock != null) {
             setFlightTarget(new Vector3d(viewBlock.getX() + 0.5, viewBlock.getY() + 0.5, viewBlock.getZ() + 0.5));

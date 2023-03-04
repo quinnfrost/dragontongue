@@ -145,10 +145,12 @@ public class IafHelperClass {
         }
 
         return Arrays.asList(
+                String.format("%.4f - %.4f - %.4f - %.4f - %.4f", dragon.renderYawOffset, dragon.rotationYaw, dragon.rotationPitch, dragon.rotationYawHead, dragon.prevRotationYawHead),
                 "Pitch: " + String.format("%.4f", dragon.getDragonPitch()),
                 "Yaw: " + String.format("%.4f", dragon.rotationYaw),
                 "PlaneDist: " + String.format("%.4f", (float) ((Math.abs(dragon.getMotion().x) + Math.abs(dragon.getMotion().z)) * 6F)),
                 "NoPath? " + dragon.getNavigator().noPath(),
+                "PathTime: " + String.valueOf(dragon.world.getGameTime() - ((IafAdvancedDragonPathNavigator) dragon.getNavigator()).pathStartTime),
                 "Flying:" + dragon.isFlying(),
                 "Hovering:" + dragon.isHovering(),
                 "Render size:" + dragon.getRenderSize() + String.format("(%.2f)", dragon.getRenderScale()),
