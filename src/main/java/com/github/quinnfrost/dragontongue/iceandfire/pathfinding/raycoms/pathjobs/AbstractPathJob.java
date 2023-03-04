@@ -1315,7 +1315,8 @@ public abstract class AbstractPathJob implements Callable<Path> {
                     return true;
                 }
 
-                if (shape.isEmpty() || shape.getEnd(Direction.Axis.Y) <= 0.1 && !isLiquid((block)) && (block.getBlock() != Blocks.SNOW || block.get(SnowBlock.LAYERS) == 1)) {
+                // TODO: I'd be cool if dragons could squash multiple snow layers when walking over them
+                if (shape.isEmpty() || shape.getEnd(Direction.Axis.Y) <= 0.125 && !isLiquid((block)) && (block.getBlock() != Blocks.SNOW || block.get(SnowBlock.LAYERS) == 1)) {
                     final PathNodeType pathType = block.getAiPathNodeType(world, pos);
                     return pathType == null || pathType.getDanger() == null;
                 }
@@ -1449,7 +1450,7 @@ public abstract class AbstractPathJob implements Callable<Path> {
         }
 
         if (blockState.getMaterial().isSolid()
-            || (blockState.getBlock() == Blocks.SNOW && blockState.get(SnowBlock.LAYERS) >= 1)
+            || (blockState.getBlock() == Blocks.SNOW && blockState.get(SnowBlock.LAYERS) > 1)
             || block instanceof CarpetBlock) {
             return SurfaceType.WALKABLE;
         }
