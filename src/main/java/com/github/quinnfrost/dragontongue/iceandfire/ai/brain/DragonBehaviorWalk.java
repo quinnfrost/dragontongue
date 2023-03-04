@@ -66,7 +66,6 @@ public class DragonBehaviorWalk extends Task<EntityDragonBase> {
     protected void resetTask(ServerWorld worldIn, EntityDragonBase dragon, long gameTimeIn) {
         this.target = null;
         dragon.getNavigator().clearPath();
-
     }
 
     @Override

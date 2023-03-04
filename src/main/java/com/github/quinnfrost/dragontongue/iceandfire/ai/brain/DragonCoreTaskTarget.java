@@ -80,8 +80,8 @@ public class DragonCoreTaskTarget extends Task<EntityDragonBase> {
 
         this.timestamp = gameTimeIn;
 
-        dragon.getBrain().setFallbackActivity(RegistryBrains.ACTIVITY_ATTACK);
-        dragon.getBrain().switchTo(RegistryBrains.ACTIVITY_ATTACK);
+//        dragon.getBrain().setFallbackActivity(RegistryBrains.ACTIVITY_ATTACK);
+//        dragon.getBrain().switchTo(RegistryBrains.ACTIVITY_ATTACK);
     }
 
     @Override

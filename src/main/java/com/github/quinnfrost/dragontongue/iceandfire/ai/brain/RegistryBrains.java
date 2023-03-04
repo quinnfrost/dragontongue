@@ -183,17 +183,14 @@ public class RegistryBrains extends Schedule {
 
                 ), MultiTask.Ordering.ORDERED, MultiTask.RunType.RUN_ONE,
                         ImmutableList.of(
-
-                        )
-                )),
-                Pair.of(10, new RunSometimesTask<>(
-                        new FirstShuffledTask<>(ImmutableMap.of(
-                                MemoryModuleType.WALK_TARGET, MemoryModuleStatus.VALUE_ABSENT
-                        ), ImmutableList.of(
-                                Pair.of(new DragonTaskGlide(1.0f), 0),
-                                Pair.of(new DragonTaskWander(1.0f), 1)
-                        )), RangedInteger.createRangedInteger(30, 60)
-                )),
+                                Pair.of(new DragonBehaviorAttack(), 0),
+                                Pair.of(new FirstShuffledTask<>(ImmutableMap.of(
+                                        MemoryModuleType.WALK_TARGET, MemoryModuleStatus.VALUE_ABSENT
+                                ), ImmutableList.of(
+                                        Pair.of(new RunSometimesTask<>(new DragonTaskGlide(1.0f), RangedInteger.createRangedInteger(30, 60)), 0),
+                                        Pair.of(new RunSometimesTask<>(new DragonTaskWander(1.0f), RangedInteger.createRangedInteger(30, 60)), 1)
+                                )), 1)
+                        ))),
 
                 Pair.of(99, new UpdateActivityTask())
         );
@@ -206,7 +203,7 @@ public class RegistryBrains extends Schedule {
      */
     public static ImmutableList<Pair<Integer, ? extends Task<? super EntityDragonBase>>> attack() {
         return ImmutableList.of(
-                Pair.of(7, new DragonBehaviorAttack()),
+
 
                 Pair.of(99, new UpdateActivityTask())
         );

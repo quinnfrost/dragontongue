@@ -14,6 +14,7 @@ import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.schedule.Activity;
@@ -23,10 +24,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.server.ServerWorld;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -53,7 +51,7 @@ public class EntityBehaviorDebugger {
         try {
             if (brain.hasMemory(MemoryModuleType.WALK_TARGET)) {
                 brain.getMemory(MemoryModuleType.WALK_TARGET).ifPresent(target -> {
-                    stringList.add("Destination: " + formatBlockPos(target.getTarget().getBlockPos()));
+                    stringList.add("WalkTarget: " + formatBlockPos(target.getTarget().getBlockPos()));
                 });
             }
             if (brain.hasMemory(MemoryModuleType.ATTACK_TARGET)) {
@@ -115,18 +113,18 @@ public class EntityBehaviorDebugger {
         List<String> debugMsg = new ArrayList<>();
 
         debugMsg.addAll(Arrays.asList(
-                String.format("%s \"%s\" [%s]", mobEntity.getName().getString(), mobEntity.getCustomName() == null ? "-" : mobEntity.getCustomName(), mobEntity.getEntityString()),
+                String.format("%s \"%s\" [%s] (%.1f/%s)", mobEntity.getName().getString(), mobEntity.getCustomName() == null ? "-" : mobEntity.getCustomName(), mobEntity.getEntityString(), mobEntity.getHealth(), Objects.toString((mobEntity.getAttribute(Attributes.MAX_HEALTH).getValue()), "-")),
                 "Pos: " + String.format("%.5f, %.5f, %.5f ", mobEntity.getPositionVec().x, mobEntity.getPositionVec().y, mobEntity.getPositionVec().z) + String.format("[%d, %d, %d]", mobEntity.getPosition().getX(), mobEntity.getPosition().getY(), mobEntity.getPosition().getZ()),
                 "Motion: " + String.format("%.5f, %.5f, %.5f ", mobEntity.getMotion().x, mobEntity.getMotion().y, mobEntity.getMotion().z),
                 "Goals:",
                 mobEntity.goalSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString(),
                 mobEntity.targetSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString(),
                 "Tasks:",
-                "- Schedule: " + scheduleString,
-                "- Activity: " + String.format("%s + ", mobEntity.getBrain().persistentActivities.toString()) + String.format("(%s)", mobEntity.getBrain().getTemporaryActivity().orElse(new Activity(""))),
-                "- Running",
+                " Schedule: " + scheduleString,
+                " Activity: " + String.format("%s + ", mobEntity.getBrain().persistentActivities.toString()) + String.format("(%s)", mobEntity.getBrain().getTemporaryActivity().orElse(new Activity(""))),
+                " Running",
                 mobEntity.getBrain().getRunningTasks().toString(),
-                "- Memory"
+                " Memory"
         ));
         debugMsg.addAll(getMemoryInfoString(mobEntity));
         debugMsg.addAll(Arrays.asList(

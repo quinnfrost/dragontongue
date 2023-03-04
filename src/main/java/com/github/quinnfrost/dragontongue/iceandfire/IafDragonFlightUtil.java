@@ -3,6 +3,7 @@ package com.github.quinnfrost.dragontongue.iceandfire;
 import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.utils.util;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.entity.Entity;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.math.BlockPos;
@@ -103,17 +104,21 @@ public class IafDragonFlightUtil {
         return worldIn.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, positionIn);
     }
 
-    public static BlockPos getHighestBlockInRadius(World worldIn, BlockPos positionIn, int radius) {
-        BlockPos areaTerrainHighest = positionIn;
+    public static Pair<BlockPos, BlockPos> getTerrainFeatureInRadius(World worldIn, BlockPos positionIn, int radius) {
+        BlockPos areaTerrainHighest = getHighestBlock(worldIn, positionIn);
+        BlockPos areaTerrainLowest = getHighestBlock(worldIn, positionIn);
         for (int i = positionIn.getX() - radius; i <= positionIn.getX() + radius; i++) {
             for (int j = positionIn.getZ() - radius; j <= positionIn.getZ() + radius; j++) {
                 BlockPos currentBlock = getHighestBlock(worldIn, new BlockPos(i, 0, j));
                 if (currentBlock.getY() > areaTerrainHighest.getY()) {
                     areaTerrainHighest = currentBlock;
                 }
+                if (currentBlock.getY() < areaTerrainLowest.getY()) {
+                    areaTerrainLowest = currentBlock;
+                }
             }
         }
-        return areaTerrainHighest;
+        return Pair.of(areaTerrainLowest, areaTerrainHighest);
     }
 
     public static boolean canAreaSeeSky(World worldIn, BlockPos blockPosIn, int radius) {

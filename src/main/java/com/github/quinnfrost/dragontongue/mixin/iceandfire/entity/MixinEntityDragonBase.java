@@ -38,6 +38,7 @@ import net.minecraft.entity.ai.brain.sensor.SensorType;
 import net.minecraft.entity.ai.goal.HurtByTargetGoal;
 import net.minecraft.entity.ai.goal.OwnerHurtByTargetGoal;
 import net.minecraft.entity.ai.goal.OwnerHurtTargetGoal;
+import net.minecraft.entity.ai.goal.SitGoal;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
@@ -220,19 +221,29 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 
     @Shadow
     public boolean hasHomePosition;
+    @Shadow public int flyTicks;
+
+    @Shadow public abstract boolean isGoingDown();
+
+    @Shadow public float flyProgress;
+
+    @Shadow public abstract boolean isChained();
+
+    @Shadow public abstract int getCommand();
+
     public ICapabilityInfoHolder cap = this.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(this));
 
     private static final ImmutableList<MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(
-            MemoryModuleType.WALK_TARGET,
-
             MemoryModuleType.HOME,
+            MemoryModuleType.LOOK_TARGET,
+            MemoryModuleType.WALK_TARGET,
+            MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
+
             MemoryModuleType.MOBS,
             MemoryModuleType.VISIBLE_MOBS,
             MemoryModuleType.NEAREST_VISIBLE_PLAYER,
             MemoryModuleType.NEAREST_VISIBLE_TARGETABLE_PLAYER,
-            MemoryModuleType.LOOK_TARGET,
-            MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
-            MemoryModuleType.PATH,
+
             MemoryModuleType.ATTACK_TARGET,
             MemoryModuleType.ATTACK_COOLING_DOWN
 
@@ -268,11 +279,6 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     }
 
     @Override
-    public boolean isMovementBlocked() {
-        return this.getHealth() <= 0.0F || this.isModelDead() || this.isPassenger();
-    }
-
-    @Override
     protected void updateAITasks() {
         super.updateAITasks();
         breakBlock();
@@ -297,7 +303,7 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     @Override
     protected Brain<?> createBrain(Dynamic<?> dynamicIn) {
         Brain<EntityDragonBase> brain = this.getBrainCodec().deserialize(dynamicIn);
-        this.initBrain(brain);
+//        this.initBrain(brain);
         return brain;
     }
 
@@ -383,35 +389,35 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
             }
         }));
 
-//        this.goalSelector.addGoal(0, new DragonAIRide<>((EntityDragonBase) (Object) this));
-//        this.goalSelector.addGoal(1, new SitGoal(this));
-//        this.goalSelector.addGoal(2, new DragonAIMate((EntityDragonBase) (Object) this, 1.0D));
-//        this.goalSelector.addGoal(3, new DragonAIReturnToRoost((EntityDragonBase) (Object) this, 1.0D));
-//        this.goalSelector.addGoal(4, new DragonAIEscort((EntityDragonBase) (Object) this, 1.0D));
-//        this.goalSelector.addGoal(5, new DragonAIAttackMelee((EntityDragonBase) (Object) this, 1.5D, false));
-//        this.goalSelector.addGoal(6, new AquaticAITempt(this, 1.0D, IafItemRegistry.FIRE_STEW, false));
-//        this.goalSelector.addGoal(7, new DragonAIWander((EntityDragonBase) (Object) this, 1.0D));
-//        this.goalSelector.addGoal(8, new DragonAIWatchClosest(this, LivingEntity.class, 6.0F));
-//        this.goalSelector.addGoal(8, new DragonAILookIdle((EntityDragonBase) (Object) this));
+        this.goalSelector.addGoal(0, new DragonAIRide<>((EntityDragonBase) (Object) this));
+        this.goalSelector.addGoal(1, new SitGoal(this));
+        this.goalSelector.addGoal(2, new DragonAIMate((EntityDragonBase) (Object) this, 1.0D));
+        this.goalSelector.addGoal(3, new DragonAIReturnToRoost((EntityDragonBase) (Object) this, 1.0D));
+        this.goalSelector.addGoal(4, new DragonAIEscort((EntityDragonBase) (Object) this, 1.0D));
+        this.goalSelector.addGoal(5, new DragonAIAttackMelee((EntityDragonBase) (Object) this, 1.5D, false));
+        this.goalSelector.addGoal(6, new AquaticAITempt(this, 1.0D, IafItemRegistry.FIRE_STEW, false));
+        this.goalSelector.addGoal(7, new DragonAIWander((EntityDragonBase) (Object) this, 1.0D));
+        this.goalSelector.addGoal(8, new DragonAIWatchClosest(this, LivingEntity.class, 6.0F));
+        this.goalSelector.addGoal(8, new DragonAILookIdle((EntityDragonBase) (Object) this));
 
-//        this.targetSelector.addGoal(1, new OwnerHurtTargetGoal(this));
-//        this.targetSelector.addGoal(2, new OwnerHurtByTargetGoal(this));
-//        this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
-//        this.targetSelector.addGoal(4, new DragonAITargetNonTamed((EntityDragonBase) (Object) this, LivingEntity.class, false, new Predicate<LivingEntity>() {
-//            @Override
-//            public boolean apply(@Nullable LivingEntity entity) {
-////                DragonTongue.LOGGER.debug("Getting inner class instance: " + this);
-////                DragonTongue.LOGGER.debug("Getting outer class instance: " + MixinEntityDragonBase.this);
-//                return (!(entity instanceof PlayerEntity) || !((PlayerEntity) entity).isCreative()) && DragonUtils.canHostilesTarget(entity) && entity.getType() != MixinEntityDragonBase.this.getType() && MixinEntityDragonBase.this.shouldTarget(entity) && DragonUtils.isAlive(entity);
-//            }
-//        }));
-//        this.targetSelector.addGoal(5, new DragonAITarget((EntityDragonBase) (Object) this, LivingEntity.class, true, new Predicate<LivingEntity>() {
-//            @Override
-//            public boolean apply(@Nullable LivingEntity entity) {
-//                return entity instanceof LivingEntity && DragonUtils.canHostilesTarget(entity) && entity.getType() != MixinEntityDragonBase.this.getType() && MixinEntityDragonBase.this.shouldTarget(entity) && DragonUtils.isAlive(entity);
-//            }
-//        }));
-//        this.targetSelector.addGoal(6, new DragonAITargetItems((EntityDragonBase) (Object) this, false));
+        this.targetSelector.addGoal(1, new OwnerHurtTargetGoal(this));
+        this.targetSelector.addGoal(2, new OwnerHurtByTargetGoal(this));
+        this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(4, new DragonAITargetNonTamed<>((EntityDragonBase) (Object) this, LivingEntity.class, false, new Predicate<LivingEntity>() {
+            @Override
+            public boolean apply(@Nullable LivingEntity entity) {
+//                DragonTongue.LOGGER.debug("Getting inner class instance: " + this);
+//                DragonTongue.LOGGER.debug("Getting outer class instance: " + MixinEntityDragonBase.this);
+                return (!(entity instanceof PlayerEntity) || !((PlayerEntity) entity).isCreative()) && DragonUtils.canHostilesTarget(entity) && entity.getType() != MixinEntityDragonBase.this.getType() && MixinEntityDragonBase.this.shouldTarget(entity) && DragonUtils.isAlive(entity);
+            }
+        }));
+        this.targetSelector.addGoal(5, new DragonAITarget((EntityDragonBase) (Object) this, LivingEntity.class, true, new Predicate<LivingEntity>() {
+            @Override
+            public boolean apply(@Nullable LivingEntity entity) {
+                return entity instanceof LivingEntity && DragonUtils.canHostilesTarget(entity) && entity.getType() != MixinEntityDragonBase.this.getType() && MixinEntityDragonBase.this.shouldTarget(entity) && DragonUtils.isAlive(entity);
+            }
+        }));
+        this.targetSelector.addGoal(6, new DragonAITargetItems((EntityDragonBase) (Object) this, false));
     }
 
     @Inject(
@@ -628,6 +634,20 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
                 }
             }
         }
+    }
+
+    @Inject(
+            remap = false,
+            method = "Lcom/github/alexthe666/iceandfire/entity/EntityDragonBase;doesWantToLand()Z",
+            at = @At(value = "HEAD"),
+            cancellable = true
+    )
+    public void roadblock$doesWantToLand(CallbackInfoReturnable<Boolean> cir) {
+        cir.setReturnValue(head$doesWantToLand());
+        cir.cancel();
+    }
+    public boolean head$doesWantToLand() {
+        return this.flyTicks > 6000 && cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.NONE && this.getCommand() == 0 || isGoingDown() || flyTicks > 40 && this.flyProgress == 0 || this.isChained() && flyTicks > 100;
     }
 
     @Inject(

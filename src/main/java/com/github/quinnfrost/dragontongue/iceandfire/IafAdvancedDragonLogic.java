@@ -135,7 +135,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
 
         $updateDragonServer();
 
-        // At IafDragonLogic#320, dragon takes random chance to flight if she is vanilla on ground
+        // At IafDragonLogic#320, dragon takes random chance to flight if she is idle on ground
         if (movementType != EnumCommandSettingType.MovementType.AIR && cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.STAY) {
             // Prevent flying
             dragon.setHovering(false);
@@ -606,19 +606,19 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             dragon.setFlying(false);
             dragon.setHovering(false);
         }
-        // When dragon is landed, take random chances to take flight, or, emergency take off when below the world
-//        if (!dragon.isFlying() && !dragon.isHovering()) {
-//            if (dragon.isAllowedToTriggerFlight() || dragon.getPosY() < -1) {
-//                if (dragon.getRNG().nextInt(iEntityDragon.getFlightChancePerTick$invoke()) == 0 || dragon.getPosY() < -1 || dragon.getAttackTarget() != null && Math.abs(dragon.getAttackTarget().getPosY() - dragon.getPosY()) > 5 || dragon.isInWater() && !iEntityDragon.isIceInWater$invoke()) {
-//                    dragon.setHovering(true);
-//                    dragon.setQueuedToSit(false);
-//                    dragon.setSitting(false);
-//                    iEntityDragon.setFlyHovering(0);
-//                    dragon.hoverTicks = 0;
-//                    dragon.flyTicks = 0;
-//                }
-//            }
-//        }
+        // When dragon is landed, take off for, random chances, when below the world, target is running far, or in water
+        if (!dragon.isFlying() && !dragon.isHovering()) {
+            if (dragon.isAllowedToTriggerFlight() || dragon.getPosY() < -1) {
+                if (dragon.getPosY() < -1 || dragon.getAttackTarget() != null && Math.abs(dragon.getAttackTarget().getPosY() - dragon.getPosY()) > 5 || dragon.isInWater() && !iEntityDragon.isIceInWater$invoke()) {
+                    dragon.setHovering(true);
+                    dragon.setQueuedToSit(false);
+                    dragon.setSitting(false);
+                    iEntityDragon.setFlyHovering(0);
+                    dragon.hoverTicks = 0;
+                    dragon.flyTicks = 0;
+                }
+            }
+        }
         // Conditions that attack target should be invalidated
         if (dragon.getAttackTarget() != null) {
             // When rider climbs up
