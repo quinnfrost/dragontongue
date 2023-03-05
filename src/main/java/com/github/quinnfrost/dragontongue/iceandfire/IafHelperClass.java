@@ -10,6 +10,7 @@ import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import com.github.alexthe666.iceandfire.item.ItemDragonsteelArmor;
 import com.github.alexthe666.iceandfire.item.ItemScaleArmor;
 import com.github.quinnfrost.dragontongue.client.render.RenderPath;
+import com.github.quinnfrost.dragontongue.entity.ai.EntityBehaviorDebugger;
 import com.github.quinnfrost.dragontongue.iceandfire.message.MessageSyncPath;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Pathfinding;
@@ -146,6 +147,8 @@ public class IafHelperClass {
 
         return Arrays.asList(
                 String.format("%.4f - %.4f - %.4f - %.4f - %.4f", dragon.renderYawOffset, dragon.rotationYaw, dragon.rotationPitch, dragon.rotationYawHead, dragon.prevRotationYawHead),
+                "HeadPos: " + EntityBehaviorDebugger.formatVector(dragon.getHeadPosition()),
+                "AnimationTicks: " + dragon.getAnimationTick(),
                 "Pitch: " + String.format("%.4f", dragon.getDragonPitch()),
                 "Yaw: " + String.format("%.4f", dragon.rotationYaw),
                 "PlaneDist: " + String.format("%.4f", (float) ((Math.abs(dragon.getMotion().x) + Math.abs(dragon.getMotion().z)) * 6F)),

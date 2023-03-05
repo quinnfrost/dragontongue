@@ -713,8 +713,8 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             else if (dragon.isDismounting()) {
                 if (dragon.isFlying() || dragon.isHovering()) {
                     dragon.setMotion(dragon.getMotion().add(0, -0.04, 0));
-                    dragon.setFlying(false);
-                    dragon.setHovering(false);
+//                    dragon.setFlying(false);
+//                    dragon.setHovering(false);
                 }
             }
         }
