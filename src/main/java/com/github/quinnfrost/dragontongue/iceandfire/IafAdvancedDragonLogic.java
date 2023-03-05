@@ -30,11 +30,13 @@ import java.util.List;
 
 public class IafAdvancedDragonLogic extends IafDragonLogic {
     private EntityDragonBase dragon;
+    private ICapabilityInfoHolder cap;
     private IEntityDragonAccess iEntityDragon;
 
     public IafAdvancedDragonLogic(EntityDragonBase dragon) {
         super(dragon);
         this.dragon = dragon;
+        this.cap = ICapabilityInfoHolder.getCapability(dragon);
         this.iEntityDragon = (IEntityDragonAccess) dragon;
     }
 
@@ -712,9 +714,14 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             // When the rider dismounts, land immediately
             else if (dragon.isDismounting()) {
                 if (dragon.isFlying() || dragon.isHovering()) {
-                    dragon.setMotion(dragon.getMotion().add(0, -0.04, 0));
+                    if (dragon.getCommand() == 1) {
+                        cap.setCommandStatus(EnumCommandSettingType.CommandStatus.HOVER);
+                        cap.setDestination(dragon.getPosition());
 //                    dragon.setFlying(false);
 //                    dragon.setHovering(false);
+                    } else {
+//                        dragon.setMotion(dragon.getMotion().add(0, -0.04, 0));
+                    }
                 }
             }
         }

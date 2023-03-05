@@ -400,8 +400,8 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
         this.goalSelector.addGoal(8, new DragonAIWatchClosest(this, LivingEntity.class, 6.0F));
         this.goalSelector.addGoal(8, new DragonAILookIdle((EntityDragonBase) (Object) this));
 
-        this.targetSelector.addGoal(1, new DragonAIOwnerTarget(this));
-        this.targetSelector.addGoal(2, new DragonAIDefendOwner(this));
+        this.targetSelector.addGoal(1, new DragonAIOwnerTarget((EntityDragonBase) (Object) this));
+        this.targetSelector.addGoal(2, new DragonAIDefendOwner((EntityDragonBase) (Object) this));
         this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(4, new DragonAITargetNonTamed<>((EntityDragonBase) (Object) this, LivingEntity.class, false, new Predicate<LivingEntity>() {
             @Override

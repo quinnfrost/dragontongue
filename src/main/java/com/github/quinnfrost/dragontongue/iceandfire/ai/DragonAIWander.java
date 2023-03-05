@@ -51,23 +51,34 @@ public class DragonAIWander extends Goal {
                 return false;
             }
         }
-        Vector3d Vector3d = RandomPositionGenerator.findRandomTarget(this.dragon, 10 + 5 * dragon.getDragonStage(), 7 + dragon.getDragonStage());
-        if (Vector3d == null) {
+        Vector3d randomTarget = RandomPositionGenerator.findRandomTarget(this.dragon, 10 + 5 * dragon.getDragonStage(), 7 + dragon.getDragonStage());
+        for (int i = 0; i < 5; i++) {
+            if (randomTarget == null) {
+                continue;
+            }
+            if (dragon.hasHomePosition && randomTarget.distanceTo(dragon.getPositionVec()) > IafConfig.dragonWanderFromHomeDistance) {
+                randomTarget = null;
+                continue;
+            }
+            Pair<BlockPos, BlockPos> feature = IafDragonFlightUtil.getTerrainFeatureInRadius(dragon.world, new BlockPos(randomTarget), dragon.getDragonStage());
+            if (Math.abs(feature.getFirst().getY() - feature.getSecond().getY()) >= 2) {
+                randomTarget = null;
+                continue;
+            }
+            break;
+        }
+        if (randomTarget == null) {
+            if (this.dragon.getRNG().nextInt(++failedToFindPlainPenalty) > 10) {
+                IafDragonBehaviorHelper.setDragonTakeOff(dragon);
+            }
             return false;
         } else {
-            if (dragon.hasHomePosition && Vector3d.distanceTo(dragon.getPositionVec()) > IafConfig.dragonWanderFromHomeDistance) {
-                return false;
-            }
-//            Pair<BlockPos, BlockPos> feature = IafDragonFlightUtil.getTerrainFeatureInRadius(dragon.world, new BlockPos(Vector3d), dragon.getDragonStage());
-//            if (Math.abs(feature.getFirst().getY() - feature.getSecond().getY()) >= 2) {
-//                if (this.dragon.getRNG().nextInt(++failedToFindPlainPenalty) > 5) {
-//                    IafDragonBehaviorHelper.setDragonTakeOff(dragon);
-//                }
+//            if (dragon.hasHomePosition && randomTarget.distanceTo(dragon.getPositionVec()) > IafConfig.dragonWanderFromHomeDistance) {
 //                return false;
 //            }
-            this.xPosition = Vector3d.x;
-            this.yPosition = Vector3d.y;
-            this.zPosition = Vector3d.z;
+            this.xPosition = randomTarget.x;
+            this.yPosition = randomTarget.y;
+            this.zPosition = randomTarget.z;
             this.mustUpdate = false;
 
             return true;

@@ -1,27 +1,29 @@
 package com.github.quinnfrost.dragontongue.iceandfire.ai;
 
-import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
+import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
+import com.github.quinnfrost.dragontongue.DragonTongue;
+import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import net.minecraft.entity.EntityPredicate;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.ai.goal.TargetGoal;
-import net.minecraft.entity.passive.TameableEntity;
 
 import java.util.EnumSet;
 
 public class DragonAIOwnerTarget extends TargetGoal {
     private EntityPredicate predicate;
-    private final TameableEntity tameable;
+    private double awareDistance = 1024;
+
+    private final EntityDragonBase dragon;
     private LivingEntity attacker;
     private int timestamp;
 
-    public DragonAIOwnerTarget(TameableEntity theEntityTameableIn) {
-        super(theEntityTameableIn, false);
-        this.tameable = theEntityTameableIn;
+    public DragonAIOwnerTarget(EntityDragonBase dragonIn) {
+        super(dragonIn, false);
+        this.dragon = dragonIn;
         this.setMutexFlags(EnumSet.of(Goal.Flag.TARGET));
 
-        this.predicate = new EntityPredicate().setDistance(tameable.getAttribute(Attributes.FOLLOW_RANGE).getValue());
+        this.predicate = new EntityPredicate().setDistance(1024).setIgnoresLineOfSight();
     }
 
     /**
@@ -29,20 +31,33 @@ public class DragonAIOwnerTarget extends TargetGoal {
      * method as well.
      */
     public boolean shouldExecute() {
-        predicate.setDistance(Math.max(ICapabilityInfoHolder.getCapability(this.tameable).getSelectDistance(), this.tameable.getAttribute(Attributes.FOLLOW_RANGE).getValue()));
-
-        if (this.tameable.isTamed() && !this.tameable.isQueuedToSit()) {
-            LivingEntity livingentity = this.tameable.getOwner();
+        if (this.dragon.isTamed() && !this.dragon.isQueuedToSit()) {
+            LivingEntity livingentity = this.dragon.getOwner();
             if (livingentity == null) {
                 return false;
             } else {
+                awareDistance = 1024;
+                if (!IafDragonBehaviorHelper.isDragonInAir(dragon)) {
+                    awareDistance = 64 * dragon.getDragonStage();
+//                    awareDistance = 64 * dragon.getHeight();
+                }
+                if (dragon.isSleeping() || dragon.getCommand() == 1) {
+                    awareDistance = 32 + 16 * dragon.getDragonStage();
+                }
+                this.predicate = predicate.setDistance(awareDistance);
                 this.attacker = livingentity.getLastAttackedEntity();
                 int i = livingentity.getLastAttackedEntityTime();
-                return i != this.timestamp && this.isSuitableTarget(this.attacker, predicate) && this.tameable.shouldAttackEntity(this.attacker, livingentity);
+                return i != this.timestamp && this.isSuitableTarget(this.attacker, predicate) && this.dragon.shouldAttackEntity(this.attacker, livingentity);
             }
         } else {
             return false;
         }
+    }
+
+    @Override
+
+    protected double getTargetDistance() {
+        return this.awareDistance;
     }
 
     /**
@@ -50,7 +65,7 @@ public class DragonAIOwnerTarget extends TargetGoal {
      */
     public void startExecuting() {
         this.goalOwner.setAttackTarget(this.attacker);
-        LivingEntity livingentity = this.tameable.getOwner();
+        LivingEntity livingentity = this.dragon.getOwner();
         if (livingentity != null) {
             this.timestamp = livingentity.getLastAttackedEntityTime();
         }
