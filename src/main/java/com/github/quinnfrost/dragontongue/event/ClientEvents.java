@@ -69,14 +69,14 @@ public class ClientEvents {
                 OverlayCrossHair.setCrossHairString(
                         Vector2f.CR_DISTANCE,
                         String.format("%.1f", distance),
-                        1,
+                        2,
                         true
                 );
             } else {
                 OverlayCrossHair.setCrossHairString(
                         Vector2f.CR_DISTANCE,
                         "--",
-                        1,
+                        2,
                         true
                 );
             }
