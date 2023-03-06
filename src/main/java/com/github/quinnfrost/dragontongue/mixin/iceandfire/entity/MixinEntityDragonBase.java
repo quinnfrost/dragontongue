@@ -51,6 +51,7 @@ import net.minecraft.potion.Effects;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
@@ -322,6 +323,23 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
         dragonBrain.switchToFallbackActivity();
 
         dragonBrain.updateActivity(this.world.getDayTime(), this.world.getGameTime());
+    }
+
+    @Override
+    public boolean canBePushed() {
+        if (!super.canBePushed()) {
+            return false;
+        }
+        return this.getDragonStage() < 4;
+    }
+
+    @Override
+    protected void collideWithNearbyEntities() {
+        Vector3d oldMotion = this.getMotion();
+        super.collideWithNearbyEntities();
+        if (!canBePushed()) {
+            this.setMotion(oldMotion);
+        }
     }
 
     @Override
