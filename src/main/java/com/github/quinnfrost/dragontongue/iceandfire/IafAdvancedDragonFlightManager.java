@@ -2,6 +2,7 @@ package com.github.quinnfrost.dragontongue.iceandfire;
 
 import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.entity.*;
+import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
@@ -154,8 +155,12 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
         if (dragon instanceof EntityIceDragon && dragon.isInWater()) {
             viewBlock = IafDragonFlightUtil.getWaterBlockInView(dragon);
         }
-        if (dragon.getCommand() == 2 && dragon.isFlying()) {
-            viewBlock = IafDragonFlightUtil.getBlockInViewEscort(dragon);
+        if (dragon.getCommand() == 2 && dragon.useFlyingPathFinder()) {
+            if (dragon instanceof EntityIceDragon && dragon.isInWater()) {
+                viewBlock = IafDragonFlightUtil.getWaterBlockInViewEscort(dragon);
+            } else {
+                viewBlock = IafDragonFlightUtil.getBlockInViewEscort(dragon);
+            }
         } else if (dragon.lookingForRoostAIFlag) {
             double xDist = Math.abs(dragon.getPosX() - dragon.getHomePosition().getX() - 0.5F);
             double zDist = Math.abs(dragon.getPosZ() - dragon.getHomePosition().getZ() - 0.5F);
