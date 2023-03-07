@@ -12,6 +12,7 @@ import com.github.alexthe666.iceandfire.item.ItemScaleArmor;
 import com.github.quinnfrost.dragontongue.client.render.RenderPath;
 import com.github.quinnfrost.dragontongue.entity.ai.EntityBehaviorDebugger;
 import com.github.quinnfrost.dragontongue.iceandfire.message.MessageSyncPath;
+import com.github.quinnfrost.dragontongue.iceandfire.message.MessageSyncPathReached;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Pathfinding;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjobs.AbstractPathJob;
@@ -40,16 +41,18 @@ public class IafHelperClass {
         AbstractPathJob.trackingMap.put(playerEntity, livingEntity.getUniqueID());
     }
 
-    public static void stopIafPathDebug(PlayerEntity playerEntity) {
-        AbstractPathJob.trackingMap.remove(playerEntity);
-        RegistryMessages.sendToClient(new MessageSyncPath(new HashSet<>(), new HashSet<>(), new HashSet<>()), (ServerPlayerEntity) playerEntity);
+    public static void stopIafPathDebug() {
         Pathfinding.lastDebugNodesVisited = new HashSet<>();
         Pathfinding.lastDebugNodesNotVisited = new HashSet<>();
         Pathfinding.lastDebugNodesPath = new HashSet<>();
+
+        AbstractPathJob.trackingMap.clear();
+//        AbstractPathJob.trackingMap.remove(playerEntity);
+        RegistryMessages.sendToAll(new MessageSyncPath(new HashSet<>(), new HashSet<>(), new HashSet<>()));
     }
 
     public static void renderWorldLastEvent(RenderWorldLastEvent event) {
-        if (DragonTongue.debugTarget != null) {
+        if (!Pathfinding.lastDebugNodesNotVisited.isEmpty() && !Pathfinding.lastDebugNodesPath.isEmpty() && !Pathfinding.lastDebugNodesVisited.isEmpty()) {
             RenderPath.debugDraw(event.getPartialTicks(), event.getMatrixStack());
         }
     }

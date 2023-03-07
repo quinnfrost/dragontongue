@@ -1,11 +1,6 @@
 package com.github.quinnfrost.dragontongue.message;
 
 import com.github.quinnfrost.dragontongue.client.overlay.OverlayCrossHair;
-import com.github.quinnfrost.dragontongue.client.overlay.OverlayInfoPanel;
-import com.github.quinnfrost.dragontongue.entity.ai.EntityBehaviorDebugger;
-import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.MobEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
@@ -20,8 +15,13 @@ public class MessageClientDisplay {
     private int debugTargetId = 0;
     private int displayTime = 20;
     private int size = 3;
-    private List<String> message = new ArrayList<>();
+    public enum EnumClientDisplay {
+        PASS,
+        DAMAGE,
+        CRITICAL
+    }
 
+    private List<String> message = new ArrayList<>();
     public MessageClientDisplay(EnumClientDisplay messageType,int displayTime,List<String> message) {
         this.messageType = messageType;
         this.debugTargetId = 0;
@@ -50,6 +50,7 @@ public class MessageClientDisplay {
             }
         }
     }
+
     public void encoder(PacketBuffer buffer) {
         buffer.writeEnumValue(messageType);
         buffer.writeInt(debugTargetId);
@@ -74,10 +75,6 @@ public class MessageClientDisplay {
                         break;
                     case CRITICAL:
                         OverlayCrossHair.setCrossHairDisplay(message.get(0), 20, 20, OverlayCrossHair.IconType.CRITICAL, true);
-                        break;
-                    case ENTITY_DEBUG:
-                        OverlayInfoPanel.bufferInfoLeft = message;
-                        OverlayInfoPanel.bufferInfoRight = EntityBehaviorDebugger.getTargetInfoString((MobEntity) Minecraft.getInstance().world.getEntityByID(debugTargetId));
                         break;
                 }
             }

@@ -2,12 +2,9 @@ package com.github.quinnfrost.dragontongue.event;
 
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
-import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
-import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.entity.ai.EntityBehaviorDebugger;
 import com.github.quinnfrost.dragontongue.entity.ai.RegistryAI;
-import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
 import com.github.quinnfrost.dragontongue.enums.EnumCrowWand;
 import com.github.quinnfrost.dragontongue.iceandfire.IafAdvancedDragonFlightManager;
 import com.github.quinnfrost.dragontongue.iceandfire.IafAdvancedDragonLogic;
@@ -35,7 +32,6 @@ import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.vector.Vector3d;
@@ -54,7 +50,6 @@ import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
-import net.minecraftforge.fml.event.server.ServerLifecycleEvent;
 
 import java.util.*;
 
@@ -62,15 +57,16 @@ public class ServerEvents {
     @SubscribeEvent
     public static void onServerStarted(FMLServerStartedEvent event) {
         // Resets the debug option, the getChunk() might cause infinite wait
-        if (DragonTongue.debugTarget != null) {
-            RegistryMessages.sendToClient(new MessageClientDisplay(
-                    EnumClientDisplay.ENTITY_DEBUG,
-                    1,
-                    Collections.singletonList("")
-            ), (ServerPlayerEntity) DragonTongue.debugger);
-            DragonTongue.debugTarget = null;
-            DragonTongue.debugger = null;
-        }
+//        if (DragonTongue.debugTarget != null) {
+//            RegistryMessages.sendToClient(new MessageClientDisplay(
+//                    MessageClientDisplay.EnumClientDisplay.ENTITY_DEBUG,
+//                    1,
+//                    Collections.singletonList("")
+//            ), (ServerPlayerEntity) DragonTongue.debugger);
+//            DragonTongue.debugTarget = null;
+//            DragonTongue.debugger = null;
+//        }
+        EntityBehaviorDebugger.stopDebug();
     }
 
     /**
@@ -121,6 +117,9 @@ public class ServerEvents {
         if (event.player.world.isRemote) {
             return;
         }
+        if (event.player == EntityBehaviorDebugger.requestedPlayer) {
+            EntityBehaviorDebugger.updateDebugMessage();
+        }
 
         ServerPlayerEntity player = (ServerPlayerEntity) event.player;
         ServerWorld serverWorld = player.getServerWorld();
@@ -152,10 +151,10 @@ public class ServerEvents {
         if (event.getEntity().world.isRemote) {
             return;
         }
-        if (DragonTongue.debugTarget != null && DragonTongue.debugger != null && event.getEntityLiving() == DragonTongue.debugTarget) {
-            EntityBehaviorDebugger.sendDebugMessage();
-            EntityBehaviorDebugger.sendDestinationMessage();
-        }
+//        if (DragonTongue.debugTarget != null && DragonTongue.debugger != null && event.getEntityLiving() == DragonTongue.debugTarget) {
+//            EntityBehaviorDebugger.sendDebugMessage();
+//            EntityBehaviorDebugger.sendDestinationMessage();
+//        }
 
         if (DragonTongue.isIafPresent) {
             IafServerEvent.onLivingUpdate(event);
@@ -292,7 +291,7 @@ public class ServerEvents {
         if (source instanceof ServerPlayerEntity) {
             ServerPlayerEntity attacker = (ServerPlayerEntity) source;
             RegistryMessages.sendToClient(new MessageClientDisplay(
-                            EnumClientDisplay.CRITICAL, 1, Collections.singletonList("")),
+                            MessageClientDisplay.EnumClientDisplay.CRITICAL, 1, Collections.singletonList("")),
                     attacker
             );
         }
@@ -315,7 +314,7 @@ public class ServerEvents {
             if (hurtEntity.isAlive()) {
 
                 RegistryMessages.sendToClient(new MessageClientDisplay(
-                                EnumClientDisplay.DAMAGE, 1, Collections.singletonList(String.format("%.1f", damageAmount))),
+                                MessageClientDisplay.EnumClientDisplay.DAMAGE, 1, Collections.singletonList(String.format("%.1f", damageAmount))),
                         playerEntity
                 );
             }

@@ -71,6 +71,12 @@ public class RegistryMessages {
                 .consumer(MessageClientDraw::handler)
                 .add();
 
+        CHANNEL.messageBuilder(MessageDebugEntity.class, nextID())
+                .encoder(MessageDebugEntity::encoder)
+                .decoder(MessageDebugEntity::decoder)
+                .consumer(MessageDebugEntity::handler)
+                .add();
+
         if (DragonTongue.isIafPresent) {
             CHANNEL.messageBuilder(MessageClientSetReferenceDragon.class, nextID())
                     .encoder(MessageClientSetReferenceDragon::encoder)
@@ -81,12 +87,12 @@ public class RegistryMessages {
             CHANNEL.messageBuilder(MessageSyncPath.class, nextID())
                     .encoder(MessageSyncPath::write)
                     .decoder(MessageSyncPath::read)
-                    .consumer(MessageSyncPath.Handler::handle)
+                    .consumer(MessageSyncPath::handle)
                     .add();
             CHANNEL.messageBuilder(MessageSyncPathReached.class, nextID())
                     .encoder(MessageSyncPathReached::write)
                     .decoder(MessageSyncPathReached::read)
-                    .consumer(MessageSyncPathReached.Handler::handle)
+                    .consumer(MessageSyncPathReached::handle)
                     .add();
         }
     }

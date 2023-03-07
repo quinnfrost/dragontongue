@@ -53,6 +53,13 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
         return true;
     }
 
+    public static Vector3d getCurrentFlightTargetFor(LivingEntity dragonIn) {
+        if (!IafHelperClass.isDragon(dragonIn)) {
+            return null;
+        }
+        return ((IafAdvancedDragonFlightManager)((EntityDragonBase)dragonIn).flightManager).getFlightTarget();
+    }
+
     @Override
     public void update() {
         // Periodic check if the target is in sight

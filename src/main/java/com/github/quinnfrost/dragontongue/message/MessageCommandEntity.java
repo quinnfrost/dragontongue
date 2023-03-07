@@ -4,7 +4,6 @@ import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
-import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
@@ -18,14 +17,11 @@ import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.Biomes;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.fml.network.NetworkEvent;
 
@@ -231,27 +227,27 @@ public class MessageCommandEntity {
 //                ScreenDragon.openGui(commander, target);
                 break;
             case DEBUG:
-                if (target instanceof MobEntity) {
-                    // A messy workaround for debugTarget inconsistency on dedicated server and client
-                    if (DragonTongue.debugger == null || (DragonTongue.debugTarget != null && DragonTongue.debugTarget.getUniqueID() != target.getUniqueID())) {
-                        DragonTongue.debugTarget = (MobEntity) target;
-                        DragonTongue.debugger = (PlayerEntity) commander;
-                        if (DragonTongue.isIafPresent) {
-                            IafHelperClass.startIafPathDebug((PlayerEntity) commander, target);
-                        }
-                    } else {
-                        RegistryMessages.sendToClient(new MessageClientDisplay(
-                                EnumClientDisplay.ENTITY_DEBUG,
-                                1,
-                                Collections.singletonList("")
-                        ), (ServerPlayerEntity) DragonTongue.debugger);
-                        DragonTongue.debugTarget = null;
-                        DragonTongue.debugger = null;
-                        if (DragonTongue.isIafPresent) {
-                            IafHelperClass.stopIafPathDebug((PlayerEntity) commander);
-                        }
-                    }
-                }
+//                if (target instanceof MobEntity) {
+//                    // A messy workaround for debugTarget inconsistency on dedicated server and client
+//                    if (DragonTongue.debugger == null || (DragonTongue.debugTarget != null && DragonTongue.debugTarget.getUniqueID() != target.getUniqueID())) {
+//                        DragonTongue.debugTarget = (MobEntity) target;
+//                        DragonTongue.debugger = (PlayerEntity) commander;
+//                        if (DragonTongue.isIafPresent) {
+//                            IafHelperClass.startIafPathDebug((PlayerEntity) commander, target);
+//                        }
+//                    } else {
+//                        RegistryMessages.sendToClient(new MessageClientDisplay(
+//                                MessageClientDisplay.EnumClientDisplay.ENTITY_DEBUG,
+//                                1,
+//                                Collections.singletonList("")
+//                        ), (ServerPlayerEntity) DragonTongue.debugger);
+//                        DragonTongue.debugTarget = null;
+//                        DragonTongue.debugger = null;
+//                        if (DragonTongue.isIafPresent) {
+//                            IafHelperClass.stopIafPathDebug((PlayerEntity) commander);
+//                        }
+//                    }
+//                }
                 DragonTongue.LOGGER.debug("Debug triggered, set a breakpoint at MessageCommandEntity#232");
                 break;
             default:

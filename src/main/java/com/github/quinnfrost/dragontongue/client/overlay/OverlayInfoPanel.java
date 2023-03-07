@@ -126,6 +126,9 @@ public class OverlayInfoPanel extends AbstractGui {
                 }
 
             }
+        } else {
+            renderString(ms, bufferInfoLeft, Color.WHITE, xOffsetLeft, yOffsetLeft, maxLineLength, false);
+            renderString(ms, bufferInfoRight, Color.WHITE, xOffsetRight, yOffsetRight, maxLineLength, true);
         }
 
 

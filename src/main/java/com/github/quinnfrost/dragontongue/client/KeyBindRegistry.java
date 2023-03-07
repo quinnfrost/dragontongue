@@ -10,6 +10,7 @@ import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Pathfinding;
 import com.github.quinnfrost.dragontongue.message.MessageClientCommandDistance;
 import com.github.quinnfrost.dragontongue.message.MessageCommandEntity;
+import com.github.quinnfrost.dragontongue.message.MessageDebugEntity;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.client.GameSettings;
@@ -128,22 +129,22 @@ public class KeyBindRegistry {
             RayTraceResult debugRayTraceResult = util.getTargetBlockOrEntity(clientPlayerEntity,
                     Config.COMMAND_DISTANCE_MAX.get().floatValue(), null);
             if (debugRayTraceResult.getType() == RayTraceResult.Type.ENTITY) {
-                RegistryMessages.sendToServer(new MessageCommandEntity(
-                        EnumCommandType.DEBUG, clientPlayerEntity.getUniqueID(), (EntityRayTraceResult) debugRayTraceResult
-                ));
-                if (DragonTongue.debugTarget == null) {
-                    DragonTongue.debugTarget = (MobEntity) ((EntityRayTraceResult) debugRayTraceResult).getEntity();
-                } else {
-                    DragonTongue.debugTarget = null;
-                Pathfinding.lastDebugNodesVisited = new HashSet<>();
-                Pathfinding.lastDebugNodesNotVisited = new HashSet<>();
-                Pathfinding.lastDebugNodesPath = new HashSet<>();
-                }
+                RegistryMessages.sendToServer(new MessageDebugEntity(((EntityRayTraceResult)debugRayTraceResult).getEntity().getEntityId()));
+                ClientGlow.setGlowing(((EntityRayTraceResult)debugRayTraceResult).getEntity(), 20);
+//                RegistryMessages.sendToServer(new MessageCommandEntity(
+//                        EnumCommandType.DEBUG, clientPlayerEntity.getUniqueID(), (EntityRayTraceResult) debugRayTraceResult
+//                ));
+//                if (DragonTongue.debugTarget == null) {
+//                    DragonTongue.debugTarget = (MobEntity) ((EntityRayTraceResult) debugRayTraceResult).getEntity();
+//                } else {
+//                    DragonTongue.debugTarget = null;
+//                Pathfinding.lastDebugNodesVisited = new HashSet<>();
+//                Pathfinding.lastDebugNodesNotVisited = new HashSet<>();
+//                Pathfinding.lastDebugNodesPath = new HashSet<>();
+//                }
             }
         }
-        if (KeyBindRegistry.debug.isPressed()) {
-//            clientPlayerEntity.setGlowing(!clientPlayerEntity.isGlowing());
-        }
+
 
         // Scan scroll action
         if (

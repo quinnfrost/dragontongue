@@ -1,19 +1,19 @@
 package com.github.quinnfrost.dragontongue.entity.ai;
 
-import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
-import com.github.quinnfrost.dragontongue.enums.EnumClientDisplay;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
+import com.github.quinnfrost.dragontongue.iceandfire.IafAdvancedDragonFlightManager;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
-import com.github.quinnfrost.dragontongue.iceandfire.ai.brain.RegistryBrains;
 import com.github.quinnfrost.dragontongue.message.MessageClientDisplay;
 import com.github.quinnfrost.dragontongue.message.MessageClientDraw;
+import com.github.quinnfrost.dragontongue.message.MessageDebugEntity;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.brain.Brain;
@@ -29,7 +29,54 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Provide debug info of a living entity
+ */
 public class EntityBehaviorDebugger {
+    public static MobEntity targetEntity;
+    public static ServerPlayerEntity requestedPlayer;
+
+    public static void startDebugFor(ServerPlayerEntity playerIn, MobEntity targetEntityIn) {
+        if (targetEntityIn == null) {
+            return;
+        }
+
+        IafHelperClass.startIafPathDebug(playerIn, targetEntityIn);
+
+        requestedPlayer = playerIn;
+        targetEntity = targetEntityIn;
+
+    }
+
+    public static void stopDebug() {
+        IafHelperClass.stopIafPathDebug();
+        RegistryMessages.sendToAll(new MessageDebugEntity());
+
+        requestedPlayer = null;
+        targetEntity = null;
+
+    }
+
+    public static void updateDebugMessage() {
+        if (targetEntity != null) {
+            RegistryMessages.sendToClient(new MessageDebugEntity(targetEntity.getEntityId(), getAssociatedTargetFor(targetEntity), getTargetInfoString(targetEntity)), requestedPlayer);
+        }
+    }
+
+    public static List<Vector3d> getAssociatedTargetFor(MobEntity mobEntity) {
+        List<Vector3d> associatedTarget = new ArrayList<>();
+        if (DragonTongue.isIafPresent) {
+            if (IafAdvancedDragonFlightManager.getCurrentFlightTargetFor(mobEntity) != null) {
+                associatedTarget.add(IafAdvancedDragonFlightManager.getCurrentFlightTargetFor(mobEntity));
+            }
+            if (IafHelperClass.getReachTarget(mobEntity) != null) {
+                associatedTarget.add(Vector3d.copyCenteredHorizontally(IafHelperClass.getReachTarget(mobEntity)));
+            }
+        } else if (mobEntity.getNavigator().getTargetPos() != null) {
+            associatedTarget.add(Vector3d.copyCenteredHorizontally(mobEntity.getNavigator().getTargetPos()));
+        }
+        return associatedTarget;
+    }
     public static String formatBlockPos(BlockPos pos) {
         if (pos != null) {
             return String.format("%d, %d, %d", pos.getX(), pos.getY(), pos.getZ());
@@ -153,70 +200,70 @@ public class EntityBehaviorDebugger {
         return debugMsg;
     }
 
-    public static void sendDebugMessage() {
-        // Ask all client to display entity debug string
-        if (DragonTongue.debugTarget != null) {
-            MobEntity mobEntity = DragonTongue.debugTarget;
-            RegistryMessages.sendToClient(new MessageClientDisplay(
-                    EnumClientDisplay.ENTITY_DEBUG,
-                    mobEntity.getEntityId(),
-                    1,
-                    EntityBehaviorDebugger.getTargetInfoString(mobEntity)
-            ), (ServerPlayerEntity) DragonTongue.debugger);
-        }
+//    public static void sendDebugMessage() {
+//        // Ask all client to display entity debug string
+//        if (DragonTongue.debugTarget != null) {
+//            MobEntity mobEntity = DragonTongue.debugTarget;
+//            RegistryMessages.sendToClient(new MessageClientDisplay(
+//                    MessageClientDisplay.EnumClientDisplay.ENTITY_DEBUG,
+//                    mobEntity.getEntityId(),
+//                    1,
+//                    EntityBehaviorDebugger.getTargetInfoString(mobEntity)
+//            ), (ServerPlayerEntity) DragonTongue.debugger);
+//        }
+//
+//    }
 
-    }
-
-    public static void sendDestinationMessage() {
-        // Ask all clients to draw entity destination
-        if (DragonTongue.debugTarget != null) {
-            PlayerEntity playerEntity = DragonTongue.debugger;
-            ICapabilityInfoHolder cap = playerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(playerEntity));
-
-            for (UUID entityUUID :
-                    cap.getCommandEntities()) {
-                MobEntity mobEntity = (MobEntity) ((ServerWorld) playerEntity.world).getEntityByUuid(entityUUID);
-                if (!DragonTongue.isIafPresent) {
-                    if (mobEntity.getNavigator().getTargetPos() != null) {
-                        RegistryMessages.sendToClient(new MessageClientDraw(
-                                mobEntity.getEntityId(), Vector3d.copyCentered(mobEntity.getNavigator().getTargetPos()),
-                                mobEntity.getPositionVec()
-                        ), (ServerPlayerEntity) DragonTongue.debugger);
-                    }
-                } else {
-                    if (IafHelperClass.isDragon(mobEntity)) {
-                        IafHelperClass.drawDragonFlightDestination(mobEntity);
-                    }
-                    BlockPos pos = IafHelperClass.getReachTarget(mobEntity);
-                    if (pos != null) {
-                        RegistryMessages.sendToClient(new MessageClientDraw(
-                                mobEntity.getEntityId(), Vector3d.copyCentered(pos),
-                                mobEntity.getPositionVec()
-                        ), (ServerPlayerEntity) DragonTongue.debugger);
-                    }
-                }
-            }
-
-            MobEntity mobEntity = DragonTongue.debugTarget;
-            if (!DragonTongue.isIafPresent) {
-                if (mobEntity.getNavigator().getTargetPos() != null) {
-                    RegistryMessages.sendToClient(new MessageClientDraw(
-                            mobEntity.getEntityId(), Vector3d.copyCentered(mobEntity.getNavigator().getTargetPos()),
-                            mobEntity.getPositionVec()
-                    ), (ServerPlayerEntity) DragonTongue.debugger);
-                }
-            } else {
-                if (IafHelperClass.isDragon(mobEntity)) {
-                    IafHelperClass.drawDragonFlightDestination(mobEntity);
-                }
-                BlockPos pos = IafHelperClass.getReachTarget(mobEntity);
-                if (pos != null) {
-                    RegistryMessages.sendToClient(new MessageClientDraw(
-                            mobEntity.getEntityId(), Vector3d.copyCentered(pos),
-                            mobEntity.getPositionVec()
-                    ), (ServerPlayerEntity) DragonTongue.debugger);
-                }
-            }
-        }
-    }
+//    public static void sendDestinationMessage() {
+//        // Ask all clients to draw entity destination
+//        if (DragonTongue.debugTarget != null) {
+//            PlayerEntity playerEntity = DragonTongue.debugger;
+//            ICapabilityInfoHolder cap = playerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(playerEntity));
+//
+//            for (UUID entityUUID :
+//                    cap.getCommandEntities()) {
+//                MobEntity mobEntity = (MobEntity) ((ServerWorld) playerEntity.world).getEntityByUuid(entityUUID);
+//                if (!DragonTongue.isIafPresent) {
+//                    if (mobEntity.getNavigator().getTargetPos() != null) {
+//                        RegistryMessages.sendToClient(new MessageClientDraw(
+//                                mobEntity.getEntityId(), Vector3d.copyCentered(mobEntity.getNavigator().getTargetPos()),
+//                                mobEntity.getPositionVec()
+//                        ), (ServerPlayerEntity) DragonTongue.debugger);
+//                    }
+//                } else {
+//                    if (IafHelperClass.isDragon(mobEntity)) {
+//                        IafHelperClass.drawDragonFlightDestination(mobEntity);
+//                    }
+//                    BlockPos pos = IafHelperClass.getReachTarget(mobEntity);
+//                    if (pos != null) {
+//                        RegistryMessages.sendToClient(new MessageClientDraw(
+//                                mobEntity.getEntityId(), Vector3d.copyCentered(pos),
+//                                mobEntity.getPositionVec()
+//                        ), (ServerPlayerEntity) DragonTongue.debugger);
+//                    }
+//                }
+//            }
+//
+//            MobEntity mobEntity = DragonTongue.debugTarget;
+//            if (!DragonTongue.isIafPresent) {
+//                if (mobEntity.getNavigator().getTargetPos() != null) {
+//                    RegistryMessages.sendToClient(new MessageClientDraw(
+//                            mobEntity.getEntityId(), Vector3d.copyCentered(mobEntity.getNavigator().getTargetPos()),
+//                            mobEntity.getPositionVec()
+//                    ), (ServerPlayerEntity) DragonTongue.debugger);
+//                }
+//            } else {
+//                if (IafHelperClass.isDragon(mobEntity)) {
+//                    IafHelperClass.drawDragonFlightDestination(mobEntity);
+//                }
+//                BlockPos pos = IafHelperClass.getReachTarget(mobEntity);
+//                if (pos != null) {
+//                    RegistryMessages.sendToClient(new MessageClientDraw(
+//                            mobEntity.getEntityId(), Vector3d.copyCentered(pos),
+//                            mobEntity.getPositionVec()
+//                    ), (ServerPlayerEntity) DragonTongue.debugger);
+//                }
+//            }
+//        }
+//    }
 }
