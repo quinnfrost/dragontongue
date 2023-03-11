@@ -117,9 +117,6 @@ public class IafHelperClass {
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
         IafAdvancedDragonPathNavigator navigator = (IafAdvancedDragonPathNavigator) dragon.getNavigator();
 
-//        CompoundNBT compoundNBT = new CompoundNBT();
-//        DragonTongue.debugTarget.writeAdditional(compoundNBT);
-
         ICapabilityInfoHolder capabilityInfoHolder = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
         BlockPos targetPos = getReachTarget(dragon);
 
@@ -185,42 +182,6 @@ public class IafHelperClass {
 
     }
 
-    public static boolean drawDragonFlightDestination(LivingEntity dragonIn) {
-        if (!isDragon(dragonIn)) {
-            return false;
-        }
-        EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-
-        if (dragon.flightManager.getFlightTarget() == null) {
-            return false;
-        }
-
-        RegistryMessages.sendToClient(new MessageClientDraw(
-                -dragon.getEntityId(), dragon.flightManager.getFlightTarget(),
-                dragon.getPositionVec()
-        ), (ServerPlayerEntity) DragonTongue.debugger);
-
-        double length = dragon.flightManager.getFlightTarget().distanceTo(dragon.getPositionVec());
-        Vector3d direction = dragon.flightManager.getFlightTarget().subtract(dragon.getPositionVec()).normalize();
-        Vector3d directionXZ = new Vector3d(direction.x, 0, direction.z).normalize();
-
-        Vector3d central = dragon.getPositionVec();
-        Vector3d leftWing = central.add(directionXZ.rotateYaw(90 * ((float) Math.PI / 180F)).scale(dragon.getRenderSize()));
-        Vector3d rightWing = central.add(directionXZ.rotateYaw(-90 * ((float) Math.PI / 180F)).scale(dragon.getRenderSize()));
-
-        Vector3d centralTarget = dragon.flightManager.getFlightTarget();
-        Vector3d leftWingTarget = centralTarget.add(directionXZ.rotateYaw(90 * ((float) Math.PI / 180F)).scale(dragon.getRenderSize()));
-        Vector3d rightWingTarget = centralTarget.add(directionXZ.rotateYaw(-90 * ((float) Math.PI / 180F)).scale(dragon.getRenderSize()));
-
-        RegistryMessages.sendToClient(new MessageClientDraw(
-                -dragon.getEntityId() * 10000, leftWingTarget, leftWing
-        ), (ServerPlayerEntity) DragonTongue.debugger);
-        RegistryMessages.sendToClient(new MessageClientDraw(
-                -dragon.getEntityId() * 10000 + 1, rightWingTarget, rightWing
-        ), (ServerPlayerEntity) DragonTongue.debugger);
-        return true;
-    }
-
     public static boolean isIafHostile(LivingEntity livingEntity) {
         if (livingEntity instanceof IDeadMob || !DragonUtils.isAlive(livingEntity)) {
             return false;
@@ -228,7 +189,6 @@ public class IafHelperClass {
         if (livingEntity instanceof EntityDragonBase && ((EntityDragonBase) livingEntity).isModelDead()) {
             return false;
         }
-        // Todo: what hostiles does iaf have?
         return livingEntity instanceof EntityDragonBase
                 ;
     }

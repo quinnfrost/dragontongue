@@ -252,4 +252,8 @@ publishing {
             url "file:///${project.projectDir}/mcmodsrepo"
         }
     }
+    copy {
+        from "mcmodsrepo/com/github/quinnfrost/dragontongue/${version}/${project.name}-${version}.jar"
+        into "${projectDir}"
+    }
 }

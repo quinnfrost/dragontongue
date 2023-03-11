@@ -1,6 +1,6 @@
 package com.github.quinnfrost.dragontongue;
 
-import com.github.quinnfrost.dragontongue.container.RegistryContainers;
+import com.github.quinnfrost.dragontongue.iceandfire.container.RegistryContainers;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.brain.RegistryBrains;
 import com.github.quinnfrost.dragontongue.item.RegistryItems;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;

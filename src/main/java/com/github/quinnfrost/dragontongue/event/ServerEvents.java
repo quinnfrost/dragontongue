@@ -1,7 +1,11 @@
 package com.github.quinnfrost.dragontongue.event;
 
+import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
+import com.github.alexthe666.iceandfire.entity.EntityDragonPart;
+import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.entity.ai.EntityBehaviorDebugger;
 import com.github.quinnfrost.dragontongue.entity.ai.RegistryAI;
@@ -10,7 +14,9 @@ import com.github.quinnfrost.dragontongue.iceandfire.IafAdvancedDragonFlightMana
 import com.github.quinnfrost.dragontongue.iceandfire.IafAdvancedDragonLogic;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
+import com.github.quinnfrost.dragontongue.iceandfire.container.ContainerDragon;
 import com.github.quinnfrost.dragontongue.iceandfire.event.IafServerEvent;
+import com.github.quinnfrost.dragontongue.iceandfire.message.MessageClientSetReferenceDragon;
 import com.github.quinnfrost.dragontongue.item.RegistryItems;
 import com.github.quinnfrost.dragontongue.message.*;
 import com.github.quinnfrost.dragontongue.utils.util;
@@ -56,16 +62,7 @@ import java.util.*;
 public class ServerEvents {
     @SubscribeEvent
     public static void onServerStarted(FMLServerStartedEvent event) {
-        // Resets the debug option, the getChunk() might cause infinite wait
-//        if (DragonTongue.debugTarget != null) {
-//            RegistryMessages.sendToClient(new MessageClientDisplay(
-//                    MessageClientDisplay.EnumClientDisplay.ENTITY_DEBUG,
-//                    1,
-//                    Collections.singletonList("")
-//            ), (ServerPlayerEntity) DragonTongue.debugger);
-//            DragonTongue.debugTarget = null;
-//            DragonTongue.debugger = null;
-//        }
+        // Resets the debug option, or the getChunk() might cause infinite wait
         EntityBehaviorDebugger.stopDebug();
     }
 
@@ -151,10 +148,6 @@ public class ServerEvents {
         if (event.getEntity().world.isRemote) {
             return;
         }
-//        if (DragonTongue.debugTarget != null && DragonTongue.debugger != null && event.getEntityLiving() == DragonTongue.debugTarget) {
-//            EntityBehaviorDebugger.sendDebugMessage();
-//            EntityBehaviorDebugger.sendDestinationMessage();
-//        }
 
         if (DragonTongue.isIafPresent) {
             IafServerEvent.onLivingUpdate(event);
@@ -278,6 +271,32 @@ public class ServerEvents {
         }
         if (DragonTongue.isIafPresent) {
             IafServerEvent.onEntityUseItem(event);
+        }
+        if (event.getEntityLiving() instanceof PlayerEntity) {
+            PlayerEntity playerEntity = (PlayerEntity) event.getEntityLiving();
+            Hand hand = event.getHand();
+            ItemStack itemStack = playerEntity.getHeldItem(hand);
+
+            if (itemStack.getItem() == RegistryItems.DRAGON_STAFF_ICE) {
+//                EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(playerEntity, Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f,
+//                        entity -> entity instanceof EntityDragonPart || entity instanceof LivingEntity);
+//                if (entityRayTraceResult == null || !IafHelperClass.isDragon(IafHelperClass.getDragon(entityRayTraceResult.getEntity()))) {
+//                    return;
+//                }
+//                EntityDragonBase dragon = IafHelperClass.getDragon(entityRayTraceResult.getEntity());
+
+                RayTraceResult rayTraceResult = util.getTargetBlockOrEntity(playerEntity, (float) ICapabilityInfoHolder.getCapability(playerEntity).getCommandDistance(), null);
+
+                if (EntityBehaviorDebugger.targetEntity != null) {
+                    MobEntity targetEntity = EntityBehaviorDebugger.targetEntity;
+                    Vector3d target = rayTraceResult.getHitVec();
+                    double xTarget = target.x;
+                    double yTarget = target.y;
+                    double zTarget = target.z;
+                    targetEntity.getNavigator().tryMoveToXYZ(xTarget,yTarget,zTarget,1.0f);
+                }
+
+            }
         }
     }
 

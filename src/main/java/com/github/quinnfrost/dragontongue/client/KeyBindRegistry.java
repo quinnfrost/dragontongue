@@ -131,17 +131,6 @@ public class KeyBindRegistry {
             if (debugRayTraceResult.getType() == RayTraceResult.Type.ENTITY) {
                 RegistryMessages.sendToServer(new MessageDebugEntity(((EntityRayTraceResult)debugRayTraceResult).getEntity().getEntityId()));
                 ClientGlow.setGlowing(((EntityRayTraceResult)debugRayTraceResult).getEntity(), 20);
-//                RegistryMessages.sendToServer(new MessageCommandEntity(
-//                        EnumCommandType.DEBUG, clientPlayerEntity.getUniqueID(), (EntityRayTraceResult) debugRayTraceResult
-//                ));
-//                if (DragonTongue.debugTarget == null) {
-//                    DragonTongue.debugTarget = (MobEntity) ((EntityRayTraceResult) debugRayTraceResult).getEntity();
-//                } else {
-//                    DragonTongue.debugTarget = null;
-//                Pathfinding.lastDebugNodesVisited = new HashSet<>();
-//                Pathfinding.lastDebugNodesNotVisited = new HashSet<>();
-//                Pathfinding.lastDebugNodesPath = new HashSet<>();
-//                }
             }
         }
 

@@ -10,7 +10,6 @@ import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.entity.EntityRendererManager;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.*;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3d;
@@ -22,7 +21,7 @@ import java.util.*;
 
 public class RenderNode {
     public static delayedTimer timer = new delayedTimer();
-    // Todo: refactor to VoxelShapes to render AABBs
+    // Todo: 改成存voxelshape
     public static Map<Integer, Pair<Integer, Pair<Vector3d, Boolean>>> renderCubeList = new HashMap<>();
     public static Map<Integer, Pair<Integer, Pair<Vector3d, Vector3d>>> renderLineList = new HashMap<>();
     public static Map<Integer, Pair<Integer, Pair<Vector3d, String>>> renderStringList = new HashMap<>();
@@ -207,11 +206,11 @@ public class RenderNode {
                 nodePos.y + edgeLength / 2f,
                 nodePos.z + edgeLength / 2f
         );
-        renderShapeOutline(matrixStack, voxelShape);
+        renderVoxelShapeOutline(matrixStack, voxelShape);
     }
 
-    private static void renderShapeOutline(MatrixStack matrixStack,
-                                           VoxelShape voxelShape) {
+    private static void renderVoxelShapeOutline(MatrixStack matrixStack,
+                                                VoxelShape voxelShape) {
         voxelShape.forEachEdge((x0, y0, z0, x1, y1, z1) -> {
             renderLine(matrixStack, new Vector3d(x0, y0, z0), new Vector3d(x1, y1, z1));
         });

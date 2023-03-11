@@ -535,7 +535,7 @@ public abstract class AbstractPathJob implements Callable<Path> {
     }
 
     /**
-     * Callable method for initiating asynchronous brain.
+     * Callable method for initiating asynchronous task.
      *
      * @return path to follow or null.
      */

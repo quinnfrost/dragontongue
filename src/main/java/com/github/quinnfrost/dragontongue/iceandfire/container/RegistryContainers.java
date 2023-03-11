@@ -1,4 +1,4 @@
-package com.github.quinnfrost.dragontongue.container;
+package com.github.quinnfrost.dragontongue.iceandfire.container;
 
 import com.github.quinnfrost.dragontongue.Registration;
 import net.minecraft.inventory.container.ContainerType;

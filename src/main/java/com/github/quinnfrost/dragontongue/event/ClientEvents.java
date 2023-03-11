@@ -102,13 +102,10 @@ public class ClientEvents {
 //        event.getItemColors().register((stack, i) -> 0xff0000, ItemRegistry.FIRSTENTITYSPAWNEGG.get());
     }
 
-//    @SubscribeEvent
-//    public static void onPlayerTick(TickEvent.ClientTickEvent event) {
-//        if (DragonTongue.aiDebugger.target != null) {
-//            DragonTongue.aiDebugger.currentGoal = DragonTongue.aiDebugger.target.goalSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString();
-//            DragonTongue.aiDebugger.currentTarget = DragonTongue.aiDebugger.target.targetSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString();
-//        }
-//    }
+    @SubscribeEvent
+    public static void onPlayerTick(TickEvent.ClientTickEvent event) {
+
+    }
     @SubscribeEvent
     public static void onGuiInit(GuiScreenEvent.InitGuiEvent.Post event) {
         keySneakPressed = false;

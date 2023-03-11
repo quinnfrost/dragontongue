@@ -7,16 +7,15 @@ import net.minecraftforge.fml.RegistryObject;
 
 
 public class RegistryItems {
-    public static final RegistryObject<ItemDragonStaff> DRAGON_STAFF = Registration.ITEMS.register("dragon_staff", ItemDragonStaff::new);
+    public static final Item DRAGON_STAFF_ICE = new ItemDragonStaff();
     // Items in mod
     public static final Item CROW_WAND = new ItemCrowWand();
-
-
 
 
     // Register item
     public static void registerItems(IEventBus eventBus) {
         Registration.ITEMS.register("crow_wand", () -> CROW_WAND);
+        Registration.ITEMS.register("dragonstaff_ice", () -> DRAGON_STAFF_ICE);
 
         Registration.ITEMS.register(eventBus);
     }

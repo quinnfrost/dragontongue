@@ -2,7 +2,6 @@ package com.github.quinnfrost.dragontongue.iceandfire;
 
 import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
-import com.github.quinnfrost.dragontongue.utils.util;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.entity.Entity;
 import net.minecraft.tags.FluidTags;
@@ -170,27 +169,27 @@ public class IafDragonFlightUtil {
         BlockPos highestBlock = new BlockPos(startIn.x, 0, startIn.z);
         int highestDistance = 0;
         for (int i = 0; i < length; i++) {
-            BlockPos currentCentral = getHighestBlock(worldIn, new BlockPos(util.getDirectionOffset(central, direction, i)));
+            BlockPos currentCentral = getHighestBlock(worldIn, new BlockPos(getDirectionOffset(central, direction, i)));
             if (currentCentral.getY() > highestBlock.getY()) {
                 highestBlock = currentCentral;
                 highestDistance = i;
             }
             if (leftWing != null) {
-                BlockPos currentLeft = getHighestBlock(worldIn, new BlockPos(util.getDirectionOffset(leftWing, direction, i)));
+                BlockPos currentLeft = getHighestBlock(worldIn, new BlockPos(getDirectionOffset(leftWing, direction, i)));
                 if (currentLeft.getY() > highestBlock.getY()) {
                     highestBlock = currentLeft;
                     highestDistance = i;
                 }
             }
             if (rightWing != null) {
-                BlockPos currentRight = getHighestBlock(worldIn, new BlockPos(util.getDirectionOffset(rightWing, direction, i)));
+                BlockPos currentRight = getHighestBlock(worldIn, new BlockPos(getDirectionOffset(rightWing, direction, i)));
                 if (currentRight.getY() > highestBlock.getY()) {
                     highestBlock = currentRight;
                     highestDistance = i;
                 }
             }
         }
-        BlockPos centralPos = new BlockPos(util.getDirectionOffset(central, direction, highestDistance));
+        BlockPos centralPos = new BlockPos(getDirectionOffset(central, direction, highestDistance));
         return new BlockPos(centralPos.getX(), highestBlock.getY(), centralPos.getZ());
     }
 
@@ -201,5 +200,17 @@ public class IafDragonFlightUtil {
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
 
         return dragon.getPositionVec().y - getTerrainHeight(dragon.world, dragon.getPosition());
+    }
+
+    public static Vector3d getDirectionOffset(Vector3d startIn, Vector3d direction, float length) {
+        return startIn.add(direction.normalize().scale(length));
+    }
+
+    public static double degree2Radian(double degreeIn) {
+        return degreeIn * 0.0174532925199D;
+    }
+
+    public static double radian2Degree(double radianIn) {
+        return radianIn * 57.2957763671875D;
     }
 }

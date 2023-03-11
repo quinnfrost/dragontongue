@@ -227,27 +227,6 @@ public class MessageCommandEntity {
 //                ScreenDragon.openGui(commander, target);
                 break;
             case DEBUG:
-//                if (target instanceof MobEntity) {
-//                    // A messy workaround for debugTarget inconsistency on dedicated server and client
-//                    if (DragonTongue.debugger == null || (DragonTongue.debugTarget != null && DragonTongue.debugTarget.getUniqueID() != target.getUniqueID())) {
-//                        DragonTongue.debugTarget = (MobEntity) target;
-//                        DragonTongue.debugger = (PlayerEntity) commander;
-//                        if (DragonTongue.isIafPresent) {
-//                            IafHelperClass.startIafPathDebug((PlayerEntity) commander, target);
-//                        }
-//                    } else {
-//                        RegistryMessages.sendToClient(new MessageClientDisplay(
-//                                MessageClientDisplay.EnumClientDisplay.ENTITY_DEBUG,
-//                                1,
-//                                Collections.singletonList("")
-//                        ), (ServerPlayerEntity) DragonTongue.debugger);
-//                        DragonTongue.debugTarget = null;
-//                        DragonTongue.debugger = null;
-//                        if (DragonTongue.isIafPresent) {
-//                            IafHelperClass.stopIafPathDebug((PlayerEntity) commander);
-//                        }
-//                    }
-//                }
                 DragonTongue.LOGGER.debug("Debug triggered, set a breakpoint at MessageCommandEntity#232");
                 break;
             default:

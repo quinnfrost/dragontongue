@@ -12,7 +12,6 @@ import java.util.function.Supplier;
 public class MessageClientDisplay {
 
     private EnumClientDisplay messageType = EnumClientDisplay.PASS;
-    private int debugTargetId = 0;
     private int displayTime = 20;
     private int size = 3;
     public enum EnumClientDisplay {
@@ -24,23 +23,14 @@ public class MessageClientDisplay {
     private List<String> message = new ArrayList<>();
     public MessageClientDisplay(EnumClientDisplay messageType,int displayTime,List<String> message) {
         this.messageType = messageType;
-        this.debugTargetId = 0;
         this.displayTime = displayTime;
 
         this.size = message.size();
         this.message = message;
     }
-    public MessageClientDisplay(EnumClientDisplay messageType, int debugTargetId, int displayTime,List<String> message) {
-        this.messageType = messageType;
-        this.debugTargetId = debugTargetId;
-        this.displayTime = displayTime;
 
-        this.size = message.size();
-        this.message = message;
-    }
     public MessageClientDisplay(PacketBuffer buffer) {
         this.messageType = buffer.readEnumValue(EnumClientDisplay.class);
-        this.debugTargetId = buffer.readInt();
         this.displayTime = buffer.readInt();
 
         this.size = buffer.readInt();
@@ -53,7 +43,6 @@ public class MessageClientDisplay {
 
     public void encoder(PacketBuffer buffer) {
         buffer.writeEnumValue(messageType);
-        buffer.writeInt(debugTargetId);
         buffer.writeInt(displayTime);
 
         buffer.writeInt(size);

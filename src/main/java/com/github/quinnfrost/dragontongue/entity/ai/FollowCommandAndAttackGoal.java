@@ -21,7 +21,6 @@ public class FollowCommandAndAttackGoal extends MeleeAttackGoal {
         this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
     };
 
-    // Todo: cleanup what's happening below
     @Override
     public boolean shouldExecute() {
         if (super.shouldExecute()) {

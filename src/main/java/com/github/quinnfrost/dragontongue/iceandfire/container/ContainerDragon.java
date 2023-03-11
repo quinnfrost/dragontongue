@@ -1,4 +1,4 @@
-package com.github.quinnfrost.dragontongue.container;
+package com.github.quinnfrost.dragontongue.iceandfire.container;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.item.ItemDragonArmor;
@@ -17,8 +17,6 @@ import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.BannerItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 

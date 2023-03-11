@@ -17,7 +17,6 @@ public class HippogryphAIFollowCommandAndAttack extends MeleeAttackGoal {
         this.capabilityInfoHolder = creature.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(creature));
     }
 
-    // Todo: cleanup what's happening below
     @Override
     public boolean shouldExecute() {
         if (this.attacker.getAttackTarget() != null || capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE) {

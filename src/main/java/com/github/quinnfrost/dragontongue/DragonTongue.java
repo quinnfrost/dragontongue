@@ -8,7 +8,7 @@ import com.github.quinnfrost.dragontongue.iceandfire.gui.ScreenDragon;
 import com.github.quinnfrost.dragontongue.client.overlay.OverlayRenderEvent;
 import com.github.quinnfrost.dragontongue.command.RegistryCommands;
 import com.github.quinnfrost.dragontongue.config.Config;
-import com.github.quinnfrost.dragontongue.container.RegistryContainers;
+import com.github.quinnfrost.dragontongue.iceandfire.container.RegistryContainers;
 import com.github.quinnfrost.dragontongue.event.ClientEvents;
 import com.github.quinnfrost.dragontongue.event.ServerEvents;
 import com.github.quinnfrost.dragontongue.utils.util;
@@ -16,8 +16,6 @@ import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScreenManager;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
@@ -46,8 +44,7 @@ public class DragonTongue
     public static IEventBus eventBus;
 //    public static CommonProxy PROXY = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> CommonProxy::new);
     public static boolean isIafPresent = false;
-    public static MobEntity debugTarget;
-    public static PlayerEntity debugger;
+
     public DragonTongue() {
         // Register the setup method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
@@ -74,7 +71,6 @@ public class DragonTongue
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
 //        PROXY.init();
-//        MinecraftForge.EVENT_BUS.register(CommonEvents.class);
         MinecraftForge.EVENT_BUS.register(ServerEvents.class);
 
         if (isIafPresent) {

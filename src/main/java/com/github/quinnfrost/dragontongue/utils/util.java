@@ -200,10 +200,6 @@ public class util {
                 RayTraceContext.FluidMode.NONE, null));
     }
 
-    public static Vector3d getDirectionOffset(Vector3d startIn, Vector3d direction, float length) {
-        return startIn.add(direction.normalize().scale(length));
-    }
-
 
 //    public static List<Entity> getEntitiesAround(BlockPos blockPos, World world, float radius, Predicate<? super Entity> excludeEntity) {
 //        if (excludeEntity == null) {
