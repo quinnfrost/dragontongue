@@ -4,12 +4,15 @@ import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.Heightmap;
+
+import javax.annotation.Nullable;
 
 // This class came from DragonUtils, with some modification
 public class IafDragonFlightUtil {
@@ -112,11 +115,37 @@ public class IafDragonFlightUtil {
         return null;
     }
 
+    public static BlockPos getBlockUp(World world, Heightmap.Type heightmapType, BlockPos blockPos) {
+        while (!heightmapType.getHeightLimitPredicate().test(world.getBlockState(blockPos)) && blockPos.getY() < world.getHeight()) {
+            blockPos = blockPos.up();
+        }
+        return blockPos;
+    }
+
+    public static BlockPos getBlockUnder(World world, Heightmap.Type heightmapType, BlockPos blockPos) {
+        while (!heightmapType.getHeightLimitPredicate().test(world.getBlockState(blockPos)) && blockPos.getY() > 0) {
+            blockPos = blockPos.down();
+        }
+        return blockPos;
+    }
+
+    // Return the block up to match the World#getHeight
+    public static BlockPos getGround(World world, BlockPos blockPos) {
+        return getBlockUnder(world, Heightmap.Type.MOTION_BLOCKING, blockPos).up();
+    }
+    public static BlockPos getGround(LivingEntity entityIn) {
+        return getBlockUnder(entityIn.world, Heightmap.Type.MOTION_BLOCKING, entityIn.getPosition()).up();
+    }
+
+    public static BlockPos getHighestBlock(World worldIn, BlockPos positionIn) {
+        return worldIn.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, positionIn);
+    }
+
     public static int getTerrainHeight(World worldIn, BlockPos positionIn) {
         return getHighestBlock(worldIn, positionIn).getY();
     }
-    public static BlockPos getHighestBlock(World worldIn, BlockPos positionIn) {
-        return worldIn.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, positionIn);
+    public static int getTerrainHeight(LivingEntity entityIn) {
+        return getHighestBlock(entityIn.world, entityIn.getPosition()).getY();
     }
 
     public static Pair<BlockPos, BlockPos> getTerrainFeatureInRadius(World worldIn, BlockPos positionIn, int radius) {
@@ -134,6 +163,22 @@ public class IafDragonFlightUtil {
             }
         }
         return Pair.of(areaTerrainLowest, areaTerrainHighest);
+    }
+
+    public static BlockPos getSkyPosOnPath(EntityDragonBase dragonIn) {
+        return null;
+    }
+    @Nullable
+    public static BlockPos getSkyPosOnPath(World worldIn, Vector3d startIn, Vector3d direction, float maxLength, int radius) {
+        Vector3d directionXZ = new Vector3d(direction.x, 0, direction.z).normalize();
+
+        for (int i = 0; i < maxLength; i++) {
+            BlockPos currentBlockpos = new BlockPos(getDirectionOffset(startIn, directionXZ, i));
+            if (canAreaSeeSky(worldIn, currentBlockpos, radius)) {
+                return new BlockPos(currentBlockpos.getX(), startIn.getY(), currentBlockpos.getZ());
+            }
+        }
+        return null;
     }
 
     public static boolean canAreaSeeSky(World worldIn, BlockPos blockPosIn, int radius) {
@@ -199,7 +244,7 @@ public class IafDragonFlightUtil {
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
 
-        return dragon.getPositionVec().y - getTerrainHeight(dragon.world, dragon.getPosition());
+        return dragon.getPositionVec().y - getGround(dragon.world, dragon.getPosition()).getY();
     }
 
     public static Vector3d getDirectionOffset(Vector3d startIn, Vector3d direction, float length) {

@@ -182,7 +182,6 @@ public class EntityBehaviorDebugger {
                 "isInWater:" + mobEntity.isInWater(),
                 "Move:" + String.format("%f - %f - %f", mobEntity.moveForward, mobEntity.moveStrafing, mobEntity.moveVertical),
                 "Current dest: " + targetPosString,
-                "ReachesTarget? " + reachesTarget,
                 "Command status:" + capabilityInfoHolder.getCommandStatus().toString(),
                 "Command dest:" + destinationString,
                 "AttackDecision:" + capabilityInfoHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE)
