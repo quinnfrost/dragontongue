@@ -192,6 +192,17 @@ public class IafDragonFlightUtil {
         return true;
     }
 
+    public static boolean isAreaPassable(World worldIn, BlockPos blockPosIn, int radius) {
+        for (int i = blockPosIn.getX() - radius; i <= blockPosIn.getX() + radius; i++) {
+            for (int j = blockPosIn.getZ() - radius; j <= blockPosIn.getZ() + radius; j++) {
+                if (Heightmap.Type.MOTION_BLOCKING.getHeightLimitPredicate().test(worldIn.getBlockState(blockPosIn))) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     public static BlockPos getHighestPosOnPath(EntityDragonBase dragonIn, Vector3d targetPos) {
         return getHighestPosOnPath(dragonIn.world, dragonIn.getHeadPosition(), targetPos, dragonIn.getWidth());
     }

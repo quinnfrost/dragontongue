@@ -140,6 +140,13 @@ public class IafAdvancedDragonMoveController {
                     return;
                 }
             }
+            // Todo: 用AbstractPathJob#isPassableBB代替
+            if (dragon.collidedVertically && !IafDragonFlightUtil.isAreaPassable(
+                    dragon.world,
+                    dragon.getPosition().up((int) Math.ceil(dragon.getBoundingBox().getYSize())),
+                    (int) dragon.getBoundingBox().getAverageEdgeLength())) {
+                dragon.setMotion(new Vector3d(dragon.getMotion().scale(1d).x, -0.2, dragon.getMotion().scale(1d).y));
+            }
 
             float distToX = (float) (flightTarget.x - dragon.getPosX());
             float distToY = (float) (flightTarget.y - dragon.getPosY());

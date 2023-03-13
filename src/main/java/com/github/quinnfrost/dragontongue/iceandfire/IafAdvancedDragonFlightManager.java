@@ -3,6 +3,7 @@ package com.github.quinnfrost.dragontongue.iceandfire;
 import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.entity.*;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
+import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
@@ -33,6 +34,7 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
     private LivingEntity prevAttackTarget = null;
 
     public enum FlightPhase {
+        DETOUR,
         CLIMB,
         CRUISE,
         DIRECT
@@ -60,6 +62,10 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
         return ((IafAdvancedDragonFlightManager)((EntityDragonBase)dragonIn).flightManager).getFlightTarget();
     }
 
+    public void updateFlightSensors() {
+
+    }
+
     @Override
     public void update() {
         // Periodic check if the target is in sight
@@ -77,7 +83,11 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
                         flightPhase = FlightPhase.CRUISE;
                     }
                 } else {
-                    flightPhase = FlightPhase.CLIMB;
+                    if (IafDragonFlightUtil.canAreaSeeSky(dragon.world, dragon.getPosition(), dragon.getYNavSize())) {
+                        flightPhase = FlightPhase.CLIMB;
+                    } else {
+                        flightPhase = FlightPhase.DETOUR;
+                    }
                 }
             }
             switch (flightPhase) {
@@ -102,12 +112,29 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
                     }
                     currentFlightTarget = new Vector3d(finalFlightTarget.x, flightLevel.y + 2 * dragon.getYNavSize(), finalFlightTarget.z);
                     break;
+                case DETOUR:
+                    BlockPos skyPos = IafDragonFlightUtil.getSkyPosOnPath(dragon.world, dragon.getPositionVec(), dragon.getPositionVec().subtract(finalFlightTarget), 128f, dragon.getYNavSize());
+                    if (skyPos != null) {
+                        currentFlightTarget = Vector3d.copyCenteredHorizontally(skyPos);
+                        flightPhase = FlightPhase.DETOUR;
+                        if (dragon.getPosY() > currentFlightTarget.getY() || IafDragonFlightUtil.canAreaSeeSky(dragon.world, dragon.getPosition(), dragon.getYNavSize())) {
+                            flightPhase = FlightPhase.CLIMB;
+                        }
+                    } else {
+                        // We couldn't handle this situation, maybe we're inside a cave or something
+                        flightPhase = FlightPhase.DIRECT;
+                    }
+                    break;
             }
         }
+
         if (dragon.collidedHorizontally) {
             if (flightLevel != null && flightLevel.y < IafConfig.maxDragonFlight) {
                 flightLevel.add(0, dragon.getYNavSize(), 0);
             }
+        }
+        if (dragon.collidedVertically) {
+
         }
 
         // Attack related
