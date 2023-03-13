@@ -12,11 +12,11 @@ import com.github.alexthe666.iceandfire.pathfinding.raycoms.PathingStuckHandler;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
-import com.github.quinnfrost.dragontongue.container.ContainerDragon;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.*;
 import com.github.quinnfrost.dragontongue.iceandfire.*;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.brain.RegistryBrains;
+import com.github.quinnfrost.dragontongue.iceandfire.container.ContainerDragon;
 import com.github.quinnfrost.dragontongue.utils.util;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
@@ -180,9 +180,6 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     public abstract int getArmorOrdinal(ItemStack stack);
 
     @Shadow
-    public abstract boolean useFlyingPathFinder();
-
-    @Shadow
     public String prevArmorResLoc;
     @Shadow
     public String armorResLoc;
@@ -231,6 +228,8 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     @Shadow public abstract boolean isChained();
 
     @Shadow public abstract int getCommand();
+
+    @Shadow public abstract boolean isHovering();
 
     public ICapabilityInfoHolder cap = this.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(this));
 
@@ -357,6 +356,10 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
             Vector3d = new Vector3d(0, 0, 0);
         }
         super.travel(Vector3d);
+    }
+
+    public boolean useFlyingPathFinder() {
+        return this.isFlying() || this.isHovering();
     }
 
     @Inject(
