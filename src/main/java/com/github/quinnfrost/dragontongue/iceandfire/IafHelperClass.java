@@ -267,4 +267,10 @@ public class IafHelperClass {
         return false;
     }
 
+    public static float getXZDistanceSq(Vector3d startIn, Vector3d endIn) {
+        float dx = (float) (startIn.x - endIn.x);
+        float dz = (float) (startIn.z - endIn.z);
+        return dx * dx + dz * dz;
+    }
+
 }

@@ -282,8 +282,8 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         if (dragon.lookingForRoostAIFlag
 //                && dragon.getDistanceSquared(Vector3d.copyCentered(dragon.getHomePosition())) < dragon.getWidth() * 12
         ) {
-            if (navigator.noPath() && dragon.world.getGameTime() - navigator.pathStartTime < 10) {
-                if (dragon.getPositionVec().distanceTo(Vector3d.copyCenteredHorizontally(dragon.getHomePosition())) < 12) {
+            if (navigator.noPath()) {
+                if (IafHelperClass.getXZDistanceSq(dragon.getPositionVec(), Vector3d.copyCenteredHorizontally(dragon.getHomePosition())) < 100) {
                     if (!dragon.isInWater() && dragon.isOnGround() && !dragon.isFlying() && !dragon.isHovering() && dragon.getAttackTarget() == null) {
                         dragon.lookingForRoostAIFlag = false;
                         dragon.setQueuedToSit(true);
