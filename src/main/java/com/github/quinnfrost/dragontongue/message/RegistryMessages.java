@@ -5,8 +5,8 @@ import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.References;
 import com.github.quinnfrost.dragontongue.iceandfire.message.MessageClientSetReferenceDragon;
 import com.github.quinnfrost.dragontongue.iceandfire.message.MessageSyncPathReached;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
@@ -102,13 +102,13 @@ public class RegistryMessages {
      * @param packet
      * @param player
      */
-    public static void sendToClient(Object packet, ServerPlayerEntity player) {
-        CHANNEL.sendTo(packet, player.connection.netManager, NetworkDirection.PLAY_TO_CLIENT);
+    public static void sendToClient(Object packet, ServerPlayer player) {
+        CHANNEL.sendTo(packet, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
     }
 
     public static void sendToAll(Object packet) {
-        for (ServerPlayerEntity player : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers()) {
-            CHANNEL.sendTo(packet, player.connection.netManager, NetworkDirection.PLAY_TO_CLIENT);
+        for (ServerPlayer player : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers()) {
+            CHANNEL.sendTo(packet, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
         }
     }
 

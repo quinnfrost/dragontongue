@@ -3,15 +3,15 @@ package com.github.quinnfrost.dragontongue.iceandfire.ai;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
-import net.minecraft.entity.EntityPredicate;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.ai.goal.TargetGoal;
+import net.minecraft.world.entity.ai.targeting.TargetingConditions;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.target.TargetGoal;
 
 import java.util.EnumSet;
 
 public class DragonAIOwnerTarget extends TargetGoal {
-    private EntityPredicate predicate;
+    private TargetingConditions predicate;
     private double awareDistance = 1024;
 
     private final EntityDragonBase dragon;
@@ -21,17 +21,17 @@ public class DragonAIOwnerTarget extends TargetGoal {
     public DragonAIOwnerTarget(EntityDragonBase dragonIn) {
         super(dragonIn, false);
         this.dragon = dragonIn;
-        this.setMutexFlags(EnumSet.of(Goal.Flag.TARGET));
+        this.setFlags(EnumSet.of(Goal.Flag.TARGET));
 
-        this.predicate = new EntityPredicate().setDistance(1024).setIgnoresLineOfSight();
+        this.predicate = new TargetingConditions().range(1024).allowUnseeable();
     }
 
     /**
      * Returns whether execution should begin. You can also read and cache any state necessary for execution in this
      * method as well.
      */
-    public boolean shouldExecute() {
-        if (this.dragon.isTamed() && !this.dragon.isQueuedToSit()) {
+    public boolean canUse() {
+        if (this.dragon.isTame() && !this.dragon.isOrderedToSit()) {
             LivingEntity livingentity = this.dragon.getOwner();
             if (livingentity == null) {
                 return false;
@@ -44,10 +44,10 @@ public class DragonAIOwnerTarget extends TargetGoal {
                 if (dragon.isSleeping() || dragon.getCommand() == 1) {
                     awareDistance = 32 + 16 * dragon.getDragonStage();
                 }
-                this.predicate = predicate.setDistance(awareDistance);
-                this.attacker = livingentity.getLastAttackedEntity();
-                int i = livingentity.getLastAttackedEntityTime();
-                return i != this.timestamp && this.isSuitableTarget(this.attacker, predicate) && this.dragon.shouldAttackEntity(this.attacker, livingentity);
+                this.predicate = predicate.range(awareDistance);
+                this.attacker = livingentity.getLastHurtMob();
+                int i = livingentity.getLastHurtMobTimestamp();
+                return i != this.timestamp && this.canAttack(this.attacker, predicate) && this.dragon.wantsToAttack(this.attacker, livingentity);
             }
         } else {
             return false;
@@ -56,20 +56,20 @@ public class DragonAIOwnerTarget extends TargetGoal {
 
     @Override
 
-    protected double getTargetDistance() {
+    protected double getFollowDistance() {
         return this.awareDistance;
     }
 
     /**
      * Execute a one shot task or start executing a continuous task
      */
-    public void startExecuting() {
-        this.goalOwner.setAttackTarget(this.attacker);
+    public void start() {
+        this.mob.setTarget(this.attacker);
         LivingEntity livingentity = this.dragon.getOwner();
         if (livingentity != null) {
-            this.timestamp = livingentity.getLastAttackedEntityTime();
+            this.timestamp = livingentity.getLastHurtMobTimestamp();
         }
 
-        super.startExecuting();
+        super.start();
     }
 }

@@ -20,29 +20,29 @@ import com.github.quinnfrost.dragontongue.iceandfire.message.MessageClientSetRef
 import com.github.quinnfrost.dragontongue.item.RegistryItems;
 import com.github.quinnfrost.dragontongue.message.*;
 import com.github.quinnfrost.dragontongue.utils.util;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.item.TNTEntity;
-import net.minecraft.entity.item.minecart.TNTMinecartEntity;
-import net.minecraft.entity.monster.CreeperEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.entity.projectile.TridentEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.particles.ParticleTypes;
-import net.minecraft.potion.EffectInstance;
-import net.minecraft.potion.Effects;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.EntityRayTraceResult;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.Explosion;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.item.PrimedTnt;
+import net.minecraft.world.entity.vehicle.MinecartTNT;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.ThrownTrident;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.EntityMobGriefingEvent;
@@ -75,28 +75,28 @@ public class ServerEvents {
      */
     @SubscribeEvent
     public static void onProjectileImpact(ProjectileImpactEvent.Arrow event) {
-        if (event.getEntity().world.isRemote) {
+        if (event.getEntity().level.isClientSide) {
             return;
         }
 
-        ProjectileEntity projectile = event.getArrow();
-        Entity shooter = projectile.getShooter();
+        Projectile projectile = event.getArrow();
+        Entity shooter = projectile.getOwner();
 
         // Trident teleports
-        if (projectile instanceof TridentEntity && shooter instanceof ServerPlayerEntity) {
-            ServerWorld serverWorld = (ServerWorld) shooter.getEntityWorld();
-            ServerPlayerEntity player = (ServerPlayerEntity) shooter;
-            if (Config.TRIDENT_TELEPORT.get() && shooter.isSneaking() && event.getRayTraceResult().getType() != RayTraceResult.Type.MISS) {
-                Vector3d targetBlock = event.getRayTraceResult().getHitVec();
-                shooter.teleportKeepLoaded(targetBlock.getX(), targetBlock.getY(), targetBlock.getZ());
-                util.spawnParticleForce(serverWorld, ParticleTypes.PORTAL, targetBlock.getX(), targetBlock.getY(),
-                        targetBlock.getZ(),
+        if (projectile instanceof ThrownTrident && shooter instanceof ServerPlayer) {
+            ServerLevel serverWorld = (ServerLevel) shooter.getCommandSenderWorld();
+            ServerPlayer player = (ServerPlayer) shooter;
+            if (Config.TRIDENT_TELEPORT.get() && shooter.isShiftKeyDown() && event.getRayTraceResult().getType() != HitResult.Type.MISS) {
+                Vec3 targetBlock = event.getRayTraceResult().getLocation();
+                shooter.teleportToWithTicket(targetBlock.x(), targetBlock.y(), targetBlock.z());
+                util.spawnParticleForce(serverWorld, ParticleTypes.PORTAL, targetBlock.x(), targetBlock.y(),
+                        targetBlock.z(),
                         800, 2, 1, 2, 0.1);
-                player.addPotionEffect(new EffectInstance(Effects.BLINDNESS, 10, 0, true, false));
-            } else if (event.getRayTraceResult().getType() == RayTraceResult.Type.ENTITY) {
-                EntityRayTraceResult entityRayTraceResult = (EntityRayTraceResult) event.getRayTraceResult();
+                player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 10, 0, true, false));
+            } else if (event.getRayTraceResult().getType() == HitResult.Type.ENTITY) {
+                EntityHitResult entityRayTraceResult = (EntityHitResult) event.getRayTraceResult();
                 try {
-                    player.setLastAttackedEntity(entityRayTraceResult.getEntity());
+                    player.setLastHurtMob(entityRayTraceResult.getEntity());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -111,24 +111,24 @@ public class ServerEvents {
      */
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.player.world.isRemote) {
+        if (event.player.level.isClientSide) {
             return;
         }
         if (event.player == EntityBehaviorDebugger.requestedPlayer) {
             EntityBehaviorDebugger.updateDebugMessage();
         }
 
-        ServerPlayerEntity player = (ServerPlayerEntity) event.player;
-        ServerWorld serverWorld = player.getServerWorld();
-        Item mainhandItem = player.getHeldItemMainhand().getItem();
-        Item offhandItem = player.getHeldItemOffhand().getItem();
+        ServerPlayer player = (ServerPlayer) event.player;
+        ServerLevel serverWorld = player.getLevel();
+        Item mainhandItem = player.getMainHandItem().getItem();
+        Item offhandItem = player.getOffhandItem().getItem();
         // Player can fall back before fallback timer tick to 0
         player.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
             iCapTargetHolder.tickFallbackTimer();
             List<String> msg = new ArrayList<>();
             msg.add(String.valueOf(iCapTargetHolder.getFallbackTimer()));
             // Sneak to fallback, set timer to 0 if not holding wand anymore
-            if (iCapTargetHolder.getFallbackTimer() != 0 && player.isSneaking()) {
+            if (iCapTargetHolder.getFallbackTimer() != 0 && player.isShiftKeyDown()) {
                 MessageCrowWand.crowWandAction(EnumCrowWand.FALLBACK, player, serverWorld);
             } else if (iCapTargetHolder.getFallbackTimer() != 0 && !(
                     mainhandItem.equals(RegistryItems.CROW_WAND)
@@ -145,7 +145,7 @@ public class ServerEvents {
      */
     @SubscribeEvent
     public static void onLivingUpdate(LivingEvent.LivingUpdateEvent event) {
-        if (event.getEntity().world.isRemote) {
+        if (event.getEntity().level.isClientSide) {
             return;
         }
 
@@ -156,13 +156,13 @@ public class ServerEvents {
 
     @SubscribeEvent
     public static void onEntityJoinWorld(EntityJoinWorldEvent event) {
-        if (event.getEntity().world.isRemote) {
+        if (event.getEntity().level.isClientSide) {
             return;
         }
         // Register ai
         Entity entity = event.getEntity();
-        if (entity instanceof MobEntity) {
-            MobEntity mobEntity = (MobEntity) event.getEntity();
+        if (entity instanceof Mob) {
+            Mob mobEntity = (Mob) event.getEntity();
             RegistryAI.registerAI(mobEntity);
             if (DragonTongue.isIafPresent && IafHelperClass.isDragon(mobEntity)) {
                 IafAdvancedDragonLogic.applyDragonLogic(mobEntity);
@@ -170,22 +170,22 @@ public class ServerEvents {
             }
         }
         // Initial capability update for the first time player logs in
-        if (entity instanceof PlayerEntity) {
-            PlayerEntity playerEntity = (PlayerEntity) entity;
+        if (entity instanceof Player) {
+            Player playerEntity = (Player) entity;
             playerEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
-                RegistryMessages.sendToClient(new MessageSyncCapability(playerEntity), (ServerPlayerEntity) playerEntity);
+                RegistryMessages.sendToClient(new MessageSyncCapability(playerEntity), (ServerPlayer) playerEntity);
             });
         }
     }
 
     @SubscribeEvent
     public static void onPlayerStartTracking(PlayerEvent.StartTracking event) {
-        if (event.getEntity().world.isRemote) {
+        if (event.getEntity().level.isClientSide) {
             return;
         }
-        ServerPlayerEntity serverPlayerEntity = (ServerPlayerEntity) event.getPlayer();
-        if (event.getTarget() instanceof MobEntity) {
-            MobEntity mobEntity = (MobEntity) event.getTarget();
+        ServerPlayer serverPlayerEntity = (ServerPlayer) event.getPlayer();
+        if (event.getTarget() instanceof Mob) {
+            Mob mobEntity = (Mob) event.getTarget();
             // Initial capability update for the player client loads the entity for the first time
             RegistryMessages.sendToClient(new MessageSyncCapability(mobEntity), serverPlayerEntity);
         }
@@ -193,21 +193,21 @@ public class ServerEvents {
 
     @SubscribeEvent
     public static void onEntityInteractSpecific(PlayerInteractEvent.EntityInteractSpecific event) {
-        if (event.getEntity().world.isRemote) {
+        if (event.getEntity().level.isClientSide) {
             return;
         }
 
         if (DragonTongue.isIafPresent) {
-            PlayerEntity playerEntity = event.getPlayer();
-            Hand hand = event.getHand();
-            ItemStack itemStack = playerEntity.getHeldItem(hand);
+            Player playerEntity = event.getPlayer();
+            InteractionHand hand = event.getHand();
+            ItemStack itemStack = playerEntity.getItemInHand(hand);
             Entity target = event.getTarget();
             if (itemStack.getItem() == Items.TOTEM_OF_UNDYING && IafHelperClass.isDragon(target)) {
                 LivingEntity dragon = (LivingEntity) target;
                 if (IafDragonBehaviorHelper.resurrectDragon(dragon)) {
                     itemStack.shrink(1);
                 }
-                event.setCancellationResult(ActionResultType.SUCCESS);
+                event.setCancellationResult(InteractionResult.SUCCESS);
                 event.setCanceled(true);
             }
         }
@@ -215,18 +215,18 @@ public class ServerEvents {
 
     @SubscribeEvent
     public static void onMobGriefing(EntityMobGriefingEvent event) {
-        if (event.getEntity() == null || event.getEntity().world.isRemote) {
+        if (event.getEntity() == null || event.getEntity().level.isClientSide) {
             return;
         }
         Entity entity = event.getEntity();
-        if (entity instanceof CreeperEntity) {
+        if (entity instanceof Creeper) {
             event.setResult(Event.Result.DENY);
         }
     }
 
     @SubscribeEvent
     public static void onExplosionStart(ExplosionEvent.Start event) {
-        if (event.getWorld().isRemote) {
+        if (event.getWorld().isClientSide) {
             return;
         }
 
@@ -234,15 +234,15 @@ public class ServerEvents {
 
     @SubscribeEvent
     public static void onExplosionDetonate(ExplosionEvent.Detonate event) {
-        if (event.getWorld().isRemote) {
+        if (event.getWorld().isClientSide) {
             return;
         }
         Explosion explosion = event.getExplosion();
         Entity exploder = event.getExplosion().getExploder();
-        Entity placer = event.getExplosion().getExplosivePlacedBy();
-        if ((exploder instanceof TNTEntity)
-                || (exploder instanceof TNTMinecartEntity)) {
-            explosion.clearAffectedBlockPositions();
+        Entity placer = event.getExplosion().getSourceMob();
+        if ((exploder instanceof PrimedTnt)
+                || (exploder instanceof MinecartTNT)) {
+            explosion.clearToBlow();
         }
     }
 
@@ -253,12 +253,12 @@ public class ServerEvents {
 
     @SubscribeEvent(priority = EventPriority.NORMAL)
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
-        if (event.getWorld().isRemote) {
+        if (event.getWorld().isClientSide) {
             return;
         }
         // Using dragon staff right-click on a dragon will open gui
         Entity targetEntity = event.getTarget();
-        PlayerEntity playerEntity = event.getPlayer();
+        Player playerEntity = event.getPlayer();
         if (DragonTongue.isIafPresent) {
             IafServerEvent.onEntityInteract(event);
         }
@@ -266,16 +266,16 @@ public class ServerEvents {
 
     @SubscribeEvent
     public static void onEntityUseItem(PlayerInteractEvent.RightClickItem event) {
-        if (event.getWorld().isRemote) {
+        if (event.getWorld().isClientSide) {
             return;
         }
         if (DragonTongue.isIafPresent) {
             IafServerEvent.onEntityUseItem(event);
         }
-        if (event.getEntityLiving() instanceof PlayerEntity) {
-            PlayerEntity playerEntity = (PlayerEntity) event.getEntityLiving();
-            Hand hand = event.getHand();
-            ItemStack itemStack = playerEntity.getHeldItem(hand);
+        if (event.getEntityLiving() instanceof Player) {
+            Player playerEntity = (Player) event.getEntityLiving();
+            InteractionHand hand = event.getHand();
+            ItemStack itemStack = playerEntity.getItemInHand(hand);
 
             if (itemStack.getItem() == RegistryItems.DRAGON_STAFF_ICE) {
 //                EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(playerEntity, Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f,
@@ -285,15 +285,15 @@ public class ServerEvents {
 //                }
 //                EntityDragonBase dragon = IafHelperClass.getDragon(entityRayTraceResult.getEntity());
 
-                RayTraceResult rayTraceResult = util.getTargetBlockOrEntity(playerEntity, (float) ICapabilityInfoHolder.getCapability(playerEntity).getCommandDistance(), null);
+                HitResult rayTraceResult = util.getTargetBlockOrEntity(playerEntity, (float) ICapabilityInfoHolder.getCapability(playerEntity).getCommandDistance(), null);
 
                 if (EntityBehaviorDebugger.targetEntity != null) {
-                    MobEntity targetEntity = EntityBehaviorDebugger.targetEntity;
-                    Vector3d target = rayTraceResult.getHitVec();
+                    Mob targetEntity = EntityBehaviorDebugger.targetEntity;
+                    Vec3 target = rayTraceResult.getLocation();
                     double xTarget = target.x;
                     double yTarget = target.y;
                     double zTarget = target.z;
-                    targetEntity.getNavigator().tryMoveToXYZ(xTarget,yTarget,zTarget,1.0f);
+                    targetEntity.getNavigation().moveTo(xTarget,yTarget,zTarget,1.0f);
                 }
 
             }
@@ -302,13 +302,13 @@ public class ServerEvents {
 
     @SubscribeEvent
     public static void onEntityDeath(LivingDeathEvent event) {
-        if (event.getEntity().world.isRemote) {
+        if (event.getEntity().level.isClientSide) {
             return;
         }
         // Display critical hit mark
-        Entity source = event.getSource().getTrueSource();
-        if (source instanceof ServerPlayerEntity) {
-            ServerPlayerEntity attacker = (ServerPlayerEntity) source;
+        Entity source = event.getSource().getEntity();
+        if (source instanceof ServerPlayer) {
+            ServerPlayer attacker = (ServerPlayer) source;
             RegistryMessages.sendToClient(new MessageClientDisplay(
                             MessageClientDisplay.EnumClientDisplay.CRITICAL, 1, Collections.singletonList("")),
                     attacker
@@ -318,17 +318,17 @@ public class ServerEvents {
 
     @SubscribeEvent
     public static void onEntityDamage(LivingDamageEvent event) {
-        if (event.getEntity().world.isRemote) {
+        if (event.getEntity().level.isClientSide) {
             return;
         }
         if (DragonTongue.isIafPresent) {
             IafServerEvent.onEntityDamage(event);
         }
         // Display hit mark
-        Entity source = event.getSource().getTrueSource();
+        Entity source = event.getSource().getEntity();
         LivingEntity hurtEntity = event.getEntityLiving();
-        if (source instanceof ServerPlayerEntity) {
-            ServerPlayerEntity playerEntity = (ServerPlayerEntity) source;
+        if (source instanceof ServerPlayer) {
+            ServerPlayer playerEntity = (ServerPlayer) source;
             float damageAmount = event.getAmount();
             if (hurtEntity.isAlive()) {
 
@@ -342,7 +342,7 @@ public class ServerEvents {
 
     @SubscribeEvent
     public static void onEntityAttack(LivingAttackEvent event) {
-        if (event.getEntity().world.isRemote) {
+        if (event.getEntity().level.isClientSide) {
             return;
         }
         if (DragonTongue.isIafPresent) {

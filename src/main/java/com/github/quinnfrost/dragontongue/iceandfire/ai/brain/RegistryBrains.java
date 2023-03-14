@@ -10,18 +10,24 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.memory.WalkTarget;
-import net.minecraft.entity.ai.brain.schedule.Activity;
-import net.minecraft.entity.ai.brain.schedule.Schedule;
-import net.minecraft.entity.ai.brain.schedule.ScheduleBuilder;
-import net.minecraft.entity.ai.brain.sensor.SensorType;
+import net.minecraft.world.entity.schedule.Activity;
+import net.minecraft.world.entity.schedule.Schedule;
+import net.minecraft.world.entity.schedule.ScheduleBuilder;
+import net.minecraft.world.entity.ai.sensing.SensorType;
 import net.minecraft.entity.ai.brain.task.*;
-import net.minecraft.util.RangedInteger;
+import net.minecraft.util.IntRange;
 import net.minecraftforge.eventbus.api.IEventBus;
 
 import java.util.Optional;
+
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.world.entity.ai.behavior.GateBehavior;
+import net.minecraft.world.entity.ai.behavior.RunOne;
+import net.minecraft.world.entity.ai.behavior.RunSometimes;
+import net.minecraft.world.entity.ai.behavior.UpdateActivityFromSchedule;
 
 public class RegistryBrains extends Schedule {
     // Our custom memory items
@@ -41,8 +47,8 @@ public class RegistryBrains extends Schedule {
 
     // Our schedules
     public static final Schedule SCHEDULE_DEFAULT = getScheduleBuilder().build();
-    public static final Schedule SCHEDULE_DAY_DRAGON = getScheduleBuilder().add(10, ACTIVITY_IDLE).add(2000, ACTIVITY_HUNT).add(5000, ACTIVITY_REST).add(7000, ACTIVITY_IDLE).add(9000, ACTIVITY_HUNT).add(11000, ACTIVITY_IDLE).add(12010, ACTIVITY_SLEEP).build();
-    public static final Schedule SCHEDULE_NIGHT_DRAGON = getScheduleBuilder().add(10, ACTIVITY_SLEEP).add(12010, ACTIVITY_IDLE).add(14000, ACTIVITY_HUNT).add(17000, ACTIVITY_IDLE).add(19000, ACTIVITY_HUNT).add(21000, ACTIVITY_IDLE).add(23000, ACTIVITY_SLEEP).build();
+    public static final Schedule SCHEDULE_DAY_DRAGON = getScheduleBuilder().changeActivityAt(10, ACTIVITY_IDLE).changeActivityAt(2000, ACTIVITY_HUNT).changeActivityAt(5000, ACTIVITY_REST).changeActivityAt(7000, ACTIVITY_IDLE).changeActivityAt(9000, ACTIVITY_HUNT).changeActivityAt(11000, ACTIVITY_IDLE).changeActivityAt(12010, ACTIVITY_SLEEP).build();
+    public static final Schedule SCHEDULE_NIGHT_DRAGON = getScheduleBuilder().changeActivityAt(10, ACTIVITY_SLEEP).changeActivityAt(12010, ACTIVITY_IDLE).changeActivityAt(14000, ACTIVITY_HUNT).changeActivityAt(17000, ACTIVITY_IDLE).changeActivityAt(19000, ACTIVITY_HUNT).changeActivityAt(21000, ACTIVITY_IDLE).changeActivityAt(23000, ACTIVITY_SLEEP).build();
 
     public static final Schedule FROST_WILD = getScheduleBuilder().build();
     public static final Schedule FIRE_WILD = getScheduleBuilder().build();
@@ -57,16 +63,16 @@ public class RegistryBrains extends Schedule {
 
     public static Schedule makeDefaultSchedule() {
         ScheduleBuilder scheduleBuilder = new ScheduleBuilder(new Schedule());
-        scheduleBuilder.add(0, Activity.IDLE);
+        scheduleBuilder.changeActivityAt(0, Activity.IDLE);
         return scheduleBuilder.build();
     }
 
     public static void register(IEventBus eventBus) {
-        Registration.ACTIVITY.register(ACTIVITY_DRAGON_DEFAULT.getKey(), () -> ACTIVITY_DRAGON_DEFAULT);
-        Registration.ACTIVITY.register(ACTIVITY_IDLE.getKey(), () -> ACTIVITY_IDLE);
-        Registration.ACTIVITY.register(ACTIVITY_REST.getKey(), () -> ACTIVITY_REST);
-        Registration.ACTIVITY.register(ACTIVITY_SLEEP.getKey(), () -> ACTIVITY_SLEEP);
-        Registration.ACTIVITY.register(ACTIVITY_ATTACK.getKey(), () -> ACTIVITY_ATTACK);
+        Registration.ACTIVITY.register(ACTIVITY_DRAGON_DEFAULT.getName(), () -> ACTIVITY_DRAGON_DEFAULT);
+        Registration.ACTIVITY.register(ACTIVITY_IDLE.getName(), () -> ACTIVITY_IDLE);
+        Registration.ACTIVITY.register(ACTIVITY_REST.getName(), () -> ACTIVITY_REST);
+        Registration.ACTIVITY.register(ACTIVITY_SLEEP.getName(), () -> ACTIVITY_SLEEP);
+        Registration.ACTIVITY.register(ACTIVITY_ATTACK.getName(), () -> ACTIVITY_ATTACK);
 
 
         Registration.SCHEDULES.register("schedule_default", () -> SCHEDULE_DEFAULT);
@@ -83,13 +89,13 @@ public class RegistryBrains extends Schedule {
         Registration.SENSOR.register(eventBus);
     }
 
-    public static ImmutableList<Pair<Integer, ? extends Task<? super EntityDragonBase>>> vanilla() {
+    public static ImmutableList<Pair<Integer, ? extends Behavior<? super EntityDragonBase>>> vanilla() {
         return ImmutableList.of(
-                Pair.of(9, new MultiTask<>(ImmutableMap.of(
+                Pair.of(9, new GateBehavior<>(ImmutableMap.of(
 
                 ), ImmutableSet.of(
 
-                ), MultiTask.Ordering.ORDERED, MultiTask.RunType.RUN_ONE,
+                ), GateBehavior.OrderPolicy.ORDERED, GateBehavior.RunningPolicy.RUN_ONE,
                         ImmutableList.of(
                                 Pair.of(new DragonVanillaTaskRide<>(60, 60), 0),
                                 Pair.of(new DragonVanillaTaskSit(60, 60), 1),
@@ -102,11 +108,11 @@ public class RegistryBrains extends Schedule {
                                 Pair.of(new DragonVanillaTaskLookIdle(), 6)
                         )
                 )),
-                Pair.of(10, new MultiTask<>(ImmutableMap.of(
+                Pair.of(10, new GateBehavior<>(ImmutableMap.of(
 
                 ), ImmutableSet.of(
 
-                ), MultiTask.Ordering.ORDERED, MultiTask.RunType.RUN_ONE,
+                ), GateBehavior.OrderPolicy.ORDERED, GateBehavior.RunningPolicy.RUN_ONE,
                         ImmutableList.of(
 //                                Pair.of(new DragonVanillaTaskRide<>(10, 10), 0),
 //                                Pair.of(new DragonVanillaTaskSit(10, 10), 1),
@@ -150,14 +156,14 @@ public class RegistryBrains extends Schedule {
      *
      * @return
      */
-    public static ImmutableList<Pair<Integer, ? extends Task<? super EntityDragonBase>>> core() {
+    public static ImmutableList<Pair<Integer, ? extends Behavior<? super EntityDragonBase>>> core() {
         return ImmutableList.of(
                 Pair.of(0, new DragonBehaviorLook()),
-                Pair.of(1, new MultiTask<>(ImmutableMap.of(
+                Pair.of(1, new GateBehavior<>(ImmutableMap.of(
 
                 ), ImmutableSet.of(
 
-                ), MultiTask.Ordering.ORDERED, MultiTask.RunType.RUN_ONE,
+                ), GateBehavior.OrderPolicy.ORDERED, GateBehavior.RunningPolicy.RUN_ONE,
                         ImmutableList.of(
                                 Pair.of(new DragonBehaviorFlight(), 0),
                                 Pair.of(new DragonBehaviorWalk(), 1)
@@ -175,24 +181,24 @@ public class RegistryBrains extends Schedule {
      *
      * @return
      */
-    public static ImmutableList<Pair<Integer, ? extends Task<? super EntityDragonBase>>> idle() {
+    public static ImmutableList<Pair<Integer, ? extends Behavior<? super EntityDragonBase>>> idle() {
         return ImmutableList.of(
-                Pair.of(9, new MultiTask<>(ImmutableMap.of(
+                Pair.of(9, new GateBehavior<>(ImmutableMap.of(
 
                 ), ImmutableSet.of(
 
-                ), MultiTask.Ordering.ORDERED, MultiTask.RunType.RUN_ONE,
+                ), GateBehavior.OrderPolicy.ORDERED, GateBehavior.RunningPolicy.RUN_ONE,
                         ImmutableList.of(
                                 Pair.of(new DragonBehaviorAttack(), 0),
-                                Pair.of(new FirstShuffledTask<>(ImmutableMap.of(
-                                        MemoryModuleType.WALK_TARGET, MemoryModuleStatus.VALUE_ABSENT
+                                Pair.of(new RunOne<>(ImmutableMap.of(
+                                        MemoryModuleType.WALK_TARGET, MemoryStatus.VALUE_ABSENT
                                 ), ImmutableList.of(
-                                        Pair.of(new RunSometimesTask<>(new DragonTaskGlide(1.0f), RangedInteger.createRangedInteger(30, 60)), 0),
-                                        Pair.of(new RunSometimesTask<>(new DragonTaskWander(1.0f), RangedInteger.createRangedInteger(30, 60)), 1)
+                                        Pair.of(new RunSometimes<>(new DragonTaskGlide(1.0f), IntRange.of(30, 60)), 0),
+                                        Pair.of(new RunSometimes<>(new DragonTaskWander(1.0f), IntRange.of(30, 60)), 1)
                                 )), 1)
                         ))),
 
-                Pair.of(99, new UpdateActivityTask())
+                Pair.of(99, new UpdateActivityFromSchedule())
         );
     }
 
@@ -201,11 +207,11 @@ public class RegistryBrains extends Schedule {
      *
      * @return
      */
-    public static ImmutableList<Pair<Integer, ? extends Task<? super EntityDragonBase>>> attack() {
+    public static ImmutableList<Pair<Integer, ? extends Behavior<? super EntityDragonBase>>> attack() {
         return ImmutableList.of(
 
 
-                Pair.of(99, new UpdateActivityTask())
+                Pair.of(99, new UpdateActivityFromSchedule())
         );
     }
 
@@ -215,20 +221,20 @@ public class RegistryBrains extends Schedule {
      *
      * @return
      */
-    public static ImmutableList<Pair<Integer, ? extends Task<? super EntityDragonBase>>> sleep() {
+    public static ImmutableList<Pair<Integer, ? extends Behavior<? super EntityDragonBase>>> sleep() {
         return ImmutableList.of(
-                Pair.of(9, new MultiTask<>(ImmutableMap.of(
+                Pair.of(9, new GateBehavior<>(ImmutableMap.of(
 
                 ), ImmutableSet.of(
 
-                ), MultiTask.Ordering.ORDERED, MultiTask.RunType.RUN_ONE,
+                ), GateBehavior.OrderPolicy.ORDERED, GateBehavior.RunningPolicy.RUN_ONE,
                         ImmutableList.of(
                                 Pair.of(new DragonTaskReturnRoost(), 0),
                                 Pair.of(new DragonTaskSleep(), 1)
                         )
                 )),
 
-                Pair.of(99, new UpdateActivityTask())
+                Pair.of(99, new UpdateActivityFromSchedule())
         );
     }
 
@@ -237,24 +243,24 @@ public class RegistryBrains extends Schedule {
      *
      * @return
      */
-    public static ImmutableList<Pair<Integer, ? extends Task<? super EntityDragonBase>>> rest() {
+    public static ImmutableList<Pair<Integer, ? extends Behavior<? super EntityDragonBase>>> rest() {
         return ImmutableList.of(
-                Pair.of(9, new MultiTask<>(ImmutableMap.of(
+                Pair.of(9, new GateBehavior<>(ImmutableMap.of(
 
                 ), ImmutableSet.of(
 
-                ), MultiTask.Ordering.ORDERED, MultiTask.RunType.RUN_ONE,
+                ), GateBehavior.OrderPolicy.ORDERED, GateBehavior.RunningPolicy.RUN_ONE,
                         ImmutableList.of(
                                 Pair.of(new DragonTaskReturnRoost(), 0)
                         )
                 )),
 
-                Pair.of(99, new UpdateActivityTask())
+                Pair.of(99, new UpdateActivityFromSchedule())
         );
     }
 
 
-    public static ImmutableList<Pair<Integer, ? extends Task<? super EntityDragonBase>>> escort() {
+    public static ImmutableList<Pair<Integer, ? extends Behavior<? super EntityDragonBase>>> escort() {
         return ImmutableList.of(
 
         );

@@ -4,20 +4,20 @@ import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.utils.util;
 import com.google.common.collect.ImmutableMap;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.memory.WalkTarget;
-import net.minecraft.entity.ai.brain.task.Task;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.WalkTarget;
+import net.minecraft.world.entity.ai.behavior.Behavior;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.Hand;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.server.level.ServerLevel;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
 
-public class DragonBehaviorAttack extends Task<EntityDragonBase> {
+public class DragonBehaviorAttack extends Behavior<EntityDragonBase> {
     @Nullable
     private LivingEntity attackTarget;
     private int attackTick;
@@ -32,9 +32,9 @@ public class DragonBehaviorAttack extends Task<EntityDragonBase> {
 
     public DragonBehaviorAttack(int durationMinIn, int durationMaxIn, float speedTowardsTarget) {
         super(ImmutableMap.of(
-                MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED,
-                MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.VALUE_PRESENT,
-                MemoryModuleType.ATTACK_COOLING_DOWN, MemoryModuleStatus.REGISTERED
+                MemoryModuleType.LOOK_TARGET, MemoryStatus.REGISTERED,
+                MemoryModuleType.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT,
+                MemoryModuleType.ATTACK_COOLING_DOWN, MemoryStatus.REGISTERED
         ), durationMinIn, durationMaxIn);
         this.speedTowardsTarget = speedTowardsTarget;
     }
@@ -44,7 +44,7 @@ public class DragonBehaviorAttack extends Task<EntityDragonBase> {
     }
 
     @Override
-    protected boolean shouldExecute(ServerWorld worldIn, EntityDragonBase dragon) {
+    protected boolean checkExtraStartConditions(ServerLevel worldIn, EntityDragonBase dragon) {
         LivingEntity target = this.getAttackTarget(dragon);
         if (!util.shouldAttack(dragon, target, dragon.getAttributeValue(Attributes.FOLLOW_RANGE))) {
             return false;
@@ -60,33 +60,33 @@ public class DragonBehaviorAttack extends Task<EntityDragonBase> {
     }
 
     @Override
-    protected boolean shouldContinueExecuting(ServerWorld worldIn, EntityDragonBase dragon, long gameTimeIn) {
+    protected boolean canStillUse(ServerLevel worldIn, EntityDragonBase dragon, long gameTimeIn) {
         return attackTarget != null && attackTarget.isAlive();
     }
 
     @Override
-    protected void resetTask(ServerWorld worldIn, EntityDragonBase dragon, long gameTimeIn) {
-        dragon.getBrain().removeMemory(MemoryModuleType.ATTACK_TARGET);
-        dragon.getBrain().removeMemory(MemoryModuleType.WALK_TARGET);
-        dragon.setAttackTarget(null);
+    protected void stop(ServerLevel worldIn, EntityDragonBase dragon, long gameTimeIn) {
+        dragon.getBrain().eraseMemory(MemoryModuleType.ATTACK_TARGET);
+        dragon.getBrain().eraseMemory(MemoryModuleType.WALK_TARGET);
+        dragon.setTarget(null);
         attackTarget = null;
 
-        dragon.getBrain().setFallbackActivity(RegistryBrains.ACTIVITY_IDLE);
-        dragon.getBrain().updateActivity(worldIn.getDayTime(), gameTimeIn);
+        dragon.getBrain().setDefaultActivity(RegistryBrains.ACTIVITY_IDLE);
+        dragon.getBrain().updateActivityFromSchedule(worldIn.getDayTime(), gameTimeIn);
     }
 
     @Override
-    protected boolean isTimedOut(long gameTime) {
+    protected boolean timedOut(long gameTime) {
         return false;
     }
 
     @Override
-    protected void startExecuting(ServerWorld worldIn, EntityDragonBase dragon, long gameTimeIn) {
+    protected void start(ServerLevel worldIn, EntityDragonBase dragon, long gameTimeIn) {
 
     }
 
     @Override
-    protected void updateTask(ServerWorld worldIn, EntityDragonBase dragon, long gameTime) {
+    protected void tick(ServerLevel worldIn, EntityDragonBase dragon, long gameTime) {
         attackTarget = dragon.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).orElse(null);
         if (attackTarget != null) {
             if (dragon.getAnimation() == EntityDragonBase.ANIMATION_SHAKEPREY) {
@@ -94,17 +94,17 @@ public class DragonBehaviorAttack extends Task<EntityDragonBase> {
                 return;
             }
 
-            dragon.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(attackTarget.getPositionVec(), speedTowardsTarget, 0));
-            dragon.setAttackTarget(attackTarget);
+            dragon.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(attackTarget.position(), speedTowardsTarget, 0));
+            dragon.setTarget(attackTarget);
 
-            final double distanceToTarget = dragon.getDistanceSq(attackTarget.getPosX(), attackTarget.getBoundingBox().minY, attackTarget.getPosZ());
+            final double distanceToTarget = dragon.distanceToSqr(attackTarget.getX(), attackTarget.getBoundingBox().minY, attackTarget.getZ());
             final double attackReachSqr = this.getAttackReachSqr(dragon, attackTarget);
 
             this.attackTick = Math.max(this.attackTick - 1, 0);
             if (distanceToTarget <= attackReachSqr && this.attackTick <= 0) {
                 this.attackTick = 20;
-                dragon.swingArm(Hand.MAIN_HAND);
-                dragon.attackEntityAsMob(attackTarget);
+                dragon.swing(InteractionHand.MAIN_HAND);
+                dragon.doHurtTarget(attackTarget);
             }
         }
     }
@@ -114,6 +114,6 @@ public class DragonBehaviorAttack extends Task<EntityDragonBase> {
     }
 
     protected double getAttackReachSqr(EntityDragonBase dragon, LivingEntity attackTarget) {
-        return dragon.getWidth() * 2.0F * dragon.getWidth() * 2.0F + attackTarget.getWidth();
+        return dragon.getBbWidth() * 2.0F * dragon.getBbWidth() * 2.0F + attackTarget.getBbWidth();
     }
 }

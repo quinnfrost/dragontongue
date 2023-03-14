@@ -3,24 +3,24 @@ package com.github.quinnfrost.dragontongue.iceandfire.ai.brain;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.server.level.ServerLevel;
 
 /**
  * Handles the dragon's look position <br>
  * Required memory state: <br>
  *      LOOK_TARGET: value present <br>
  */
-public class DragonBehaviorLook extends Task<EntityDragonBase> {
+public class DragonBehaviorLook extends Behavior<EntityDragonBase> {
     /**
      * @param durationMin
      * @param durationMax
      */
     public DragonBehaviorLook(int durationMin, int durationMax) {
         super(ImmutableMap.of(
-                MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.VALUE_PRESENT
+                MemoryModuleType.LOOK_TARGET, MemoryStatus.VALUE_PRESENT
         ), durationMin, durationMax);
     }
     public DragonBehaviorLook() {
@@ -28,36 +28,36 @@ public class DragonBehaviorLook extends Task<EntityDragonBase> {
     }
 
     @Override
-    protected boolean shouldExecute(ServerWorld worldIn, EntityDragonBase owner) {
-        return super.shouldExecute(worldIn, owner);
+    protected boolean checkExtraStartConditions(ServerLevel worldIn, EntityDragonBase owner) {
+        return super.checkExtraStartConditions(worldIn, owner);
     }
 
     @Override
-    protected boolean shouldContinueExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+    protected boolean canStillUse(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
         return entityIn.getBrain().getMemory(MemoryModuleType.LOOK_TARGET).filter((posWrapper) -> {
-            return posWrapper.isVisibleTo(entityIn);
+            return posWrapper.isVisibleBy(entityIn);
         }).isPresent();
     }
 
     @Override
-    protected void resetTask(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
-        super.resetTask(worldIn, entityIn, gameTimeIn);
+    protected void stop(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+        super.stop(worldIn, entityIn, gameTimeIn);
     }
 
     @Override
-    protected boolean isTimedOut(long gameTime) {
+    protected boolean timedOut(long gameTime) {
         return false;
     }
 
     @Override
-    protected void startExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+    protected void start(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
 
     }
 
     @Override
-    protected void updateTask(ServerWorld worldIn, EntityDragonBase owner, long gameTime) {
+    protected void tick(ServerLevel worldIn, EntityDragonBase owner, long gameTime) {
         owner.getBrain().getMemory(MemoryModuleType.LOOK_TARGET).ifPresent((posWrapper) -> {
-            owner.getLookController().setLookPosition(posWrapper.getPos());
+            owner.getLookControl().setLookAt(posWrapper.currentPosition());
         });
     }
 }

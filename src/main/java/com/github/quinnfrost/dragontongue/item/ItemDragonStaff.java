@@ -8,28 +8,30 @@ import com.github.quinnfrost.dragontongue.enums.EnumCommandType;
 import com.github.quinnfrost.dragontongue.message.MessageCommandEntity;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Rarity;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.EntityRayTraceResult;
-import net.minecraft.util.math.RayTraceContext;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Rarity;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+
+import net.minecraft.world.item.Item.Properties;
 
 public class ItemDragonStaff extends Item {
     public ItemDragonStaff() {
         super(new Properties()
 //                .group(Registration.TAB_DRAGONTONGUE)
-                .maxStackSize(1)
-                .defaultMaxDamage(6)
-                .isImmuneToFire()
+                .stacksTo(1)
+                .defaultDurability(6)
+                .fireResistant()
                 .rarity(Rarity.RARE)
         );
     }
@@ -45,49 +47,49 @@ public class ItemDragonStaff extends Item {
      */
     @Override
     @OnlyIn(Dist.CLIENT)
-    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn) {
-        if (!worldIn.isRemote) {
-            return super.onItemRightClick(worldIn, playerIn, handIn);
+    public InteractionResultHolder<ItemStack> use(Level worldIn, Player playerIn, InteractionHand handIn) {
+        if (!worldIn.isClientSide) {
+            return super.use(worldIn, playerIn, handIn);
         }
         ICapabilityInfoHolder capabilityInfoHolder = playerIn.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(playerIn));
-        ItemStack itemStack = playerIn.getHeldItem(Hand.MAIN_HAND);
+        ItemStack itemStack = playerIn.getItemInHand(InteractionHand.MAIN_HAND);
 
         // Get target entity
-        EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(playerIn,
+        EntityHitResult entityRayTraceResult = util.getTargetEntity(playerIn,
                 Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f,
                 null);
-        BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(playerIn, (float) capabilityInfoHolder.getCommandDistance(), 1.0f, RayTraceContext.BlockMode.COLLIDER);
+        BlockHitResult blockRayTraceResult = util.getTargetBlock(playerIn, (float) capabilityInfoHolder.getCommandDistance(), 1.0f, ClipContext.Block.COLLIDER);
 
-        if (entityRayTraceResult == null || entityRayTraceResult.getType() == RayTraceResult.Type.MISS) {
-            return super.onItemRightClick(worldIn, playerIn, handIn);
+        if (entityRayTraceResult == null || entityRayTraceResult.getType() == HitResult.Type.MISS) {
+            return super.use(worldIn, playerIn, handIn);
         }
 
         Entity entity = entityRayTraceResult.getEntity();
         // Different function based on holding hands and sneaking
-        if (!playerIn.isSneaking() && handIn == Hand.MAIN_HAND) {
+        if (!playerIn.isShiftKeyDown() && handIn == InteractionHand.MAIN_HAND) {
             RegistryMessages.sendToServer(
-                    new MessageCommandEntity(EnumCommandType.FOLLOW, playerIn.getUniqueID(),
-                            entityRayTraceResult.getEntity().getUniqueID()));
-        } else if (playerIn.isSneaking() && handIn == Hand.MAIN_HAND) {
+                    new MessageCommandEntity(EnumCommandType.FOLLOW, playerIn.getUUID(),
+                            entityRayTraceResult.getEntity().getUUID()));
+        } else if (playerIn.isShiftKeyDown() && handIn == InteractionHand.MAIN_HAND) {
             RegistryMessages.sendToServer(
-                    new MessageCommandEntity(EnumCommandType.SIT, playerIn.getUniqueID(),
-                            entityRayTraceResult.getEntity().getUniqueID()));
+                    new MessageCommandEntity(EnumCommandType.SIT, playerIn.getUUID(),
+                            entityRayTraceResult.getEntity().getUUID()));
 
 
-        } else if (!playerIn.isSneaking() && handIn == Hand.OFF_HAND) {
+        } else if (!playerIn.isShiftKeyDown() && handIn == InteractionHand.OFF_HAND) {
             RegistryMessages.sendToServer(
-                    new MessageCommandEntity(EnumCommandType.WONDER, playerIn.getUniqueID(),
-                            entityRayTraceResult.getEntity().getUniqueID()));
+                    new MessageCommandEntity(EnumCommandType.WONDER, playerIn.getUUID(),
+                            entityRayTraceResult.getEntity().getUUID()));
 
-        } else if (playerIn.isSneaking() && handIn == Hand.OFF_HAND) {
+        } else if (playerIn.isShiftKeyDown() && handIn == InteractionHand.OFF_HAND) {
             RegistryMessages.sendToServer(
-                    new MessageCommandEntity(EnumCommandType.FOLLOW, playerIn.getUniqueID(),
-                            entityRayTraceResult.getEntity().getUniqueID()));
+                    new MessageCommandEntity(EnumCommandType.FOLLOW, playerIn.getUUID(),
+                            entityRayTraceResult.getEntity().getUUID()));
             RegistryMessages.sendToServer(
-                    new MessageCommandEntity(EnumCommandType.LAND, playerIn.getUniqueID(),
-                            entityRayTraceResult.getEntity().getUniqueID()));
+                    new MessageCommandEntity(EnumCommandType.LAND, playerIn.getUUID(),
+                            entityRayTraceResult.getEntity().getUUID()));
         }
-        return super.onItemRightClick(worldIn, playerIn, handIn);
+        return super.use(worldIn, playerIn, handIn);
     }
 
 

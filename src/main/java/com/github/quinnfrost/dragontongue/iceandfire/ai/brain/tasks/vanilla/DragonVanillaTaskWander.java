@@ -4,14 +4,14 @@ import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.google.common.collect.ImmutableMap;
-import net.minecraft.entity.ai.RandomPositionGenerator;
+import net.minecraft.world.entity.ai.util.RandomPos;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.server.level.ServerLevel;
 
-public class DragonVanillaTaskWander extends Task<EntityDragonBase> {
+public class DragonVanillaTaskWander extends Behavior<EntityDragonBase> {
     private final float speed;
     private final int maxXZ;
     private final int maxY;
@@ -29,7 +29,7 @@ public class DragonVanillaTaskWander extends Task<EntityDragonBase> {
     }
 
     @Override
-    protected boolean shouldExecute(ServerWorld worldIn, EntityDragonBase owner) {
+    protected boolean checkExtraStartConditions(ServerLevel worldIn, EntityDragonBase owner) {
         if (!(ICapabilityInfoHolder.getCapability(owner).getCommandStatus() == EnumCommandSettingType.CommandStatus.NONE)) {
             return false;
         }
@@ -48,28 +48,28 @@ public class DragonVanillaTaskWander extends Task<EntityDragonBase> {
     }
 
 
-    protected boolean shouldContinueExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
-        return shouldExecute(worldIn, entityIn);
+    protected boolean canStillUse(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+        return checkExtraStartConditions(worldIn, entityIn);
     }
 
-    protected void startExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+    protected void start(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
 //        Optional<Vector3d> optional = Optional.ofNullable(RandomPositionGenerator.getLandPos(entityIn, this.maxXZ, this.maxY));
 //        entityIn.getBrain().setMemory(MemoryModuleType.WALK_TARGET, optional.map((vector3d) ->
 //                new WalkTarget(vector3d, this.speed, 0)
 //        ));
 
-        Vector3d Vector3d = RandomPositionGenerator.findRandomTarget(entityIn, 10, 7);
+        Vec3 Vector3d = RandomPos.getPos(entityIn, 10, 7);
         if (Vector3d != null) {
             double xPosition = Vector3d.x;
             double yPosition = Vector3d.y;
             double zPosition = Vector3d.z;
-            entityIn.getNavigator().tryMoveToXYZ(xPosition, yPosition, zPosition, this.speed);
+            entityIn.getNavigation().moveTo(xPosition, yPosition, zPosition, this.speed);
         }
     }
 
     @Override
-    protected void resetTask(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
-        super.resetTask(worldIn, entityIn, gameTimeIn);
-        entityIn.getNavigator().clearPath();
+    protected void stop(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+        super.stop(worldIn, entityIn, gameTimeIn);
+        entityIn.getNavigation().stop();
     }
 }

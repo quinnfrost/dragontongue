@@ -6,64 +6,66 @@ import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.utils.util;
-import net.minecraft.entity.EntityPredicate;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.goal.NearestAttackableTargetGoal;
-import net.minecraft.entity.passive.TameableEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.entity.ai.targeting.TargetingConditions;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.util.EnumSet;
 import java.util.function.Predicate;
 
+import net.minecraft.world.entity.ai.goal.Goal.Flag;
+
 public class GuardGoal<T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
-    private TameableEntity tameableEntity;
+    private TamableAnimal tameableEntity;
     private ICapabilityInfoHolder cap;
     private BlockPos guardPosition;
     private double guardDistance = 16;
 
 
-    public GuardGoal(TameableEntity entityIn, Class<T> targetClassIn, int targetChanceIn, boolean checkSight, boolean nearbyOnlyIn, @Nullable Predicate<LivingEntity> targetPredicate) {
+    public GuardGoal(TamableAnimal entityIn, Class<T> targetClassIn, int targetChanceIn, boolean checkSight, boolean nearbyOnlyIn, @Nullable Predicate<LivingEntity> targetPredicate) {
         super(entityIn, targetClassIn, targetChanceIn, checkSight, nearbyOnlyIn, targetPredicate);
-        this.setMutexFlags(EnumSet.of(Flag.TARGET));
+        this.setFlags(EnumSet.of(Flag.TARGET));
         this.tameableEntity = entityIn;
         this.cap = tameableEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(tameableEntity));
     }
 
-    public GuardGoal(TameableEntity entityIn, Class<T> targetClassIn, boolean checkSight, @Nullable Predicate<LivingEntity> targetPredicate) {
+    public GuardGoal(TamableAnimal entityIn, Class<T> targetClassIn, boolean checkSight, @Nullable Predicate<LivingEntity> targetPredicate) {
         super(entityIn, targetClassIn, 1, checkSight, false, null);
-        this.setMutexFlags(EnumSet.of(Flag.TARGET));
+        this.setFlags(EnumSet.of(Flag.TARGET));
         this.tameableEntity = entityIn;
         this.cap = tameableEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(tameableEntity));
     }
 
     @Override
-    public boolean shouldExecute() {
-        if (!tameableEntity.isTamed() || tameableEntity.getOwner() == null) {
+    public boolean canUse() {
+        if (!tameableEntity.isTame() || tameableEntity.getOwner() == null) {
             return false;
         }
         if (cap.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE) != EnumCommandSettingType.AttackDecisionType.GUARD) {
             return false;
         }
         updateGuardPosition();
-        if (super.shouldExecute() && !nearestTarget.getClass().equals(this.tameableEntity.getClass())) {
-            if (tameableEntity.getPositionVec().distanceTo(Vector3d.copyCenteredHorizontally(guardPosition)) > guardDistance) {
+        if (super.canUse() && !target.getClass().equals(this.tameableEntity.getClass())) {
+            if (tameableEntity.position().distanceTo(Vec3.atBottomCenterOf(guardPosition)) > guardDistance) {
                 return false;
             }
-            return util.isHostile(nearestTarget);
+            return util.isHostile(target);
         }
         return false;
     }
 
     @Override
-    public boolean shouldContinueExecuting() {
-        if (!tameableEntity.isTamed() || tameableEntity.getOwner() == null) {
+    public boolean canContinueToUse() {
+        if (!tameableEntity.isTame() || tameableEntity.getOwner() == null) {
             return false;
         }
         if (cap.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE) != EnumCommandSettingType.AttackDecisionType.GUARD) {
@@ -71,14 +73,14 @@ public class GuardGoal<T extends LivingEntity> extends NearestAttackableTargetGo
         }
 
         updateGuardPosition();
-        if (tameableEntity.getPositionVec().distanceTo(Vector3d.copyCenteredHorizontally(guardPosition)) > guardDistance) {
+        if (tameableEntity.position().distanceTo(Vec3.atBottomCenterOf(guardPosition)) > guardDistance) {
             // Waiting for current target eliminated
-            if (tameableEntity.getAttackTarget() == null) {
-                tameableEntity.getNavigator().tryMoveToXYZ(guardPosition.getX(), guardPosition.getY(), guardPosition.getZ(), 1.0f);
+            if (tameableEntity.getTarget() == null) {
+                tameableEntity.getNavigation().moveTo(guardPosition.getX(), guardPosition.getY(), guardPosition.getZ(), 1.0f);
             }
             return true;
         } else {
-            return super.shouldContinueExecuting();
+            return super.canContinueToUse();
         }
     }
 
@@ -87,13 +89,13 @@ public class GuardGoal<T extends LivingEntity> extends NearestAttackableTargetGo
         if (cap.getDestination().isPresent() && cap.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE) {
             guardPosition = cap.getDestination().get();
         } else {
-            guardPosition = tameableEntity.getOwner().getPosition();
+            guardPosition = tameableEntity.getOwner().blockPosition();
         }
     }
 
     @Override
-    public void resetTask() {
-        super.resetTask();
+    public void stop() {
+        super.stop();
         if (cap.getDestination().isPresent()) {
             cap.setCommandStatus(EnumCommandSettingType.CommandStatus.REACH);
         } else {
@@ -106,29 +108,29 @@ public class GuardGoal<T extends LivingEntity> extends NearestAttackableTargetGo
         super.tick();
     }
 
-    public static double getTargetDistance(MobEntity mobEntity) {
+    public static double getTargetDistance(Mob mobEntity) {
         return mobEntity.getAttributeValue(Attributes.FOLLOW_RANGE);
     }
 
-    public static AxisAlignedBB getTargetableArea(MobEntity mobEntity, double targetDistance) {
-        return mobEntity.getBoundingBox().grow(targetDistance, 4.0D, targetDistance);
+    public static AABB getTargetableArea(Mob mobEntity, double targetDistance) {
+        return mobEntity.getBoundingBox().inflate(targetDistance, 4.0D, targetDistance);
     }
 
-    public static LivingEntity findNearestTarget(MobEntity mobEntity) {
+    public static LivingEntity findNearestTarget(Mob mobEntity) {
         LivingEntity nearestTarget;
         Predicate<LivingEntity> targetPredicate = new Predicate<LivingEntity>() {
             @Override
             public boolean test(@Nullable LivingEntity entity) {
-                return (!(entity instanceof PlayerEntity) || !((PlayerEntity) entity).isCreative())
+                return (!(entity instanceof Player) || !((Player) entity).isCreative())
                         && util.isHostile(entity);
             }
         };
         Class entityClazz = LivingEntity.class;
-        EntityPredicate targetEntitySelector = (new EntityPredicate()).setDistance(getTargetDistance(mobEntity)).setCustomPredicate(targetPredicate);
-        if (entityClazz != PlayerEntity.class && entityClazz != ServerPlayerEntity.class) {
-            nearestTarget = mobEntity.world.getClosestEntity(LivingEntity.class, targetEntitySelector, mobEntity, mobEntity.getPosX(), mobEntity.getPosYEye(), mobEntity.getPosZ(), getTargetableArea(mobEntity, getTargetDistance(mobEntity)));
+        TargetingConditions targetEntitySelector = (new TargetingConditions()).range(getTargetDistance(mobEntity)).selector(targetPredicate);
+        if (entityClazz != Player.class && entityClazz != ServerPlayer.class) {
+            nearestTarget = mobEntity.level.getNearestLoadedEntity(LivingEntity.class, targetEntitySelector, mobEntity, mobEntity.getX(), mobEntity.getEyeY(), mobEntity.getZ(), getTargetableArea(mobEntity, getTargetDistance(mobEntity)));
         } else {
-            nearestTarget = mobEntity.world.getClosestPlayer(targetEntitySelector, mobEntity, mobEntity.getPosX(), mobEntity.getPosYEye(), mobEntity.getPosZ());
+            nearestTarget = mobEntity.level.getNearestPlayer(targetEntitySelector, mobEntity, mobEntity.getX(), mobEntity.getEyeY(), mobEntity.getZ());
         }
         return nearestTarget;
     }

@@ -6,19 +6,21 @@ import com.github.quinnfrost.dragontongue.enums.EnumCrowWand;
 import com.github.quinnfrost.dragontongue.message.MessageCrowWand;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Rarity;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.RayTraceContext;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Rarity;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+
+import net.minecraft.world.item.Item.Properties;
 
 public class ItemCrowWand extends Item {
     public static int CROW_WAND_MAX_DISTANCE = 512;
@@ -26,8 +28,8 @@ public class ItemCrowWand extends Item {
     public ItemCrowWand() {
         super(new Properties()
 //                .group(Registration.TAB_DRAGONTONGUE)
-                .maxStackSize(1)
-                .isImmuneToFire()
+                .stacksTo(1)
+                .fireResistant()
                 .rarity(Rarity.EPIC)
         );
     }
@@ -44,36 +46,36 @@ public class ItemCrowWand extends Item {
      */
     @Override
     @OnlyIn(Dist.CLIENT)
-    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
+    public InteractionResultHolder<ItemStack> use(Level world, Player player, InteractionHand hand) {
         // Skip if on server side
-        if (!world.isRemote) {
-            return super.onItemRightClick(world, player, hand);
+        if (!world.isClientSide) {
+            return super.use(world, player, hand);
         }
 
         // Send wand use message at client side
-        if (!player.isSneaking() && hand == Hand.MAIN_HAND) {
+        if (!player.isShiftKeyDown() && hand == InteractionHand.MAIN_HAND) {
             RegistryMessages.sendToServer(new MessageCrowWand(EnumCrowWand.TELEPORT));
-        } else if (player.isSneaking() && hand == Hand.MAIN_HAND) {
+        } else if (player.isShiftKeyDown() && hand == InteractionHand.MAIN_HAND) {
             RegistryMessages.sendToServer(new MessageCrowWand(EnumCrowWand.FANG));
-        } else if (!player.isSneaking() && hand == Hand.OFF_HAND) {
+        } else if (!player.isShiftKeyDown() && hand == InteractionHand.OFF_HAND) {
             RegistryMessages.sendToServer(new MessageCrowWand(EnumCrowWand.TELEPORT));
-        } else if (player.isSneaking() && hand == Hand.OFF_HAND) {
+        } else if (player.isShiftKeyDown() && hand == InteractionHand.OFF_HAND) {
             RegistryMessages.sendToServer(new MessageCrowWand(EnumCrowWand.LIGHTNING));
         }
         // Set usage cooldown
         // player.getCooldownTracker().setCooldown(this,20);
 
-        return super.onItemRightClick(world, player, hand);
+        return super.use(world, player, hand);
 
     }
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void inventoryTick(ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
+    public void inventoryTick(ItemStack stack, Level worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
         super.inventoryTick(stack, worldIn, entityIn, itemSlot, isSelected);
         if (isSelected) {
-            BlockRayTraceResult blockRayTraceResult = util.getTargetBlock(entityIn, CROW_WAND_MAX_DISTANCE, 1.0f, RayTraceContext.BlockMode.COLLIDER);
-            if (blockRayTraceResult.getType() == RayTraceResult.Type.MISS) {
+            BlockHitResult blockRayTraceResult = util.getTargetBlock(entityIn, CROW_WAND_MAX_DISTANCE, 1.0f, ClipContext.Block.COLLIDER);
+            if (blockRayTraceResult.getType() == HitResult.Type.MISS) {
                 OverlayCrossHair.setCrossHairDisplay(null, 0, 2, OverlayCrossHair.IconType.WARN, true);
             }
         }

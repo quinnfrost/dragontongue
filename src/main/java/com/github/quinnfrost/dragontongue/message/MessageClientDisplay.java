@@ -1,7 +1,7 @@
 package com.github.quinnfrost.dragontongue.message;
 
 import com.github.quinnfrost.dragontongue.client.overlay.OverlayCrossHair;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
 
@@ -29,25 +29,25 @@ public class MessageClientDisplay {
         this.message = message;
     }
 
-    public MessageClientDisplay(PacketBuffer buffer) {
-        this.messageType = buffer.readEnumValue(EnumClientDisplay.class);
+    public MessageClientDisplay(FriendlyByteBuf buffer) {
+        this.messageType = buffer.readEnum(EnumClientDisplay.class);
         this.displayTime = buffer.readInt();
 
         this.size = buffer.readInt();
         if (this.size > 0) {
             for (int i = 0; i < this.size; i++) {
-                this.message.add(buffer.readString());
+                this.message.add(buffer.readUtf());
             }
         }
     }
 
-    public void encoder(PacketBuffer buffer) {
-        buffer.writeEnumValue(messageType);
+    public void encoder(FriendlyByteBuf buffer) {
+        buffer.writeEnum(messageType);
         buffer.writeInt(displayTime);
 
         buffer.writeInt(size);
         for (int i = 0; i < size; i++) {
-            buffer.writeString(message.get(i));
+            buffer.writeUtf(message.get(i));
         }
     }
 

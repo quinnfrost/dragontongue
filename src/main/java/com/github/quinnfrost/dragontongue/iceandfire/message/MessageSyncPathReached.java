@@ -2,8 +2,8 @@ package com.github.quinnfrost.dragontongue.iceandfire.message;
 
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Node;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Pathfinding;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.BlockPos;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
@@ -36,7 +36,7 @@ public class MessageSyncPathReached {
         this.reached = reached;
     }
 
-    public void write(final PacketBuffer buf) {
+    public void write(final FriendlyByteBuf buf) {
         buf.writeInt(reached.size());
         for (final BlockPos node : reached) {
             buf.writeBlockPos(node);
@@ -44,7 +44,7 @@ public class MessageSyncPathReached {
 
     }
 
-    public static MessageSyncPathReached read(final PacketBuffer buf) {
+    public static MessageSyncPathReached read(final FriendlyByteBuf buf) {
         int size = buf.readInt();
         Set<BlockPos> reached = new HashSet<>();
         for (int i = 0; i < size; i++) {

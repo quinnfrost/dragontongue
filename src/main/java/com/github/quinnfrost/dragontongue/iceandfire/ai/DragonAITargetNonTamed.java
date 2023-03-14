@@ -1,40 +1,42 @@
 package com.github.quinnfrost.dragontongue.iceandfire.ai;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.attributes.ModifiableAttributeInstance;
-import net.minecraft.entity.ai.goal.NearestAttackableTargetGoal;
-import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.phys.AABB;
 
 import java.util.EnumSet;
 import java.util.function.Predicate;
+
+import net.minecraft.world.entity.ai.goal.Goal.Flag;
 
 public class DragonAITargetNonTamed<T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
     private EntityDragonBase dragon;
 
     public DragonAITargetNonTamed(EntityDragonBase entityIn, Class<T> classTarget, boolean checkSight, Predicate<LivingEntity> targetSelector) {
         super(entityIn, classTarget, 5, checkSight, false, targetSelector);
-        this.setMutexFlags(EnumSet.of(Flag.TARGET));
+        this.setFlags(EnumSet.of(Flag.TARGET));
         this.dragon = entityIn;
     }
 
     @Override
-    public boolean shouldExecute() {
-        if(!dragon.isTamed() && dragon.lookingForRoostAIFlag){
+    public boolean canUse() {
+        if(!dragon.isTame() && dragon.lookingForRoostAIFlag){
             return false;
         }
-        return !dragon.isTamed() && !dragon.isSleeping() && super.shouldExecute();
+        return !dragon.isTame() && !dragon.isSleeping() && super.canUse();
     }
 
     @Override
-    protected AxisAlignedBB getTargetableArea(double targetDistance) {
-        return this.dragon.getBoundingBox().grow(targetDistance, targetDistance, targetDistance);
+    protected AABB getTargetSearchArea(double targetDistance) {
+        return this.dragon.getBoundingBox().inflate(targetDistance, targetDistance, targetDistance);
     }
 
     @Override
-    protected double getTargetDistance() {
-        ModifiableAttributeInstance iattributeinstance = this.goalOwner.getAttribute(Attributes.FOLLOW_RANGE);
+    protected double getFollowDistance() {
+        AttributeInstance iattributeinstance = this.mob.getAttribute(Attributes.FOLLOW_RANGE);
         return iattributeinstance == null ? 128.0D : iattributeinstance.getValue();
     }
 }

@@ -12,17 +12,17 @@ import com.github.quinnfrost.dragontongue.message.MessageClientDraw;
 import com.github.quinnfrost.dragontongue.message.MessageDebugEntity;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
-import net.minecraft.entity.Entity;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.schedule.Activity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.server.ServerWorld;
 
 import java.util.*;
@@ -33,10 +33,10 @@ import java.util.stream.Stream;
  * Provide debug info of a living entity
  */
 public class EntityBehaviorDebugger {
-    public static MobEntity targetEntity;
-    public static ServerPlayerEntity requestedPlayer;
+    public static Mob targetEntity;
+    public static ServerPlayer requestedPlayer;
 
-    public static void startDebugFor(ServerPlayerEntity playerIn, MobEntity targetEntityIn) {
+    public static void startDebugFor(ServerPlayer playerIn, Mob targetEntityIn) {
         if (targetEntityIn == null) {
             return;
         }
@@ -59,21 +59,21 @@ public class EntityBehaviorDebugger {
 
     public static void updateDebugMessage() {
         if (targetEntity != null) {
-            RegistryMessages.sendToClient(new MessageDebugEntity(targetEntity.getEntityId(), getAssociatedTargetFor(targetEntity), getTargetInfoString(targetEntity)), requestedPlayer);
+            RegistryMessages.sendToClient(new MessageDebugEntity(targetEntity.getId(), getAssociatedTargetFor(targetEntity), getTargetInfoString(targetEntity)), requestedPlayer);
         }
     }
 
-    public static List<Vector3d> getAssociatedTargetFor(MobEntity mobEntity) {
-        List<Vector3d> associatedTarget = new ArrayList<>();
+    public static List<Vec3> getAssociatedTargetFor(Mob mobEntity) {
+        List<Vec3> associatedTarget = new ArrayList<>();
         if (DragonTongue.isIafPresent) {
             if (IafAdvancedDragonFlightManager.getCurrentFlightTargetFor(mobEntity) != null) {
                 associatedTarget.add(IafAdvancedDragonFlightManager.getCurrentFlightTargetFor(mobEntity));
             }
             if (IafHelperClass.getReachTarget(mobEntity) != null) {
-                associatedTarget.add(Vector3d.copyCenteredHorizontally(IafHelperClass.getReachTarget(mobEntity)));
+                associatedTarget.add(Vec3.atBottomCenterOf(IafHelperClass.getReachTarget(mobEntity)));
             }
-        } else if (mobEntity.getNavigator().getTargetPos() != null) {
-            associatedTarget.add(Vector3d.copyCenteredHorizontally(mobEntity.getNavigator().getTargetPos()));
+        } else if (mobEntity.getNavigation().getTargetPos() != null) {
+            associatedTarget.add(Vec3.atBottomCenterOf(mobEntity.getNavigation().getTargetPos()));
         }
         return associatedTarget;
     }
@@ -85,35 +85,35 @@ public class EntityBehaviorDebugger {
         }
     }
 
-    public static String formatVector(Vector3d vector3d) {
+    public static String formatVector(Vec3 vector3d) {
         if (vector3d != null) {
-            return String.format("%.4f, %.4f, %.4f", vector3d.getX(), vector3d.getY(), vector3d.getZ());
+            return String.format("%.4f, %.4f, %.4f", vector3d.x(), vector3d.y(), vector3d.z());
         } else {
             return "-, -, -";
         }
     }
 
-    public static List<String> getMemoryInfoString(MobEntity mobEntity) {
+    public static List<String> getMemoryInfoString(Mob mobEntity) {
         Brain<?> brain = mobEntity.getBrain();
         List<String> stringList = new ArrayList<>();
         try {
-            if (brain.hasMemory(MemoryModuleType.WALK_TARGET)) {
+            if (brain.hasMemoryValue(MemoryModuleType.WALK_TARGET)) {
                 brain.getMemory(MemoryModuleType.WALK_TARGET).ifPresent(target -> {
-                    stringList.add("WalkTarget: " + formatBlockPos(target.getTarget().getBlockPos()));
+                    stringList.add("WalkTarget: " + formatBlockPos(target.getTarget().currentBlockPosition()));
                 });
             }
-            if (brain.hasMemory(MemoryModuleType.ATTACK_TARGET)) {
+            if (brain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET)) {
                 brain.getMemory(MemoryModuleType.ATTACK_TARGET).ifPresent(target -> {
-                    stringList.add("AttackTarget: " + target.getName().getUnformattedComponentText());
+                    stringList.add("AttackTarget: " + target.getName().getContents());
                 });
             }
-            if (brain.hasMemory(MemoryModuleType.LOOK_TARGET)) {
+            if (brain.hasMemoryValue(MemoryModuleType.LOOK_TARGET)) {
                 brain.getMemory(MemoryModuleType.LOOK_TARGET).ifPresent(iPosWrapper -> {
-                    stringList.add("LookTarget: " + formatBlockPos(iPosWrapper.getBlockPos()));
+                    stringList.add("LookTarget: " + formatBlockPos(iPosWrapper.currentBlockPosition()));
                 });
             }
-            if (brain.hasMemory(MemoryModuleType.VISIBLE_MOBS)) {
-                brain.getMemory(MemoryModuleType.VISIBLE_MOBS).ifPresent(entityList -> {
+            if (brain.hasMemoryValue(MemoryModuleType.VISIBLE_LIVING_ENTITIES)) {
+                brain.getMemory(MemoryModuleType.VISIBLE_LIVING_ENTITIES).ifPresent(entityList -> {
                     stringList.add("VisibleMobs: " + entityList);
                 });
             }
@@ -123,36 +123,36 @@ public class EntityBehaviorDebugger {
         }
     }
 
-    public static List<String> getTargetInfoString(MobEntity mobEntity) {
+    public static List<String> getTargetInfoString(Mob mobEntity) {
         if (mobEntity == null) {
             return new ArrayList<>();
         }
-        mobEntity.world.getProfiler().startSection("debugString");
+        mobEntity.level.getProfiler().push("debugString");
 
         ICapabilityInfoHolder capabilityInfoHolder = mobEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(mobEntity));
 
-        String scheduleString = (mobEntity.getBrain().getSchedule() == null ? "" : mobEntity.getBrain().getSchedule().getRegistryName().getPath()) + String.format(" [%s]", (mobEntity.getBrain().getSchedule() == null ? "-" : mobEntity.getBrain().getSchedule().getScheduledActivity((int) mobEntity.world.getDayTime())));
-        BlockPos targetPos = DragonTongue.isIafPresent ? IafHelperClass.getReachTarget(mobEntity) : mobEntity.getNavigator().getTargetPos();
+        String scheduleString = (mobEntity.getBrain().getSchedule() == null ? "" : mobEntity.getBrain().getSchedule().getRegistryName().getPath()) + String.format(" [%s]", (mobEntity.getBrain().getSchedule() == null ? "-" : mobEntity.getBrain().getSchedule().getActivityAt((int) mobEntity.level.getDayTime())));
+        BlockPos targetPos = DragonTongue.isIafPresent ? IafHelperClass.getReachTarget(mobEntity) : mobEntity.getNavigation().getTargetPos();
         String targetPosString = (targetPos == null ? "-" :
                 String.format(" %d, %d, %d (%.2f)",
                         targetPos.getX(), targetPos.getY(), targetPos.getZ(),
-                        mobEntity.getPositionVec().distanceTo(Vector3d.copyCenteredHorizontally(targetPos))
+                        mobEntity.position().distanceTo(Vec3.atBottomCenterOf(targetPos))
                 ));
-        Entity targetEntity = mobEntity.getAttackTarget();
+        Entity targetEntity = mobEntity.getTarget();
         String targetString = (targetEntity == null ? "-" :
                 String.format("%s [%s] [%d, %d, %d] (%.2f)",
                         targetEntity.getName().getString(),
-                        targetEntity.getEntityString(),
-                        mobEntity.getAttackTarget().getPosition().getX(), mobEntity.getAttackTarget().getPosition().getY(), mobEntity.getAttackTarget().getPosition().getZ(),
-                        mobEntity.getPositionVec().distanceTo(targetEntity.getPositionVec())
+                        targetEntity.getEncodeId(),
+                        mobEntity.getTarget().blockPosition().getX(), mobEntity.getTarget().blockPosition().getY(), mobEntity.getTarget().blockPosition().getZ(),
+                        mobEntity.position().distanceTo(targetEntity.position())
                 ));
         String destinationString = capabilityInfoHolder.getDestination().isPresent() ? String.format(" %d, %d, %d (%.2f)",
                 capabilityInfoHolder.getDestination().get().getX(), capabilityInfoHolder.getDestination().get().getY(), capabilityInfoHolder.getDestination().get().getZ(),
-                util.getDistance(capabilityInfoHolder.getDestination().get(), mobEntity.getPosition())) : "-";
+                util.getDistance(capabilityInfoHolder.getDestination().get(), mobEntity.blockPosition())) : "-";
         String reachesTarget;
-        if (mobEntity.getNavigator().getPath() != null && mobEntity.getNavigator().getPath().reachesTarget()) {
+        if (mobEntity.getNavigation().getPath() != null && mobEntity.getNavigation().getPath().canReach()) {
             reachesTarget = "true";
-        } else if (mobEntity.getNavigator().getPath() == null) {
+        } else if (mobEntity.getNavigation().getPath() == null) {
             reachesTarget = "null";
         } else {
             reachesTarget = "false";
@@ -161,26 +161,26 @@ public class EntityBehaviorDebugger {
         List<String> debugMsg = new ArrayList<>();
 
         debugMsg.addAll(Arrays.asList(
-                String.format("%s \"%s\" [%s] (%.1f/%s)", mobEntity.getName().getString(), mobEntity.getCustomName() == null ? "-" : mobEntity.getCustomName(), mobEntity.getEntityString(), mobEntity.getHealth(), Objects.toString((mobEntity.getAttribute(Attributes.MAX_HEALTH).getValue()), "-")),
-                "Pos: " + String.format("%.5f, %.5f, %.5f ", mobEntity.getPositionVec().x, mobEntity.getPositionVec().y, mobEntity.getPositionVec().z) + String.format("[%d, %d, %d]", mobEntity.getPosition().getX(), mobEntity.getPosition().getY(), mobEntity.getPosition().getZ()),
-                "Motion: " + String.format("%.5f, %.5f, %.5f ", mobEntity.getMotion().x, mobEntity.getMotion().y, mobEntity.getMotion().z),
-                "Facing: " + String.format(" %s", formatVector(mobEntity.getLookVec())),
+                String.format("%s \"%s\" [%s] (%.1f/%s)", mobEntity.getName().getString(), mobEntity.getCustomName() == null ? "-" : mobEntity.getCustomName(), mobEntity.getEncodeId(), mobEntity.getHealth(), Objects.toString((mobEntity.getAttribute(Attributes.MAX_HEALTH).getValue()), "-")),
+                "Pos: " + String.format("%.5f, %.5f, %.5f ", mobEntity.position().x, mobEntity.position().y, mobEntity.position().z) + String.format("[%d, %d, %d]", mobEntity.blockPosition().getX(), mobEntity.blockPosition().getY(), mobEntity.blockPosition().getZ()),
+                "Motion: " + String.format("%.5f, %.5f, %.5f ", mobEntity.getDeltaMovement().x, mobEntity.getDeltaMovement().y, mobEntity.getDeltaMovement().z),
+                "Facing: " + String.format(" %s", formatVector(mobEntity.getLookAngle())),
                 "Goals:",
                 mobEntity.goalSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString(),
                 mobEntity.targetSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString(),
                 "Tasks:",
                 " Schedule: " + scheduleString,
-                " Activity: " + String.format("%s + ", mobEntity.getBrain().persistentActivities.toString()) + String.format("(%s)", mobEntity.getBrain().getTemporaryActivity().orElse(new Activity(""))),
+                " Activity: " + String.format("%s + ", mobEntity.getBrain().coreActivities.toString()) + String.format("(%s)", mobEntity.getBrain().getActiveNonCoreActivity().orElse(new Activity(""))),
                 " Running",
-                mobEntity.getBrain().getRunningTasks().toString(),
+                mobEntity.getBrain().getRunningBehaviors().toString(),
                 " Memory"
         ));
         debugMsg.addAll(getMemoryInfoString(mobEntity));
         debugMsg.addAll(Arrays.asList(
                 "Targets: " + targetString,
-                "StepHeight:" + mobEntity.stepHeight,
+                "StepHeight:" + mobEntity.maxUpStep,
                 "isInWater:" + mobEntity.isInWater(),
-                "Move:" + String.format("%f - %f - %f", mobEntity.moveForward, mobEntity.moveStrafing, mobEntity.moveVertical),
+                "Move:" + String.format("%f - %f - %f", mobEntity.zza, mobEntity.xxa, mobEntity.yya),
                 "Current dest: " + targetPosString,
                 "Command status:" + capabilityInfoHolder.getCommandStatus().toString(),
                 "Command dest:" + destinationString,
@@ -192,7 +192,7 @@ public class EntityBehaviorDebugger {
                     .collect(Collectors.toList());
         }
 
-        mobEntity.world.getProfiler().endSection();
+        mobEntity.level.getProfiler().pop();
 
         return debugMsg;
     }

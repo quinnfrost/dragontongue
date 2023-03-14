@@ -3,7 +3,7 @@ package com.github.quinnfrost.dragontongue.iceandfire.message;
 import com.github.quinnfrost.dragontongue.client.render.RenderNode;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Node;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Pathfinding;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
@@ -48,7 +48,7 @@ public class MessageSyncPath {
         this.lastDebugNodesPath = lastDebugNodesPath;
     }
 
-    public void write(final PacketBuffer buf) {
+    public void write(final FriendlyByteBuf buf) {
         buf.writeInt(lastDebugNodesVisited.size());
         for (final Node node : lastDebugNodesVisited) {
             node.serializeToBuf(buf);
@@ -65,7 +65,7 @@ public class MessageSyncPath {
         }
     }
 
-    public static MessageSyncPath read(final PacketBuffer buf) {
+    public static MessageSyncPath read(final FriendlyByteBuf buf) {
         int size = buf.readInt();
 
         Set<Node> lastDebugNodesVisited = new HashSet<>();

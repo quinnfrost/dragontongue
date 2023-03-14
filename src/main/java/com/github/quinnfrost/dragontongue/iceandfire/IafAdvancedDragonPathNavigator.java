@@ -27,7 +27,7 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -36,10 +36,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.AdvancedPathNavigate.MovementType;
+
 public class IafAdvancedDragonPathNavigator extends AdvancedPathNavigate {
     private final EntityDragonBase dragon;
 
-    public IafAdvancedDragonPathNavigator(EntityDragonBase dragon, World world, MovementType valueOf, float width, float height) {
+    public IafAdvancedDragonPathNavigator(EntityDragonBase dragon, Level world, MovementType valueOf, float width, float height) {
         super(dragon, world, valueOf, width, height);
         this.dragon = dragon;
     }

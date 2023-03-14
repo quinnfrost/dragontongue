@@ -16,15 +16,15 @@ import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.DragonAIGuard;
 import com.github.quinnfrost.dragontongue.message.MessageSyncCapability;
 import com.github.quinnfrost.dragontongue.utils.util;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
@@ -51,29 +51,29 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
 
     @Override
     public void updateDragonAttack() {
-        PlayerEntity ridingPlayer = dragon.getRidingPlayer();
-        if (iEntityDragon.isPlayingAttackAnimation$invoke() && dragon.getAttackTarget() != null && dragon.canEntityBeSeen(dragon.getAttackTarget())) {
-            LivingEntity target = dragon.getAttackTarget();
-            final double dist = dragon.getDistance(target);
+        Player ridingPlayer = dragon.getRidingPlayer();
+        if (iEntityDragon.isPlayingAttackAnimation$invoke() && dragon.getTarget() != null && dragon.canSee(dragon.getTarget())) {
+            LivingEntity target = dragon.getTarget();
+            final double dist = dragon.distanceTo(target);
             if (dist < dragon.getRenderSize() * 0.2574 * 2 + 2) {
                 if (dragon.getAnimation() == EntityDragonBase.ANIMATION_BITE) {
                     if (dragon.getAnimationTick() > 15 && dragon.getAnimationTick() < 25) {
                         attackTarget(target, ridingPlayer, (int) dragon.getAttribute(Attributes.ATTACK_DAMAGE).getValue());
-                        dragon.usingGroundAttack = dragon.getRNG().nextBoolean();
+                        dragon.usingGroundAttack = dragon.getRandom().nextBoolean();
                         dragon.randomizeAttacks();
                     }
                 } else if (dragon.getAnimation() == EntityDragonBase.ANIMATION_TAILWHACK) {
                     if (dragon.getAnimationTick() > 20 && dragon.getAnimationTick() < 30) {
                         attackTarget(target, ridingPlayer, (int) dragon.getAttribute(Attributes.ATTACK_DAMAGE).getValue());
-                        target.applyKnockback( dragon.getDragonStage() * 0.6F, MathHelper.sin(dragon.rotationYaw * 0.017453292F), -MathHelper.cos(dragon.rotationYaw * 0.017453292F));
-                        dragon.usingGroundAttack = dragon.getRNG().nextBoolean();
+                        target.knockback( dragon.getDragonStage() * 0.6F, Mth.sin(dragon.yRot * 0.017453292F), -Mth.cos(dragon.yRot * 0.017453292F));
+                        dragon.usingGroundAttack = dragon.getRandom().nextBoolean();
                         dragon.randomizeAttacks();
                     }
                 } else if (dragon.getAnimation() == EntityDragonBase.ANIMATION_WINGBLAST) {
                     if ((dragon.getAnimationTick() == 15 || dragon.getAnimationTick() == 25 || dragon.getAnimationTick() == 35)) {
                         attackTarget(target, ridingPlayer, (int) dragon.getAttribute(Attributes.ATTACK_DAMAGE).getValue());
-                        target.applyKnockback( dragon.getDragonStage() * 0.6F, MathHelper.sin(dragon.rotationYaw * 0.017453292F), -MathHelper.cos(dragon.rotationYaw * 0.017453292F));
-                        dragon.usingGroundAttack = dragon.getRNG().nextBoolean();
+                        target.knockback( dragon.getDragonStage() * 0.6F, Mth.sin(dragon.yRot * 0.017453292F), -Mth.cos(dragon.yRot * 0.017453292F));
+                        dragon.usingGroundAttack = dragon.getRandom().nextBoolean();
                         dragon.randomizeAttacks();
                     }
                 }
@@ -84,7 +84,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
     @Override
     public void updateDragonServer() {
         ICapabilityInfoHolder cap = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
-        LivingEntity attackTarget = dragon.getAttackTarget();
+        LivingEntity attackTarget = dragon.getTarget();
         boolean isFlying = IafDragonBehaviorHelper.isDragonInAir(dragon);
         EnumCommandSettingType.CommandStatus commandStatus = cap.getCommandStatus();
         EnumCommandSettingType.MovementType movementType = (EnumCommandSettingType.MovementType) cap.getObjectSetting(EnumCommandSettingType.MOVEMENT_TYPE);
@@ -144,8 +144,8 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             dragon.setFlying(false);
         }
         // At IafDragonLogic#227, dragon's target is reset if she can't move, cause issue when commanding sit dragons to attack
-        if (cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.ATTACK && dragon.getAttackTarget() != null && dragon.getAttackTarget() != attackTarget) {
-            dragon.setAttackTarget(attackTarget);
+        if (cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.ATTACK && dragon.getTarget() != null && dragon.getTarget() != attackTarget) {
+            dragon.setTarget(attackTarget);
         }
 
         // At IafDragonLogic#230, dragon's path is reset if she can't move
@@ -156,7 +156,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
 
         // Do not sleep logic
         if (!cap.getShouldSleep()) {
-            dragon.setQueuedToSit(false);
+            dragon.setInSittingPose(false);
         }
 
         // Return to roost logic
@@ -166,17 +166,17 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
                 // Vanilla behavior: return to roost
                 // In LivingUpdateEvent, original Iaf dragon staff use event is hijacked to do the same plus invalidate
                 // the home position in capability
-                cap.setHomePosition(dragon.getHomePosition());
+                cap.setHomePosition(dragon.getRestrictCenter());
             } else {
                 // Recover home pos
                 // The home position optional must be invalidated manually when removing home position
                 cap.getHomePosition().ifPresent(blockPos -> {
                     cap.getHomeDimension().ifPresent(homeDimensionName -> {
-                        if (dragon.world.getDimensionKey().getLocation().toString().equals(homeDimensionName)) {
-                            dragon.homePos = new HomePosition(blockPos, dragon.world);
+                        if (dragon.level.dimension().location().toString().equals(homeDimensionName)) {
+                            dragon.homePos = new HomePosition(blockPos, dragon.level);
                             dragon.hasHomePosition = true;
                             // Get up so she can return to roost
-                            dragon.setQueuedToSit(false);
+                            dragon.setInSittingPose(false);
                         }
                     });
                 });
@@ -201,12 +201,12 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             dragon.setBreathingFire(false);
             IafDragonBehaviorHelper.setDragonBreathTarget(dragon, null);
         } else if (cap.getObjectSetting(EnumCommandSettingType.BREATH_TYPE) == EnumCommandSettingType.BreathType.WITHOUT_BLAST) {
-            List<Entity> entities = dragon.world.getEntitiesInAABBexcluding(dragon,
-                    (new AxisAlignedBB(dragon.getHeadPosition().x, dragon.getHeadPosition().y, dragon.getHeadPosition().z,
-                            dragon.getPosX() + 1.0d, dragon.getPosY() + 1.0d, dragon.getPosZ() + 1.0d)
-                            .grow(2.0f)),
+            List<Entity> entities = dragon.level.getEntities(dragon,
+                    (new AABB(dragon.getHeadPosition().x, dragon.getHeadPosition().y, dragon.getHeadPosition().z,
+                            dragon.getX() + 1.0d, dragon.getY() + 1.0d, dragon.getZ() + 1.0d)
+                            .inflate(2.0f)),
                     entityGet -> (entityGet instanceof EntityDragonCharge)
-                            && (util.isShooter((ProjectileEntity) entityGet, dragon))
+                            && (util.isShooter((Projectile) entityGet, dragon))
             );
             for (Entity charge :
                     entities) {
@@ -229,47 +229,47 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         // Do not attack
         if (attackDecision == EnumCommandSettingType.AttackDecisionType.DONT_HELP
                 && (commandStatus != EnumCommandSettingType.CommandStatus.NONE && commandStatus != EnumCommandSettingType.CommandStatus.ATTACK)
-                && dragon.getAttackTarget() != null) {
-            dragon.setAttackTarget(null);
+                && dragon.getTarget() != null) {
+            dragon.setTarget(null);
         }
-        if (attackDecision == EnumCommandSettingType.AttackDecisionType.NONE && dragon.getAttackTarget() != null) {
-            dragon.setAttackTarget(null);
+        if (attackDecision == EnumCommandSettingType.AttackDecisionType.NONE && dragon.getTarget() != null) {
+            dragon.setTarget(null);
         }
         if (attackDecision == EnumCommandSettingType.AttackDecisionType.DEFAULT) {
 
         }
         if (attackDecision == EnumCommandSettingType.AttackDecisionType.ALWAYS_HELP) {
-            if (dragon.isTamed() && dragon.getCommand() == 1) {
+            if (dragon.isTame() && dragon.getCommand() == 1) {
                 LivingEntity owner = dragon.getOwner();
                 // +1 for update may happen at next tick
                 if (owner != null
-                        && owner.getLastAttackedEntityTime() + 1 == owner.ticksExisted
-                        && dragon.getAttackTarget() == null
-                        && util.shouldAttack(dragon, owner.getLastAttackedEntity(), dragon.getAttributeValue(Attributes.FOLLOW_RANGE))
+                        && owner.getLastHurtMobTimestamp() + 1 == owner.tickCount
+                        && dragon.getTarget() == null
+                        && util.shouldAttack(dragon, owner.getLastHurtMob(), dragon.getAttributeValue(Attributes.FOLLOW_RANGE))
                 ) {
-                    cap.setDestination(dragon.getPosition());
+                    cap.setDestination(dragon.blockPosition());
                     dragon.setCommand(0);
-                    dragon.setAttackTarget(owner.getLastAttackedEntity());
+                    dragon.setTarget(owner.getLastHurtMob());
                     cap.setCommandStatus(EnumCommandSettingType.CommandStatus.ATTACK);
                 }
             }
-            if (dragon.getAttackTarget() != null &&
+            if (dragon.getTarget() != null &&
                     (commandStatus != EnumCommandSettingType.CommandStatus.NONE)) {
                 cap.setCommandStatus(EnumCommandSettingType.CommandStatus.ATTACK);
             }
         }
         if (attackDecision == EnumCommandSettingType.AttackDecisionType.GUARD && commandStatus != EnumCommandSettingType.CommandStatus.NONE) {
-            if (dragon.getAttackTarget() == null) {
+            if (dragon.getTarget() == null) {
                 cap.setCommandStatus(EnumCommandSettingType.CommandStatus.REACH);
             } else {
                 cap.setCommandStatus(EnumCommandSettingType.CommandStatus.ATTACK);
             }
         }
-        if (attackDecision == EnumCommandSettingType.AttackDecisionType.GUARD && dragon.isMovementBlocked()) {
+        if (attackDecision == EnumCommandSettingType.AttackDecisionType.GUARD && dragon.isImmobile()) {
             if (DragonAIGuard.findNearestTarget(dragon) != null) {
-                dragon.setQueuedToSit(false);
+                dragon.setInSittingPose(false);
                 if (dragon.getCommand() == 1) {
-                    cap.setDestination(dragon.getPosition());
+                    cap.setDestination(dragon.blockPosition());
                     cap.setCommandStatus(EnumCommandSettingType.CommandStatus.REACH);
                     dragon.setCommand(0);
                 }
@@ -277,16 +277,16 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         }
 
         // Bug: In some circumstances elder dragons (125+) fail to sleep even navigator believes it has reached home.
-        PathResult<AbstractPathJob> pathResult = ((IafAdvancedDragonPathNavigator) dragon.getNavigator()).pathResult;
-        IafAdvancedDragonPathNavigator navigator = (IafAdvancedDragonPathNavigator) dragon.getNavigator();
+        PathResult<AbstractPathJob> pathResult = ((IafAdvancedDragonPathNavigator) dragon.getNavigation()).pathResult;
+        IafAdvancedDragonPathNavigator navigator = (IafAdvancedDragonPathNavigator) dragon.getNavigation();
         if (dragon.lookingForRoostAIFlag
 //                && dragon.getDistanceSquared(Vector3d.copyCentered(dragon.getHomePosition())) < dragon.getWidth() * 12
         ) {
-            if (navigator.noPath()) {
-                if (IafHelperClass.getXZDistanceSq(dragon.getPositionVec(), Vector3d.copyCenteredHorizontally(dragon.getHomePosition())) < 100) {
-                    if (!dragon.isInWater() && dragon.isOnGround() && !dragon.isFlying() && !dragon.isHovering() && dragon.getAttackTarget() == null) {
+            if (navigator.isDone()) {
+                if (IafHelperClass.getXZDistanceSq(dragon.position(), Vec3.atBottomCenterOf(dragon.getRestrictCenter())) < 100) {
+                    if (!dragon.isInWater() && dragon.isOnGround() && !dragon.isFlying() && !dragon.isHovering() && dragon.getTarget() == null) {
                         dragon.lookingForRoostAIFlag = false;
-                        dragon.setQueuedToSit(true);
+                        dragon.setInSittingPose(true);
                     }
                 } else if (!IafDragonBehaviorHelper.isDragonInAir(dragon)) {
                     IafDragonBehaviorHelper.setDragonTakeOff(dragon);
@@ -295,7 +295,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         }
         // Bug: lightning dragon won't wake up when command is set to escort
         if (dragon.getCommand() == 2 && !dragon.canMove()) {
-            dragon.setQueuedToSit(false);
+            dragon.setInSittingPose(false);
         }
 
         // Release control if the owner climbs up
@@ -319,15 +319,15 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
 
 
         // Resets attack target if the target is dead, vanilla behavior did this in the entity AI resetTask
-        if ((dragon.getAttackTarget() != null && !dragon.getAttackTarget().isAlive())
-                || (dragon.getAttackTarget() == null && cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.ATTACK)) {
+        if ((dragon.getTarget() != null && !dragon.getTarget().isAlive())
+                || (dragon.getTarget() == null && cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.ATTACK)) {
             if (dragon.getCommand() == 2) {
                 cap.setCommandStatus(EnumCommandSettingType.CommandStatus.NONE);
                 cap.setDestination(null);
             } else {
                 cap.setCommandStatus(EnumCommandSettingType.CommandStatus.REACH);
                 if (!cap.getDestination().isPresent()) {
-                    cap.setDestination(dragon.getPosition());
+                    cap.setDestination(dragon.blockPosition());
                 }
             }
 //            if (IafDragonBehaviorHelper.isDragonInAir(dragon)) {
@@ -335,7 +335,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
 //            } else {
 //                cap.setCommandStatus(CommandStatus.STAY);
 //            }
-            dragon.setAttackTarget(null);
+            dragon.setTarget(null);
             if (dragon.getAnimation() == EntityDragonBase.ANIMATION_SHAKEPREY) {
                 dragon.setAnimation(IAnimatedEntity.NO_ANIMATION);
             }
@@ -343,10 +343,10 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         // Breath to target if not empty
         if (cap.getBreathTarget().isPresent()) {
             BlockPos breathPos = cap.getBreathTarget().get();
-            dragon.setQueuedToSit(false); // In case dragon is sleeping
+            dragon.setInSittingPose(false); // In case dragon is sleeping
             IafDragonBehaviorHelper.keepDragonBreathTarget(dragon, breathPos);
             IafDragonBehaviorHelper.setDragonLook(dragon, breathPos);
-        } else if (dragon.getAttackTarget() == null) {
+        } else if (dragon.getTarget() == null) {
             // Maybe she decided to breathe herself when attacking
             dragon.setBreathingFire(false);
         }
@@ -397,23 +397,23 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         updateDragonRider();
         updateDragonPitch();
 
-        PlayerEntity ridingPlayer = dragon.getRidingPlayer();
+        Player ridingPlayer = dragon.getRidingPlayer();
 
         // Update look for roost AI flag
-        if (dragon.lookingForRoostAIFlag && dragon.getRevengeTarget() != null || dragon.isSleeping()) {
+        if (dragon.lookingForRoostAIFlag && dragon.getLastHurtByMob() != null || dragon.isSleeping()) {
             dragon.lookingForRoostAIFlag = false;
         }
         if (IafConfig.doDragonsSleep && !dragon.isSleeping() && !dragon.isTimeToWake() && dragon.getPassengers().isEmpty() && this.dragon.getCommand() != 2) {
             if (dragon.hasHomePosition
-                    && dragon.getHomePosition() != null
+                    && dragon.getRestrictCenter() != null
                     && DragonUtils.isInHomeDimension(dragon)
-                    && dragon.getDistanceSquared(Vector3d.copyCentered(dragon.getHomePosition())) > dragon.getWidth() * 10
+                    && dragon.getDistanceSquared(Vec3.atCenterOf(dragon.getRestrictCenter())) > dragon.getBbWidth() * 10
                     && this.dragon.getCommand() != 2 && this.dragon.getCommand() != 1) {
                 dragon.lookingForRoostAIFlag = true;
             } else {
                 dragon.lookingForRoostAIFlag = false;
-                if (!dragon.isInWater() && dragon.isOnGround() && !dragon.isFlying() && !dragon.isHovering() && dragon.getAttackTarget() == null) {
-                    dragon.setQueuedToSit(true);
+                if (!dragon.isInWater() && dragon.isOnGround() && !dragon.isFlying() && !dragon.isHovering() && dragon.getTarget() == null) {
+                    dragon.setInSittingPose(true);
                 }
             }
         } else {
@@ -421,14 +421,14 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         }
 
         // Conditions that should stand
-        if (dragon.isSleeping() && (dragon.isFlying() || dragon.isHovering() || dragon.isInWater() || (dragon.world.canBlockSeeSky(dragon.getPosition()) && dragon.isTimeToWake() && !dragon.isTamed() || dragon.isTimeToWake() && dragon.isTamed()) || dragon.getAttackTarget() != null || !dragon.getPassengers().isEmpty())) {
-            dragon.setQueuedToSit(false);
+        if (dragon.isSleeping() && (dragon.isFlying() || dragon.isHovering() || dragon.isInWater() || (dragon.level.canSeeSkyFromBelowWater(dragon.blockPosition()) && dragon.isTimeToWake() && !dragon.isTame() || dragon.isTimeToWake() && dragon.isTame()) || dragon.getTarget() != null || !dragon.getPassengers().isEmpty())) {
+            dragon.setInSittingPose(false);
         }
-        if (dragon.isQueuedToSit() && dragon.getControllingPassenger() != null) {
-            dragon.setSitting(false);
+        if (dragon.isOrderedToSit() && dragon.getControllingPassenger() != null) {
+            dragon.setOrderedToSit(false);
         }
         // Land dragon for rider
-        if (dragon.isBeingRidden() && !iEntityDragon.isOverAir$invoke() && dragon.isFlying() && !dragon.isHovering() && dragon.flyTicks > 40) {
+        if (dragon.isVehicle() && !iEntityDragon.isOverAir$invoke() && dragon.isFlying() && !dragon.isHovering() && dragon.flyTicks > 40) {
             dragon.setFlying(false);
         }
         // Update block break cooldown. The bigger the value the stucker when dragon trying to break blocks.
@@ -438,25 +438,25 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         // Update dragon burn target
         iEntityDragon.updateBurnTarget$invoke();
         // Conditions that should sit
-        if (dragon.isQueuedToSit()) {
+        if (dragon.isOrderedToSit()) {
             // Stand when command is set or the rider climbs up.
             if (dragon.getCommand() != 1 || dragon.getControllingPassenger() != null)
-                dragon.setSitting(false);
+                dragon.setOrderedToSit(false);
         } else {
             // Sit when command is set
             if (dragon.getCommand() == 1 && dragon.getControllingPassenger() == null)
-                dragon.setSitting(true);
+                dragon.setOrderedToSit(true);
         }
         // When sat, don't move
-        if (dragon.isQueuedToSit()) {
-            dragon.getNavigator().clearPath();
+        if (dragon.isOrderedToSit()) {
+            dragon.getNavigation().stop();
         }
         // When aroused, send entity state package. 18 means mating (AnimalEntity#handleStatusUpdate).
         if (dragon.isInLove()) {
-            dragon.world.setEntityState(dragon, (byte) 18);
+            dragon.level.broadcastEntityEvent(dragon, (byte) 18);
         }
         // Update still ticks
-        if ((int) dragon.prevPosX == (int) dragon.getPosX() && (int) dragon.prevPosZ == (int) dragon.getPosZ()) {
+        if ((int) dragon.xo == (int) dragon.getX() && (int) dragon.zo == (int) dragon.getZ()) {
             dragon.ticksStill++;
         } else {
             dragon.ticksStill = 0;
@@ -471,28 +471,28 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             }
         }
         // Dragon random roar
-        if (dragon.getRNG().nextInt(500) == 0 && !dragon.isModelDead() && !dragon.isSleeping()) {
+        if (dragon.getRandom().nextInt(500) == 0 && !dragon.isModelDead() && !dragon.isSleeping()) {
             dragon.roar();
         }
         // Flying dragon attack logic
-        if (dragon.isFlying() && dragon.getAttackTarget() != null) {
+        if (dragon.isFlying() && dragon.getTarget() != null) {
             if (dragon.airAttack == IafDragonAttacks.Air.TACKLE) {
                 dragon.setTackling(true);
             }
             // The flying bite attack
             if (dragon.isTackling()) {
                 // If the target is within range, dealt the damage
-                if (dragon.getBoundingBox().expand(2.0D, 2.0D, 2.0D).intersects(dragon.getAttackTarget().getBoundingBox())) {
+                if (dragon.getBoundingBox().expandTowards(2.0D, 2.0D, 2.0D).intersects(dragon.getTarget().getBoundingBox())) {
                     dragon.usingGroundAttack = true;
                     dragon.randomizeAttacks();
-                    attackTarget(dragon.getAttackTarget(), ridingPlayer, dragon.getDragonStage() * 3);
+                    attackTarget(dragon.getTarget(), ridingPlayer, dragon.getDragonStage() * 3);
                     dragon.setFlying(false);
                     dragon.setHovering(false);
                 }
             }
         }
         // Conditions to cancel tackling
-        if (dragon.isTackling() && (dragon.getAttackTarget() == null || dragon.airAttack != IafDragonAttacks.Air.TACKLE)) {
+        if (dragon.isTackling() && (dragon.getTarget() == null || dragon.airAttack != IafDragonAttacks.Air.TACKLE)) {
             dragon.setTackling(false);
             dragon.randomizeAttacks();
         }
@@ -500,21 +500,21 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         if (dragon.isPassenger()) {
             dragon.setFlying(false);
             dragon.setHovering(false);
-            dragon.setQueuedToSit(false);
+            dragon.setInSittingPose(false);
         }
         // Conditions to stand: the flying sleep?
-        if (dragon.isFlying() && dragon.ticksExisted % 40 == 0 || dragon.isFlying() && dragon.isSleeping()) {
-            dragon.setQueuedToSit(false);
+        if (dragon.isFlying() && dragon.tickCount % 40 == 0 || dragon.isFlying() && dragon.isSleeping()) {
+            dragon.setInSittingPose(false);
         }
         // If dragon can't move, remove attack target and path
         if (!dragon.canMove()) {
-            if (dragon.getAttackTarget() != null) {
-                dragon.setAttackTarget(null);
+            if (dragon.getTarget() != null) {
+                dragon.setTarget(null);
             }
-            dragon.getNavigator().clearPath();
+            dragon.getNavigation().stop();
         }
         // For wild dragons
-        if (!dragon.isTamed()) {
+        if (!dragon.isTame()) {
             // For wild, sleeping dragons, wake up if any player approaches
             dragon.updateCheckPlayer();
         }
@@ -527,8 +527,8 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         if (ridingPlayer == null) {
             // For airborne dragons, use flight navigator
             if ((dragon.useFlyingPathFinder() || dragon.isHovering()) && dragon.navigatorType != 1) {
-                if (!dragon.getNavigator().noPath() && dragon.getNavigator().getTargetPos() != null) {
-                    dragon.flightManager.setFlightTarget(Vector3d.copyCenteredHorizontally(dragon.getNavigator().getTargetPos()));
+                if (!dragon.getNavigation().isDone() && dragon.getNavigation().getTargetPos() != null) {
+                    dragon.flightManager.setFlightTarget(Vec3.atBottomCenterOf(dragon.getNavigation().getTargetPos()));
                 }
                 iEntityDragon.switchNavigator$invoke(1);
             }
@@ -565,12 +565,12 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             }
             // That wants to land
             if (dragon.doesWantToLand() && !dragon.isOnGround() && !dragon.isInWater()) {
-                dragon.setMotion(dragon.getMotion().add(0, -0.25, 0));
+                dragon.setDeltaMovement(dragon.getDeltaMovement().add(0, -0.25, 0));
             } else {
                 // If rider onboard, try to neutralize the gravity
                 if ((dragon.getControllingPassenger() == null || dragon.getControllingPassenger() instanceof EntityDreadQueen) && !dragon.isBeyondHeight()) {
                     double up = dragon.isInWater() ? 0.12D : 0.08D;
-                    dragon.setMotion(dragon.getMotion().add(0, up, 0));
+                    dragon.setDeltaMovement(dragon.getDeltaMovement().add(0, up, 0));
                 }
                 // Start flying after they have hovered for 2 secs
                 if (dragon.hoverTicks > 40) {
@@ -584,7 +584,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         }
         // For sleeping dragons, don't move
         if (dragon.isSleeping()) {
-            dragon.getNavigator().clearPath();
+            dragon.getNavigation().stop();
         }
         // Reset fly ticks when dragon is not flying
         if ((dragon.isOnGround() || dragon.isInWater()) && dragon.flyTicks != 0) {
@@ -610,12 +610,12 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         }
         // When dragon is landed, take off for, random chances, when below the world, target is running far, or in water
         if (!dragon.isFlying() && !dragon.isHovering()) {
-            if (dragon.isAllowedToTriggerFlight() || dragon.getPosY() < -1) {
-                if (dragon.getRNG().nextInt(iEntityDragon.getFlightChancePerTick$invoke()) == 0 && ICapabilityInfoHolder.getCapability(dragon).getCommandStatus() == EnumCommandSettingType.CommandStatus.NONE && dragon.getCommand() == 0
-                        || dragon.getPosY() < -1 || dragon.getAttackTarget() != null && Math.abs(dragon.getAttackTarget().getPosY() - dragon.getPosY()) > 5 || dragon.isInWater() && !iEntityDragon.isIceInWater$invoke()) {
+            if (dragon.isAllowedToTriggerFlight() || dragon.getY() < -1) {
+                if (dragon.getRandom().nextInt(iEntityDragon.getFlightChancePerTick$invoke()) == 0 && ICapabilityInfoHolder.getCapability(dragon).getCommandStatus() == EnumCommandSettingType.CommandStatus.NONE && dragon.getCommand() == 0
+                        || dragon.getY() < -1 || dragon.getTarget() != null && Math.abs(dragon.getTarget().getY() - dragon.getY()) > 5 || dragon.isInWater() && !iEntityDragon.isIceInWater$invoke()) {
                     dragon.setHovering(true);
-                    dragon.setQueuedToSit(false);
-                    dragon.setSitting(false);
+                    dragon.setInSittingPose(false);
+                    dragon.setOrderedToSit(false);
                     iEntityDragon.setFlyHovering(0);
                     dragon.hoverTicks = 0;
                     dragon.flyTicks = 0;
@@ -623,14 +623,14 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             }
         }
         // Conditions that attack target should be invalidated
-        if (dragon.getAttackTarget() != null) {
+        if (dragon.getTarget() != null) {
             // When rider climbs up
             if (!dragon.getPassengers().isEmpty() && dragon.getOwner() != null && dragon.getPassengers().contains(dragon.getOwner())) {
-                dragon.setAttackTarget(null);
+                dragon.setTarget(null);
             }
             // When the target is dead
-            if (!DragonUtils.isAlive(dragon.getAttackTarget())) {
-                dragon.setAttackTarget(null);
+            if (!DragonUtils.isAlive(dragon.getTarget())) {
+                dragon.setTarget(null);
             }
         }
         // Update dragon's age
@@ -642,7 +642,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             }
         }
         // Update dragon's hunger
-        if (dragon.ticksExisted % IafConfig.dragonHungerTickRate == 0 && IafConfig.dragonHungerTickRate > 0) {
+        if (dragon.tickCount % IafConfig.dragonHungerTickRate == 0 && IafConfig.dragonHungerTickRate > 0) {
             if (dragon.getHunger() > 0) {
                 dragon.setHunger(dragon.getHunger() - 1);
             }
@@ -678,11 +678,11 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         // For flying dragon attacks
         if (dragon.isFlying()) {
             // Airborne strike, for those target within reach, dealt the damage
-            if (dragon.getAttackTarget() != null && dragon.getBoundingBox().expand(3.0F, 3.0F, 3.0F).intersects(dragon.getAttackTarget().getBoundingBox())) {
-                dragon.attackEntityAsMob(dragon.getAttackTarget());
+            if (dragon.getTarget() != null && dragon.getBoundingBox().expandTowards(3.0F, 3.0F, 3.0F).intersects(dragon.getTarget().getBoundingBox())) {
+                dragon.doHurtTarget(dragon.getTarget());
             }
             // When airborne tackle is failed, switch to ground attack
-            if (dragon.airAttack == IafDragonAttacks.Air.TACKLE && (dragon.collidedHorizontally || dragon.isOnGround())) {
+            if (dragon.airAttack == IafDragonAttacks.Air.TACKLE && (dragon.horizontalCollision || dragon.isOnGround())) {
                 dragon.usingGroundAttack = true;
                 dragon.setFlying(false);
                 dragon.setHovering(false);
@@ -693,7 +693,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
                 dragon.airAttack = IafDragonAttacks.Air.TACKLE;
             }
             // Change another attack type if our target is blocked
-            if (dragon.airAttack == IafDragonAttacks.Air.TACKLE && dragon.getAttackTarget() != null && dragon.isTargetBlocked(dragon.getAttackTarget().getPositionVec())) {
+            if (dragon.airAttack == IafDragonAttacks.Air.TACKLE && dragon.getTarget() != null && dragon.isTargetBlocked(dragon.getTarget().position())) {
                 dragon.randomizeAttacks();
             }
         }
@@ -701,7 +701,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
     }
 
     public void updateDragonRider() {
-        PlayerEntity ridingPlayer = dragon.getRidingPlayer();
+        Player ridingPlayer = dragon.getRidingPlayer();
         // If there is a rider
         if (ridingPlayer != null) {
             // Update space bar pressed ticks
@@ -716,7 +716,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
                 if (dragon.isFlying() || dragon.isHovering()) {
                     if (dragon.getCommand() == 1) {
                         cap.setCommandStatus(EnumCommandSettingType.CommandStatus.HOVER);
-                        cap.setDestination(dragon.getPosition());
+                        cap.setDestination(dragon.blockPosition());
 //                    dragon.setFlying(false);
 //                    dragon.setHovering(false);
                     } else {
@@ -727,7 +727,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         }
         // When we're flying, counter the gravity?
         if (!dragon.isDismounting() && (dragon.isFlying() || dragon.isHovering())) {
-            dragon.setMotion(dragon.getMotion().add(0, 0.01, 0));
+            dragon.setDeltaMovement(dragon.getDeltaMovement().add(0, 0.01, 0));
         }
         // If the fire attack key is pressed
         if (dragon.isStriking() && dragon.getControllingPassenger() != null && dragon.getDragonStage() > 1) {
@@ -736,8 +736,8 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             dragon.fireStopTicks = 10;
         }
         // If the strike key is pressed
-        if (dragon.isAttacking() && dragon.getControllingPassenger() != null && dragon.getControllingPassenger() instanceof PlayerEntity) {
-            LivingEntity target = DragonUtils.riderLookingAtEntity(dragon, (PlayerEntity) dragon.getControllingPassenger(), dragon.getDragonStage() + (dragon.getBoundingBox().maxX - dragon.getBoundingBox().minX));
+        if (dragon.isAttacking() && dragon.getControllingPassenger() != null && dragon.getControllingPassenger() instanceof Player) {
+            LivingEntity target = DragonUtils.riderLookingAtEntity(dragon, (Player) dragon.getControllingPassenger(), dragon.getDragonStage() + (dragon.getBoundingBox().maxX - dragon.getBoundingBox().minX));
             if (dragon.getAnimation() != EntityDragonBase.ANIMATION_BITE) {
                 dragon.setAnimation(EntityDragonBase.ANIMATION_BITE);
             }
@@ -746,21 +746,21 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             }
         }
         // If the sneak key is pressed
-        if (dragon.getControllingPassenger() != null && dragon.getControllingPassenger().isSneaking()) {
+        if (dragon.getControllingPassenger() != null && dragon.getControllingPassenger().isShiftKeyDown()) {
             if (dragon.getControllingPassenger() instanceof LivingEntity)
                 MiscProperties.setDismountedDragon((LivingEntity) dragon.getControllingPassenger(), true);
             dragon.getControllingPassenger().stopRiding();
         }
         // Conditions for hovering
         if (dragon.isFlying()) {
-            if (!dragon.isHovering() && dragon.getControllingPassenger() != null && !dragon.isOnGround() && Math.max(Math.abs(dragon.getMotion().getX()), Math.abs(dragon.getMotion().getZ())) < 0.1F) {
+            if (!dragon.isHovering() && dragon.getControllingPassenger() != null && !dragon.isOnGround() && Math.max(Math.abs(dragon.getDeltaMovement().x()), Math.abs(dragon.getDeltaMovement().z())) < 0.1F) {
                 dragon.setHovering(true);
                 dragon.setFlying(false);
             }
         }
         // Conditions for flying
         else {
-            if (dragon.isHovering() && dragon.getControllingPassenger() != null && !dragon.isOnGround() && Math.max(Math.abs(dragon.getMotion().getX()), Math.abs(dragon.getMotion().getZ())) > 0.1F) {
+            if (dragon.isHovering() && dragon.getControllingPassenger() != null && !dragon.isOnGround() && Math.max(Math.abs(dragon.getDeltaMovement().x()), Math.abs(dragon.getDeltaMovement().z())) > 0.1F) {
                 dragon.setFlying(true);
                 dragon.usingGroundAttack = false;
                 dragon.setHovering(false);
@@ -779,16 +779,16 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
     private void updateDragonPitch() {
         // For dragons airborne
         if (iEntityDragon.isOverAir$invoke() && !dragon.isPassenger()) {
-            final double ydist = dragon.prevPosY - dragon.getPosY();//down 0.4 up -0.38
+            final double ydist = dragon.yo - dragon.getY();//down 0.4 up -0.38
             // For flying dragons
             if (!dragon.isHovering()) {
                 dragon.incrementDragonPitch((float) (ydist) * 10);
             }
             // Clamp the pitch into 40 ~ -60, 40 is the max for Y- (down), -60 is the max for Y+ (up)
-            dragon.setDragonPitch(MathHelper.clamp(dragon.getDragonPitch(), -60, 40));
+            dragon.setDragonPitch(Mth.clamp(dragon.getDragonPitch(), -60, 40));
             // The plane flight range
             final float plateau = 2;
-            final float speedXZ = (float) ((Math.abs(dragon.getMotion().x) + Math.abs(dragon.getMotion().z)) * 6F);
+            final float speedXZ = (float) ((Math.abs(dragon.getDeltaMovement().x) + Math.abs(dragon.getDeltaMovement().z)) * 6F);
             // 0 ± 2 is considered as plane flight
             if (dragon.getDragonPitch() > plateau) {
                 //down

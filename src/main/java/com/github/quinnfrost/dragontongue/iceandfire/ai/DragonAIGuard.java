@@ -8,21 +8,23 @@ import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.utils.util;
-import net.minecraft.entity.EntityPredicate;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.attributes.ModifiableAttributeInstance;
-import net.minecraft.entity.ai.goal.NearestAttackableTargetGoal;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.entity.ai.targeting.TargetingConditions;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.util.EnumSet;
 import java.util.function.Predicate;
+
+import net.minecraft.world.entity.ai.goal.Goal.Flag;
 
 public class DragonAIGuard<T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
     private EntityDragonBase dragon;
@@ -33,46 +35,46 @@ public class DragonAIGuard<T extends LivingEntity> extends NearestAttackableTarg
 
     public DragonAIGuard(EntityDragonBase entityIn, Class<T> targetClassIn, int targetChanceIn, boolean checkSight, boolean nearbyOnlyIn, @Nullable Predicate<LivingEntity> targetPredicate) {
         super(entityIn, targetClassIn, targetChanceIn, checkSight, nearbyOnlyIn, targetPredicate);
-        this.setMutexFlags(EnumSet.of(Flag.TARGET));
+        this.setFlags(EnumSet.of(Flag.TARGET));
         this.dragon = entityIn;
         this.cap = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
     }
 
     public DragonAIGuard(EntityDragonBase entityIn, Class<T> targetClassIn, boolean checkSight, @Nullable Predicate<LivingEntity> targetPredicate) {
         super(entityIn, targetClassIn, 1, checkSight, false, null);
-        this.setMutexFlags(EnumSet.of(Flag.TARGET));
+        this.setFlags(EnumSet.of(Flag.TARGET));
         this.dragon = entityIn;
         this.cap = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
     }
 
     @Override
-    public boolean shouldExecute() {
-        if (!dragon.isTamed() || dragon.getOwner() == null || dragon.getControllingPassenger() != null) {
+    public boolean canUse() {
+        if (!dragon.isTame() || dragon.getOwner() == null || dragon.getControllingPassenger() != null) {
             return false;
         }
         if (cap.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE) != EnumCommandSettingType.AttackDecisionType.GUARD) {
             return false;
         }
-        if (super.shouldExecute() && !nearestTarget.getClass().equals(this.dragon.getClass())) {
+        if (super.canUse() && !target.getClass().equals(this.dragon.getClass())) {
             updateGuardPosition();
-            if (nearestTarget.getPositionVec().distanceTo(Vector3d.copyCenteredHorizontally(guardPosition)) > guardDistance) {
+            if (target.position().distanceTo(Vec3.atBottomCenterOf(guardPosition)) > guardDistance) {
                 return false;
             }
-            final float dragonSize = Math.max(this.dragon.getWidth(), this.dragon.getWidth() * dragon.getRenderSize());
-            if (dragonSize >= nearestTarget.getWidth()) {
-                if (!dragon.isOwner(nearestTarget) && util.isHostile(nearestTarget)) {
+            final float dragonSize = Math.max(this.dragon.getBbWidth(), this.dragon.getBbWidth() * dragon.getRenderSize());
+            if (dragonSize >= target.getBbWidth()) {
+                if (!dragon.isOwnedBy(target) && util.isHostile(target)) {
 
-                    if (nearestTarget instanceof EntityDragonBase) {
-                        EntityDragonBase dragon = (EntityDragonBase) nearestTarget;
+                    if (target instanceof EntityDragonBase) {
+                        EntityDragonBase dragon = (EntityDragonBase) target;
                         if (dragon.getOwner() == null) {
                             // Only attack wild dragons
                             return !dragon.isModelDead();
                         }
                     }
 
-                    return DragonUtils.canTameDragonAttack(dragon, nearestTarget);
+                    return DragonUtils.canTameDragonAttack(dragon, target);
                 }
-                if (nearestTarget instanceof PlayerEntity && dragon.isTamed()) {
+                if (target instanceof Player && dragon.isTame()) {
                     return false;
                 }
             }
@@ -81,8 +83,8 @@ public class DragonAIGuard<T extends LivingEntity> extends NearestAttackableTarg
     }
 
     @Override
-    public boolean shouldContinueExecuting() {
-        if (!dragon.isTamed() || dragon.getOwner() == null || dragon.getControllingPassenger() != null) {
+    public boolean canContinueToUse() {
+        if (!dragon.isTame() || dragon.getOwner() == null || dragon.getControllingPassenger() != null) {
             return false;
         }
         if (cap.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE) != EnumCommandSettingType.AttackDecisionType.GUARD) {
@@ -90,25 +92,25 @@ public class DragonAIGuard<T extends LivingEntity> extends NearestAttackableTarg
         }
         updateGuardPosition();
 //        guardDistance = Math.min(owner.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(owner)).getCommandDistance(), dragon.getAttributeValue(Attributes.FOLLOW_RANGE));
-        if (dragon.getPositionVec().distanceTo(Vector3d.copyCenteredHorizontally(guardPosition)) > guardDistance || isTooFar) {
+        if (dragon.position().distanceTo(Vec3.atBottomCenterOf(guardPosition)) > guardDistance || isTooFar) {
             if (!isTooFar) {
-                dragon.setAttackTarget(null);
+                dragon.setTarget(null);
                 isTooFar = true;
             }
             // Waiting for current target eliminated
-            if (dragon.getAttackTarget() == null) {
+            if (dragon.getTarget() == null) {
                 // Escort itself will do
                 if (dragon.getCommand() != 2) {
                     IafDragonBehaviorHelper.setDragonWalkTarget(dragon, new BlockPos(guardPosition.getX(), guardPosition.getY(), guardPosition.getZ()));
-                    IafDragonBehaviorHelper.setDragonFlightTarget(dragon, Vector3d.copyCenteredHorizontally(guardPosition));
+                    IafDragonBehaviorHelper.setDragonFlightTarget(dragon, Vec3.atBottomCenterOf(guardPosition));
                 }
             }
-            if (dragon.getPositionVec().distanceTo(Vector3d.copyCenteredHorizontally(guardPosition)) < guardDistance / 2.0f) {
+            if (dragon.position().distanceTo(Vec3.atBottomCenterOf(guardPosition)) < guardDistance / 2.0f) {
                 isTooFar = false;
             }
             return true;
         } else {
-            return super.shouldContinueExecuting();
+            return super.canContinueToUse();
         }
     }
 
@@ -117,13 +119,13 @@ public class DragonAIGuard<T extends LivingEntity> extends NearestAttackableTarg
             return;
         }
         guardDistance = dragon.getOwner().getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon.getOwner())).getSelectDistance();
-        guardPosition = cap.getDestination().orElse(dragon.getPosition());
+        guardPosition = cap.getDestination().orElse(dragon.blockPosition());
         if (dragon.getCommand() == 2) {
             if (IafDragonBehaviorHelper.isDragonInAir(dragon) && dragon.flightManager.getFlightTarget() != null) {
-                Vector3d flightTarget = dragon.flightManager.getFlightTarget();
-                guardPosition = new BlockPos(dragon.getOwner().getPosX(), flightTarget.y, dragon.getOwner().getPosZ());
+                Vec3 flightTarget = dragon.flightManager.getFlightTarget();
+                guardPosition = new BlockPos(dragon.getOwner().getX(), flightTarget.y, dragon.getOwner().getZ());
             } else {
-                guardPosition = dragon.getOwner().getPosition();
+                guardPosition = dragon.getOwner().blockPosition();
             }
         } else {
             cap.getDestination().ifPresent(blockPos -> {
@@ -138,47 +140,47 @@ public class DragonAIGuard<T extends LivingEntity> extends NearestAttackableTarg
     }
 
     @Override
-    public void startExecuting() {
-        super.startExecuting();
-        guardPosition = cap.getDestination().orElse(dragon.getPosition());
+    public void start() {
+        super.start();
+        guardPosition = cap.getDestination().orElse(dragon.blockPosition());
     }
 
     @Override
-    protected AxisAlignedBB getTargetableArea(double targetDistance) {
-        return this.dragon.getBoundingBox().grow(targetDistance, targetDistance, targetDistance);
+    protected AABB getTargetSearchArea(double targetDistance) {
+        return this.dragon.getBoundingBox().inflate(targetDistance, targetDistance, targetDistance);
     }
 
     @Override
-    protected double getTargetDistance() {
-        ModifiableAttributeInstance iattributeinstance = this.goalOwner.getAttribute(Attributes.FOLLOW_RANGE);
+    protected double getFollowDistance() {
+        AttributeInstance iattributeinstance = this.mob.getAttribute(Attributes.FOLLOW_RANGE);
         return iattributeinstance == null ? 128.0D : iattributeinstance.getValue();
     }
 
-    public static double getTargetDistance(MobEntity mobEntity) {
-        ModifiableAttributeInstance iattributeinstance = mobEntity.getAttribute(Attributes.FOLLOW_RANGE);
+    public static double getTargetDistance(Mob mobEntity) {
+        AttributeInstance iattributeinstance = mobEntity.getAttribute(Attributes.FOLLOW_RANGE);
         return iattributeinstance == null ? 128.0D : iattributeinstance.getValue();
     }
 
-    public static AxisAlignedBB getTargetableArea(MobEntity mobEntity, double targetDistance) {
-        return mobEntity.getBoundingBox().grow(targetDistance, targetDistance, targetDistance);
+    public static AABB getTargetableArea(Mob mobEntity, double targetDistance) {
+        return mobEntity.getBoundingBox().inflate(targetDistance, targetDistance, targetDistance);
     }
 
-    public static LivingEntity findNearestTarget(MobEntity mobEntity) {
+    public static LivingEntity findNearestTarget(Mob mobEntity) {
         LivingEntity nearestTarget;
         Predicate<LivingEntity> targetPredicate = new Predicate<LivingEntity>() {
             @Override
             public boolean test(@Nullable LivingEntity entity) {
-                return (!(entity instanceof PlayerEntity) || !((PlayerEntity) entity).isCreative())
+                return (!(entity instanceof Player) || !((Player) entity).isCreative())
                         && DragonUtils.canHostilesTarget(entity)
                         && util.isHostile(entity);
             }
         };
         Class entityClazz = LivingEntity.class;
-        EntityPredicate targetEntitySelector = (new EntityPredicate()).setDistance(getTargetDistance(mobEntity)).setCustomPredicate(targetPredicate);
-        if (entityClazz != PlayerEntity.class && entityClazz != ServerPlayerEntity.class) {
-            nearestTarget = mobEntity.world.getClosestEntity(LivingEntity.class, targetEntitySelector, mobEntity, mobEntity.getPosX(), mobEntity.getPosYEye(), mobEntity.getPosZ(), getTargetableArea(mobEntity, getTargetDistance(mobEntity)));
+        TargetingConditions targetEntitySelector = (new TargetingConditions()).range(getTargetDistance(mobEntity)).selector(targetPredicate);
+        if (entityClazz != Player.class && entityClazz != ServerPlayer.class) {
+            nearestTarget = mobEntity.level.getNearestLoadedEntity(LivingEntity.class, targetEntitySelector, mobEntity, mobEntity.getX(), mobEntity.getEyeY(), mobEntity.getZ(), getTargetableArea(mobEntity, getTargetDistance(mobEntity)));
         } else {
-            nearestTarget = mobEntity.world.getClosestPlayer(targetEntitySelector, mobEntity, mobEntity.getPosX(), mobEntity.getPosYEye(), mobEntity.getPosZ());
+            nearestTarget = mobEntity.level.getNearestPlayer(targetEntitySelector, mobEntity, mobEntity.getX(), mobEntity.getEyeY(), mobEntity.getZ());
         }
         return nearestTarget;
     }

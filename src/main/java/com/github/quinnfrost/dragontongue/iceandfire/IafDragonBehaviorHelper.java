@@ -14,19 +14,19 @@ import com.github.quinnfrost.dragontongue.iceandfire.ai.*;
 import com.github.quinnfrost.dragontongue.iceandfire.event.IafServerEvent;
 import com.github.quinnfrost.dragontongue.utils.util;
 import com.google.common.base.Predicate;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.entity.ai.goal.OwnerHurtTargetGoal;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.potion.EffectInstance;
-import net.minecraft.potion.Effects;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 
 public class IafDragonBehaviorHelper {
-    public static boolean registerDragonAI(MobEntity mobEntity) {
+    public static boolean registerDragonAI(Mob mobEntity) {
         if (IafHelperClass.isDragon(mobEntity)) {
             EntityDragonBase dragon = (EntityDragonBase) mobEntity;
 
@@ -35,7 +35,7 @@ public class IafDragonBehaviorHelper {
         return false;
     }
 
-    public static boolean registerHippogryphAI(MobEntity mobEntity) {
+    public static boolean registerHippogryphAI(Mob mobEntity) {
         if (IafHelperClass.isHippogryph(mobEntity)) {
             EntityHippogryph hippogryph = (EntityHippogryph) mobEntity;
 
@@ -44,7 +44,7 @@ public class IafDragonBehaviorHelper {
             hippogryph.targetSelector.addGoal(3, new GuardGoal<>(hippogryph, LivingEntity.class, false, new java.util.function.Predicate<LivingEntity>() {
                 @Override
                 public boolean test(@Nullable LivingEntity entity) {
-                    return (!(entity instanceof PlayerEntity) || !((PlayerEntity) entity).isCreative() || !entity.isSpectator())
+                    return (!(entity instanceof Player) || !((Player) entity).isCreative() || !entity.isSpectator())
                             && util.isHostile(entity);
                 }
             }));
@@ -53,7 +53,7 @@ public class IafDragonBehaviorHelper {
         return false;
     }
 
-    public static boolean keepDragonHover(MobEntity dragonIn, BlockPos hoverPos) {
+    public static boolean keepDragonHover(Mob dragonIn, BlockPos hoverPos) {
         // Flight logic should be done in flight manager update
         if (!IafHelperClass.isDragon(dragonIn)) {
             return false;
@@ -68,15 +68,15 @@ public class IafDragonBehaviorHelper {
             cap.setCommandStatus(EnumCommandSettingType.CommandStatus.STAY);
         }
 
-        dragon.setMotion(0, 0, 0);
+        dragon.setDeltaMovement(0, 0, 0);
 
         // Todo: dragon head position glitch when hover
         // Look position is updated only if the dragon reaches her destination
-        PlayerEntity playerEntity = dragon.world.getPlayerByUuid(dragon.getOwnerId());
+        Player playerEntity = dragon.level.getPlayerByUUID(dragon.getOwnerUUID());
         // Backoff looking control if the dragon is breathing
         if (playerEntity != null
                 && !cap.getBreathTarget().isPresent()) {
-            setDragonLook(dragon, playerEntity.getPosition());
+            setDragonLook(dragon, playerEntity.blockPosition());
 //            dragon.setDragonPitch();
         }
 
@@ -85,13 +85,13 @@ public class IafDragonBehaviorHelper {
         // Force set hover ticks to prevent dragon from flying triggered by dragon logic
         dragon.hoverTicks = 10;
         dragon.ticksStill = 10;
-        dragon.flightManager.setFlightTarget(Vector3d.copyCentered(hoverPos));
-        dragon.getNavigator().clearPath();
+        dragon.flightManager.setFlightTarget(Vec3.atCenterOf(hoverPos));
+        dragon.getNavigation().stop();
 
         return true;
     }
 
-    public static boolean keepDragonStay(MobEntity dragonIn) {
+    public static boolean keepDragonStay(Mob dragonIn) {
         // Ground logic should be done in AI
         if (!IafHelperClass.isDragon(dragonIn)) {
             return false;
@@ -107,7 +107,7 @@ public class IafDragonBehaviorHelper {
         dragon.setHovering(false);
         dragon.setFlying(false);
         dragon.ticksStill = 10;
-        dragon.getNavigator().clearPath();
+        dragon.getNavigation().stop();
 
         return true;
     }
@@ -121,8 +121,8 @@ public class IafDragonBehaviorHelper {
 
         cap.getDestination().ifPresent(blockPos -> {
             if (util.hasArrived(dragon, blockPos, null)) {
-                dragon.getNavigator().clearPath();
-                dragon.setMotion(0, 0, 0);
+                dragon.getNavigation().stop();
+                dragon.setDeltaMovement(0, 0, 0);
                 if (!IafDragonBehaviorHelper.isDragonInAir(dragon) || !IafDragonBehaviorHelper.shouldHoverAt(dragon, blockPos)) {
                     cap.setCommandStatus(EnumCommandSettingType.CommandStatus.STAY);
                 } else {
@@ -132,10 +132,10 @@ public class IafDragonBehaviorHelper {
                 if (dragon.getCommand() != 0) {
                     dragon.setCommand(0);
                 }
-                if (dragon.world.isAirBlock(targetPos)) {
-                    IafDragonBehaviorHelper.setDragonFlightTarget(dragon, Vector3d.copyCentered(targetPos));
-                } else if (dragon.world.isAirBlock(targetPos.add(0, 1, 0))) {
-                    IafDragonBehaviorHelper.setDragonFlightTarget(dragon, Vector3d.copyCentered(targetPos.add(0, 1, 0)));
+                if (dragon.level.isEmptyBlock(targetPos)) {
+                    IafDragonBehaviorHelper.setDragonFlightTarget(dragon, Vec3.atCenterOf(targetPos));
+                } else if (dragon.level.isEmptyBlock(targetPos.offset(0, 1, 0))) {
+                    IafDragonBehaviorHelper.setDragonFlightTarget(dragon, Vec3.atCenterOf(targetPos.offset(0, 1, 0)));
                 } else {
                     DragonTongue.LOGGER.warn("Dragon flight target set to non air block");
                 }
@@ -154,15 +154,15 @@ public class IafDragonBehaviorHelper {
 
         cap.getDestination().ifPresent(blockPos -> {
             if (util.hasArrived(dragon, blockPos, null)) {
-                dragon.getNavigator().clearPath();
-                dragon.setMotion(0, 0, 0);
+                dragon.getNavigation().stop();
+                dragon.setDeltaMovement(0, 0, 0);
                 if (IafDragonBehaviorHelper.isDragonInAir(dragon)) {
                     cap.setCommandStatus(EnumCommandSettingType.CommandStatus.HOVER);
                 } else {
                     cap.setCommandStatus(EnumCommandSettingType.CommandStatus.STAY);
                 }
             } else {
-                dragon.setQueuedToSit(false);
+                dragon.setInSittingPose(false);
                 IafDragonBehaviorHelper.setDragonWalkTarget(dragon, targetPos);
             }
         });
@@ -182,11 +182,11 @@ public class IafDragonBehaviorHelper {
 
         if (breathPos != null) {
             dragon.burningTarget = breathPos;
-            dragon.getLookController().setLookPosition(breathPos.getX() + 0.5D, breathPos.getY() + 0.5D, breathPos.getZ() + 0.5D, 180F, 180F);
-            dragon.rotationYaw = dragon.renderYawOffset;
+            dragon.getLookControl().setLookAt(breathPos.getX() + 0.5D, breathPos.getY() + 0.5D, breathPos.getZ() + 0.5D, 180F, 180F);
+            dragon.yRot = dragon.yBodyRot;
             switch (breathType) {
                 case ANY:
-                    if (dragon.getDragonStage() >= 4 && dragon.getDragonStage() / 2.0f - 1.5 > dragon.getRNG().nextFloat()) {
+                    if (dragon.getDragonStage() >= 4 && dragon.getDragonStage() / 2.0f - 1.5 > dragon.getRandom().nextFloat()) {
                         dragon.stimulateFire(breathPos.getX() + 0.5F, breathPos.getY() + 0.5F, breathPos.getZ() + 0.5F, 5);
                     }
                 case WITHOUT_BLAST:
@@ -222,7 +222,7 @@ public class IafDragonBehaviorHelper {
                 setDragonWalkTarget(dragon, blockPos);
             }
             if (isDragonInAir(dragon) || shouldHoverAt(dragon, blockPos)) {
-                setDragonFlightTarget(dragon, Vector3d.copyCentered(blockPos));
+                setDragonFlightTarget(dragon, Vec3.atCenterOf(blockPos));
             }
         }
         return true;
@@ -245,11 +245,11 @@ public class IafDragonBehaviorHelper {
         }
 
         if (!IafDragonBehaviorHelper.isDragonInAir(dragon)) {
-            dragon.setMotion(dragon.getMotion().add(0, 0.02, 0));
+            dragon.setDeltaMovement(dragon.getDeltaMovement().add(0, 0.02, 0));
         }
         dragon.setHovering(true);
-        dragon.setQueuedToSit(false);
-        dragon.setSitting(false);
+        dragon.setInSittingPose(false);
+        dragon.setOrderedToSit(false);
         dragon.flyTicks = 0;
 
         return true;
@@ -265,7 +265,7 @@ public class IafDragonBehaviorHelper {
             return false;
         }
         if (IafDragonBehaviorHelper.isDragonInAir(dragon)) {
-            dragon.setMotion(dragon.getMotion().add(0.0, -0.25, 0.0));
+            dragon.setDeltaMovement(dragon.getDeltaMovement().add(0.0, -0.25, 0.0));
         }
 
         dragon.setFlying(false);
@@ -273,14 +273,14 @@ public class IafDragonBehaviorHelper {
         return true;
     }
 
-    public static boolean setDragonHalt(MobEntity dragonIn) {
+    public static boolean setDragonHalt(Mob dragonIn) {
         if (!IafHelperClass.isDragon(dragonIn)) {
             return false;
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
         ICapabilityInfoHolder capTargetHolder = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
 
-        capTargetHolder.setDestination(dragon.getPosition());
+        capTargetHolder.setDestination(dragon.blockPosition());
         // If no command was issued, do as the vanilla way
         if (capTargetHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE) {
             if (isDragonInAir(dragon)) {
@@ -291,9 +291,9 @@ public class IafDragonBehaviorHelper {
         }
         capTargetHolder.setBreathTarget(null);
 
-        dragon.setAttackTarget(null);
+        dragon.setTarget(null);
 //        setDragonFlightTarget(dragon, null);
-        dragon.getNavigator().clearPath();
+        dragon.getNavigation().stop();
 
         return true;
     }
@@ -312,7 +312,7 @@ public class IafDragonBehaviorHelper {
             IafDragonBehaviorHelper.setDragonTakeOff(dragon);
         }
 
-        dragon.setAttackTarget(null);
+        dragon.setTarget(null);
         setDragonTryReach(dragon, blockPos);
         cap.setDestination(blockPos);
         cap.setCommandStatus(EnumCommandSettingType.CommandStatus.REACH);
@@ -336,7 +336,7 @@ public class IafDragonBehaviorHelper {
             // One target at a time
             setDragonBreathTarget(dragon, null);
         }
-        dragon.setAttackTarget(target);
+        dragon.setTarget(target);
 
         return true;
 
@@ -350,9 +350,9 @@ public class IafDragonBehaviorHelper {
         ICapabilityInfoHolder cap = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
 
         if (breathPos != null) {
-            dragon.getLookController().setLookPosition(Vector3d.copyCentered(breathPos));
+            dragon.getLookControl().setLookAt(Vec3.atCenterOf(breathPos));
             cap.setBreathTarget(breathPos);
-            cap.setDestination(dragon.getPosition());
+            cap.setDestination(dragon.blockPosition());
             if (cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.NONE) {
                 if (isDragonInAir(dragon)) {
                     cap.setCommandStatus(EnumCommandSettingType.CommandStatus.HOVER);
@@ -371,7 +371,7 @@ public class IafDragonBehaviorHelper {
         return true;
     }
 
-    public static boolean setDragonFlightTarget(LivingEntity dragonIn, Vector3d targetVec) {
+    public static boolean setDragonFlightTarget(LivingEntity dragonIn, Vec3 targetVec) {
         if (!IafHelperClass.isDragon(dragonIn)) {
             return false;
         }
@@ -391,12 +391,12 @@ public class IafDragonBehaviorHelper {
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
 
         if (blockPos != null) {
-            ((AdvancedPathNavigate) dragon.getNavigator()).tryMoveToBlockPos(blockPos, 1.0f);
+            ((AdvancedPathNavigate) dragon.getNavigation()).tryMoveToBlockPos(blockPos, 1.0f);
             if (dragon.isInWater()) {
-                setDragonFlightTarget(dragon, Vector3d.copyCenteredHorizontally(blockPos));
+                setDragonFlightTarget(dragon, Vec3.atBottomCenterOf(blockPos));
             }
         } else {
-            dragon.getNavigator().clearPath();
+            dragon.getNavigation().stop();
         }
 
         return true;
@@ -407,7 +407,7 @@ public class IafDragonBehaviorHelper {
             return false;
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-        dragon.getLookController().setLookPosition(Vector3d.copyCentered(blockPos));
+        dragon.getLookControl().setLookAt(Vec3.atCenterOf(blockPos));
         return true;
     }
 
@@ -427,7 +427,7 @@ public class IafDragonBehaviorHelper {
         ICapabilityInfoHolder cap = dragonIn.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragonIn));
 
         IafDragonBehaviorHelper.setDragonTakeOff(dragon);
-        cap.setDestination(dragon.getPosition());
+        cap.setDestination(dragon.blockPosition());
         cap.setCommandStatus(EnumCommandSettingType.CommandStatus.HOVER);
 
         return true;
@@ -450,20 +450,20 @@ public class IafDragonBehaviorHelper {
             cap.setDestination(null);
 
             dragon.setHealth((float) Math.ceil(dragon.getMaxHealth() / 20.0f));
-            dragon.clearActivePotions();
-            dragon.addPotionEffect(new EffectInstance(Effects.REGENERATION, 900, 1));
+            dragon.removeAllEffects();
+            dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 900, 1));
 //        dragon.addPotionEffect(new EffectInstance(Effects.REGENERATION, 900, 1));
-            dragon.addPotionEffect(new EffectInstance(Effects.ABSORPTION, 100, 1));
-            dragon.addPotionEffect(new EffectInstance(Effects.FIRE_RESISTANCE, 800, 0));
-            dragon.world.setEntityState(dragon, (byte) 35);
+            dragon.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 100, 1));
+            dragon.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 800, 0));
+            dragon.level.broadcastEntityEvent(dragon, (byte) 35);
 
             dragon.setDeathStage(0);
             dragon.setModelDead(false);
-            dragon.setNoAI(false);
+            dragon.setNoAi(false);
             return true;
         } else if (deathStage > 0 && deathStage <= 2) {
 //            util.spawnParticleForce(dragon.world, ParticleTypes.HAPPY_VILLAGER, )
-            dragon.world.setEntityState(dragon, (byte) 35);
+            dragon.level.broadcastEntityEvent(dragon, (byte) 35);
             dragon.setDeathStage(deathStage - 1);
             return true;
         }
@@ -502,7 +502,7 @@ public class IafDragonBehaviorHelper {
 //            return true;
 //        }
         for (int i = 0; i < dragon.getDragonStage() + 1; i++) {
-            if (!dragon.world.isAirBlock(blockPos.add(0, -i, 0))) {
+            if (!dragon.level.isEmptyBlock(blockPos.offset(0, -i, 0))) {
                 return false;
             }
         }
@@ -532,7 +532,7 @@ public class IafDragonBehaviorHelper {
     }
 
     public static boolean isOverAir(EntityDragonBase dragon) {
-        return dragon.world.isAirBlock(new BlockPos(dragon.getPosX(), dragon.getBoundingBox().minY - 1, dragon.getPosZ()));
+        return dragon.level.isEmptyBlock(new BlockPos(dragon.getX(), dragon.getBoundingBox().minY - 1, dragon.getZ()));
     }
 
     public static boolean shouldDestroy(LivingEntity dragonIn, BlockPos destroyPosition) {

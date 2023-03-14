@@ -4,32 +4,34 @@ import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.goal.Goal;
 
 import java.util.EnumSet;
 
+import net.minecraft.world.entity.ai.goal.Goal.Flag;
+
 public class CalmLookGoal extends Goal {
-    private final MobEntity mobEntity;
+    private final Mob mobEntity;
     private final ICapabilityInfoHolder capabilityInfoHolder;
 
-    public CalmLookGoal(MobEntity entity) {
+    public CalmLookGoal(Mob entity) {
         this.mobEntity = entity;
         this.capabilityInfoHolder = entity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(entity));
-        this.setMutexFlags(EnumSet.of(Flag.LOOK));
+        this.setFlags(EnumSet.of(Flag.LOOK));
     }
 
     @Override
-    public boolean shouldExecute() {
+    public boolean canUse() {
         return capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE;
     }
     @Override
-    public boolean shouldContinueExecuting() {
-        return shouldExecute();
+    public boolean canContinueToUse() {
+        return canUse();
     }
 
     @Override
-    public void startExecuting() {
+    public void start() {
 
     }
 

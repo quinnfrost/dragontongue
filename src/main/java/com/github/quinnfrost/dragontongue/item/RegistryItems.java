@@ -1,7 +1,7 @@
 package com.github.quinnfrost.dragontongue.item;
 
 import com.github.quinnfrost.dragontongue.Registration;
-import net.minecraft.item.Item;
+import net.minecraft.world.item.Item;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.RegistryObject;
 

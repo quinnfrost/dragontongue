@@ -5,12 +5,12 @@ package com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjo
 
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.*;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.pathfinding.Path;
-import net.minecraft.util.Direction;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.core.Direction;
 import net.minecraft.util.Tuple;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
 import java.util.Random;
@@ -53,7 +53,7 @@ public class PathJobRandomPos extends AbstractPathJob
      * @param entity        the entity.
      */
     public PathJobRandomPos(
-      final World world,
+      final Level world,
       final BlockPos start,
       final int minDistFromStart,
       final int range,
@@ -64,7 +64,7 @@ public class PathJobRandomPos extends AbstractPathJob
         this.maxDistToDest = range;
 
         final Tuple<Direction, Direction> dir = getRandomDirectionTuple(random);
-        this.destination = start.offset(dir.getA(), minDistFromStart).offset(dir.getB(), minDistFromStart);
+        this.destination = start.relative(dir.getA(), minDistFromStart).relative(dir.getB(), minDistFromStart);
     }
 
     /**
@@ -77,7 +77,7 @@ public class PathJobRandomPos extends AbstractPathJob
      * @param entity           the entity.
      */
     public PathJobRandomPos(
-        final World world,
+        final Level world,
         final BlockPos start,
         final int minDistFromStart,
         final int searchRange,
@@ -101,7 +101,7 @@ public class PathJobRandomPos extends AbstractPathJob
      * @param entity   the entity.
      */
     public PathJobRandomPos(
-        final World world,
+        final Level world,
         final BlockPos start,
         final int minDistFromStart,
         final int range,
@@ -115,7 +115,7 @@ public class PathJobRandomPos extends AbstractPathJob
         this.maxDistToDest = range;
 
         final Tuple<Direction, Direction> dir = getRandomDirectionTuple(random);
-        this.destination = start.offset(dir.getA(), minDistFromStart).offset(dir.getB(), minDistFromStart);
+        this.destination = start.relative(dir.getA(), minDistFromStart).relative(dir.getB(), minDistFromStart);
     }
 
     /**
@@ -126,7 +126,7 @@ public class PathJobRandomPos extends AbstractPathJob
      */
     public static Tuple<Direction, Direction> getRandomDirectionTuple(final Random random)
     {
-        return new Tuple<>(Direction.getRandomDirection(random), Direction.getRandomDirection(random));
+        return new Tuple<>(Direction.getRandom(random), Direction.getRandom(random));
     }
 
     @Nullable
@@ -152,15 +152,15 @@ public class PathJobRandomPos extends AbstractPathJob
     @Override
     protected double computeHeuristic(final BlockPos pos)
     {
-        return Math.sqrt(destination.distanceSq(new BlockPos(pos.getX(), destination.getY(), pos.getZ())));
+        return Math.sqrt(destination.distSqr(new BlockPos(pos.getX(), destination.getY(), pos.getZ())));
     }
 
     @Override
     protected boolean isAtDestination(final Node n)
     {
-        if (random.nextInt(10) == 0 && isInRestrictedArea(n.pos) && (start.distanceSq(n.pos) > minDistFromStart * minDistFromStart)
-            && SurfaceType.getSurfaceType(world, world.getBlockState(n.pos.down()), n.pos.down()) == SurfaceType.WALKABLE
-            && destination.distanceSq(n.pos) < this.maxDistToDest * this.maxDistToDest)
+        if (random.nextInt(10) == 0 && isInRestrictedArea(n.pos) && (start.distSqr(n.pos) > minDistFromStart * minDistFromStart)
+            && SurfaceType.getSurfaceType(world, world.getBlockState(n.pos.below()), n.pos.below()) == SurfaceType.WALKABLE
+            && destination.distSqr(n.pos) < this.maxDistToDest * this.maxDistToDest)
         {
             return true;
         }
@@ -171,7 +171,7 @@ public class PathJobRandomPos extends AbstractPathJob
     protected double getNodeResultScore(final Node n)
     {
         //  For Result Score lower is better
-        return destination.distanceSq(n.pos);
+        return destination.distSqr(n.pos);
     }
 
     /**

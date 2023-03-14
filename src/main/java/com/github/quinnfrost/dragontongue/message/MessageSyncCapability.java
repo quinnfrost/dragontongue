@@ -5,12 +5,12 @@ import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
 import net.minecraftforge.fml.network.PacketDistributor;
@@ -22,29 +22,29 @@ public class MessageSyncCapability {
     private ICapabilityInfoHolder cap = new CapabilityInfoHolderImpl();
 
     public MessageSyncCapability(Entity entity) {
-        this.entityID = entity.getEntityId();
+        this.entityID = entity.getId();
         this.cap = entity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(entity));
     }
 
-    public MessageSyncCapability(PacketBuffer buffer) {
+    public MessageSyncCapability(FriendlyByteBuf buffer) {
         this.entityID = buffer.readInt();
         int listSize = buffer.readInt();
-        ListNBT listNBT = new ListNBT();
+        ListTag listNBT = new ListTag();
         for (int i = 0; i < listSize; i++) {
-            listNBT.add(buffer.readCompoundTag());
+            listNBT.add(buffer.readNbt());
         }
         CapabilityInfoHolder.TARGET_HOLDER.readNBT(cap, null, listNBT);
     }
 
-    public void encoder(PacketBuffer buffer) {
+    public void encoder(FriendlyByteBuf buffer) {
         buffer.writeInt(entityID);
 
-        ListNBT listNBT = (ListNBT) CapabilityInfoHolder.TARGET_HOLDER.writeNBT(cap, null);
+        ListTag listNBT = (ListTag) CapabilityInfoHolder.TARGET_HOLDER.writeNBT(cap, null);
         buffer.writeInt(listNBT.size());
-        CompoundNBT compoundNBT;
+        CompoundTag compoundNBT;
         for (int i = 0; i < listNBT.size(); i++) {
             compoundNBT = listNBT.getCompound(i);
-            buffer.writeCompoundTag(compoundNBT);
+            buffer.writeNbt(compoundNBT);
         }
 
     }
@@ -54,7 +54,7 @@ public class MessageSyncCapability {
             contextSupplier.get().setPacketHandled(true);
 
             if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
-                Entity entity = Minecraft.getInstance().player.world.getEntityByID(entityID);
+                Entity entity = Minecraft.getInstance().player.level.getEntity(entityID);
 //                DragonTongue.LOGGER.debug("Getting cap sync for " + entity);
                 if (entity != null) {
                     entity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
@@ -62,7 +62,7 @@ public class MessageSyncCapability {
                     });
                 }
             } else if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_SERVER){
-                Entity entity = contextSupplier.get().getSender().world.getEntityByID(entityID);
+                Entity entity = contextSupplier.get().getSender().level.getEntity(entityID);
 //                DragonTongue.LOGGER.debug("Getting cap sync for " + entity);
                 if (entity != null) {
                     entity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
@@ -81,8 +81,8 @@ public class MessageSyncCapability {
                     PacketDistributor.TRACKING_ENTITY.with(() -> entity),
                     new MessageSyncCapability(entity));
         }
-        if (entity instanceof PlayerEntity) {
-            RegistryMessages.sendToClient(new MessageSyncCapability(entity), (ServerPlayerEntity) entity);
+        if (entity instanceof Player) {
+            RegistryMessages.sendToClient(new MessageSyncCapability(entity), (ServerPlayer) entity);
         }
     }
 

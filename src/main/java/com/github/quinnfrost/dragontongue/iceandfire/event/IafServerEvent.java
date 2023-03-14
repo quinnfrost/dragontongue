@@ -23,19 +23,19 @@ import com.github.quinnfrost.dragontongue.iceandfire.message.MessageClientSetRef
 import com.github.quinnfrost.dragontongue.message.MessageSyncCapability;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.EntityRayTraceResult;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.Event;
@@ -54,7 +54,7 @@ public class IafServerEvent {
         // We need to cancel the event and handle the damaging ourselves
         EntityDragonBase destroyerDragon = event.getDragon();
         BlockPos destroyCenter = new BlockPos(event.getTargetX(), event.getTargetY(), event.getTargetZ());
-        World world = destroyerDragon.world;
+        Level world = destroyerDragon.level;
         ICapabilityInfoHolder cap = destroyerDragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(destroyerDragon));
         if (!IafDragonBehaviorHelper.shouldDestroy(destroyerDragon, destroyCenter) || destroyerDragon instanceof EntityIceDragon && ((EntityIceDragon) destroyerDragon).isInMaterialWater()) {
             // From IafDragonDestructionManager#destroyAreaFire
@@ -66,9 +66,9 @@ public class IafServerEvent {
             float dmgScale = (float) IafConfig.dragonAttackDamageIce;
 
             if (stage <= 3) {
-                BlockPos.getAllInBox(destroyCenter.add(-1, -1, -1), destroyCenter.add(1, 1, 1)).forEach(pos -> {
-                    if (world.getTileEntity(pos) instanceof TileEntityDragonforgeInput) {
-                        ((TileEntityDragonforgeInput) world.getTileEntity(pos)).onHitWithFlame();
+                BlockPos.betweenClosedStream(destroyCenter.offset(-1, -1, -1), destroyCenter.offset(1, 1, 1)).forEach(pos -> {
+                    if (world.getBlockEntity(pos) instanceof TileEntityDragonforgeInput) {
+                        ((TileEntityDragonforgeInput) world.getBlockEntity(pos)).onHitWithFlame();
                         return;
                     }
 //                    if (IafConfig.dragonGriefing != 2 && world.rand.nextBoolean()) {
@@ -77,16 +77,16 @@ public class IafServerEvent {
                 });
             } else {
                 final int radius = stage == 4 ? 2 : 3;
-                final int j = radius + world.rand.nextInt(1);
-                final int k = radius + world.rand.nextInt(1);
-                final int l = radius + world.rand.nextInt(1);
+                final int j = radius + world.random.nextInt(1);
+                final int k = radius + world.random.nextInt(1);
+                final int l = radius + world.random.nextInt(1);
                 final float f = (float) (j + k + l) * 0.333F + 0.5F;
                 final float ff = f * f;
 
                 damageRadius = 2.5F + f * 1.2F;
-                BlockPos.getAllInBox(destroyCenter.add(-j, -k, -l), destroyCenter.add(j, k, l)).forEach(pos -> {
-                    if (world.getTileEntity(pos) instanceof TileEntityDragonforgeInput) {
-                        ((TileEntityDragonforgeInput) world.getTileEntity(pos)).onHitWithFlame();
+                BlockPos.betweenClosedStream(destroyCenter.offset(-j, -k, -l), destroyCenter.offset(j, k, l)).forEach(pos -> {
+                    if (world.getBlockEntity(pos) instanceof TileEntityDragonforgeInput) {
+                        ((TileEntityDragonforgeInput) world.getBlockEntity(pos)).onHitWithFlame();
                         return;
                     }
 //                    if (destroyCenter.distanceSq(pos) <= ff) {
@@ -99,9 +99,9 @@ public class IafServerEvent {
 
             final float stageDmg = stage * dmgScale;
             final int statusDuration = 50 * stage;
-            world.getEntitiesWithinAABB(
+            world.getEntitiesOfClass(
                     LivingEntity.class,
-                    new AxisAlignedBB(
+                    new AABB(
                             (double) destroyCenter.getX() - damageRadius,
                             (double) destroyCenter.getY() - damageRadius,
                             (double) destroyCenter.getZ() - damageRadius,
@@ -110,8 +110,8 @@ public class IafServerEvent {
                             (double) destroyCenter.getZ() + damageRadius
                     )
             ).stream().forEach(livingEntity -> {
-                if (!DragonUtils.onSameTeam(destroyerDragon, livingEntity) && !destroyerDragon.isEntityEqual(livingEntity) && destroyerDragon.canEntityBeSeen(livingEntity)) {
-                    livingEntity.attackEntityFrom(source, stageDmg);
+                if (!DragonUtils.onSameTeam(destroyerDragon, livingEntity) && !destroyerDragon.is(livingEntity) && destroyerDragon.canSee(livingEntity)) {
+                    livingEntity.hurt(source, stageDmg);
                     FrozenProperties.setFrozenFor(livingEntity, statusDuration);
                 }
             });
@@ -145,38 +145,38 @@ public class IafServerEvent {
     // This event is called in server event, could register though
     public static boolean onEntityInteract(PlayerInteractEvent.EntityInteract event) {
         Entity targetEntity = event.getTarget();
-        if (IafHelperClass.isDragon(IafHelperClass.getDragon(targetEntity)) && event.getEntityLiving() instanceof PlayerEntity) {
+        if (IafHelperClass.isDragon(IafHelperClass.getDragon(targetEntity)) && event.getEntityLiving() instanceof Player) {
             EntityDragonBase dragon = IafHelperClass.getDragon(targetEntity);
-            PlayerEntity playerEntity = (PlayerEntity) event.getEntityLiving();
+            Player playerEntity = (Player) event.getEntityLiving();
             if (!util.isOwner(dragon, playerEntity)) {
                 return false;
             }
 
-            Hand hand = event.getPlayer().getActiveHand();
-            ItemStack itemStack = playerEntity.getHeldItem(event.getHand());
-            ItemStack itemStackMainhand = playerEntity.getHeldItemMainhand();
-            ItemStack itemStackOffhand = playerEntity.getHeldItemOffhand();
+            InteractionHand hand = event.getPlayer().getUsedItemHand();
+            ItemStack itemStack = playerEntity.getItemInHand(event.getHand());
+            ItemStack itemStackMainhand = playerEntity.getMainHandItem();
+            ItemStack itemStackOffhand = playerEntity.getOffhandItem();
 
-            if (playerEntity.isSneaking()) {
+            if (playerEntity.isShiftKeyDown()) {
                 if (itemStackMainhand.getItem() == IafItemRegistry.DRAGON_STAFF || itemStackOffhand.getItem() == IafItemRegistry.DRAGON_STAFF) {
                     // Hijack the dragon staff right click dragon in sneaking
-                    if (event.getHand() == event.getPlayer().getActiveHand() && playerEntity.getDistance(dragon) < 6) {
+                    if (event.getHand() == event.getPlayer().getUsedItemHand() && playerEntity.distanceTo(dragon) < 6) {
                         if (dragon.hasHomePosition) {
                             dragon.hasHomePosition = false;
-                            playerEntity.sendStatusMessage(new TranslationTextComponent("dragon.command.remove_home"), true);
+                            playerEntity.displayClientMessage(new TranslatableComponent("dragon.command.remove_home"), true);
                             dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).ifPresent(iCapTargetHolder -> {
                                 iCapTargetHolder.setHomePosition(null);
                                 iCapTargetHolder.setHomeDimension(null);
                             });
                         } else {
-                            BlockPos pos = dragon.getPosition();
-                            dragon.homePos = new HomePosition(pos, dragon.world);
+                            BlockPos pos = dragon.blockPosition();
+                            dragon.homePos = new HomePosition(pos, dragon.level);
                             dragon.hasHomePosition = true;
-                            playerEntity.sendStatusMessage(new TranslationTextComponent("dragon.command.new_home", pos.getX(), pos.getY(), pos.getZ(), dragon.homePos.getDimension()), true);
+                            playerEntity.displayClientMessage(new TranslatableComponent("dragon.command.new_home", pos.getX(), pos.getY(), pos.getZ(), dragon.homePos.getDimension()), true);
                         }
                     }
                     MessageSyncCapability.syncCapabilityToClients(dragon);
-                    event.setCancellationResult(ActionResultType.SUCCESS);
+                    event.setCancellationResult(InteractionResult.SUCCESS);
                     event.setCanceled(true);
                 } else if (itemStackMainhand.isEmpty() || itemStackOffhand.isEmpty()) {
                     // Hijack empty hand right click dragon in sneaking
@@ -199,14 +199,14 @@ public class IafServerEvent {
     }
 
     public static boolean onEntityUseItem(PlayerInteractEvent.RightClickItem event) {
-        if (event.getEntityLiving() instanceof PlayerEntity) {
-            PlayerEntity playerEntity = (PlayerEntity) event.getEntityLiving();
-            Hand hand = event.getHand();
-            ItemStack itemStack = playerEntity.getHeldItem(hand);
+        if (event.getEntityLiving() instanceof Player) {
+            Player playerEntity = (Player) event.getEntityLiving();
+            InteractionHand hand = event.getHand();
+            ItemStack itemStack = playerEntity.getItemInHand(hand);
 
             // Hijack the original dragon staff function in EntityDragonBase#1269
             if (itemStack.getItem() == IafItemRegistry.DRAGON_STAFF) {
-                EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(playerEntity, Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f,
+                EntityHitResult entityRayTraceResult = util.getTargetEntity(playerEntity, Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f,
                         entity -> entity instanceof EntityDragonPart || entity instanceof LivingEntity);
                 if (entityRayTraceResult == null || !IafHelperClass.isDragon(IafHelperClass.getDragon(entityRayTraceResult.getEntity()))) {
                     return false;
@@ -215,13 +215,13 @@ public class IafServerEvent {
 
 //                playerEntity.sendMessage(ITextComponent.getTextComponentOrEmpty("Dragon staff used"), Util.DUMMY_UUID);
 
-                if (!playerEntity.isSneaking()) {
+                if (!playerEntity.isShiftKeyDown()) {
                     if (util.isOwner(dragon, playerEntity)) {
                         RegistryMessages.sendToClient(new MessageClientSetReferenceDragon(
-                                dragon.getEntityId()
-                        ), (ServerPlayerEntity) playerEntity);
+                                dragon.getId()
+                        ), (ServerPlayer) playerEntity);
                         ContainerDragon.openGui(playerEntity, dragon);
-                        event.setCancellationResult(ActionResultType.SUCCESS);
+                        event.setCancellationResult(InteractionResult.SUCCESS);
                         event.setCanceled(true);
                     }
                 }
@@ -243,7 +243,7 @@ public class IafServerEvent {
     }
 
     public static boolean onLivingHurt(LivingHurtEvent event) {
-        String damageType = event.getSource().getDamageType();
+        String damageType = event.getSource().getMsgId();
         if (event.getSource().isProjectile()) {
 //            float multi = 1;
 //            if (event.getEntityLiving().getItemStackFromSlot(EquipmentSlotType.HEAD).getItem() instanceof ItemTrollArmor) {
@@ -294,13 +294,13 @@ public class IafServerEvent {
             }
         }
 
-        if (entity instanceof PlayerEntity) {
-            PlayerEntity playerEntity = (PlayerEntity) entity;
+        if (entity instanceof Player) {
+            Player playerEntity = (Player) entity;
 
             String setName = IafHelperClass.isFullSetOf(playerEntity);
             if (setName != null) {
-                BlockPos blockPos = playerEntity.getPosition();
-                boolean isOnIceSpike = entity.world.getBlockState(blockPos).getBlock() == IafBlockRegistry.DRAGON_ICE_SPIKES || entity.world.getBlockState(blockPos.down()).getBlock() == IafBlockRegistry.DRAGON_ICE_SPIKES;
+                BlockPos blockPos = playerEntity.blockPosition();
+                boolean isOnIceSpike = entity.level.getBlockState(blockPos).getBlock() == IafBlockRegistry.DRAGON_ICE_SPIKES || entity.level.getBlockState(blockPos.below()).getBlock() == IafBlockRegistry.DRAGON_ICE_SPIKES;
 
                 switch (setName) {
                     case "ice":
@@ -330,8 +330,8 @@ public class IafServerEvent {
     public static boolean onEntityAttacked(LivingAttackEvent event) {
         Entity entity = event.getEntity();
         DamageSource damageSource = event.getSource();
-        BlockPos blockPos = new BlockPos(entity.getPosition());
-        boolean isOnIceSpike = entity.world.getBlockState(blockPos).getBlock() == IafBlockRegistry.DRAGON_ICE_SPIKES || entity.world.getBlockState(blockPos.down()).getBlock() == IafBlockRegistry.DRAGON_ICE_SPIKES;
+        BlockPos blockPos = new BlockPos(entity.blockPosition());
+        boolean isOnIceSpike = entity.level.getBlockState(blockPos).getBlock() == IafBlockRegistry.DRAGON_ICE_SPIKES || entity.level.getBlockState(blockPos.below()).getBlock() == IafBlockRegistry.DRAGON_ICE_SPIKES;
 
         boolean minorDamages =
                 (damageSource == DamageSource.CACTUS && !isOnIceSpike)
@@ -354,7 +354,7 @@ public class IafServerEvent {
                 }
 
                 if (iceDragon.getDragonStage() >= 4 && greaterDamages) {
-                    iceDragon.forceFireTicks(0);
+                    iceDragon.setRemainingFireTicks(0);
                     event.setCanceled(true);
                 } else if (iceDragon.getDragonStage() >= 3 && medianDamages) {
                     event.setCanceled(true);
@@ -386,7 +386,7 @@ public class IafServerEvent {
                 }
                 // Ice spike is also count as cactus damage
                 if (lightningDragon.getDragonStage() >= 4 && greaterDamages) {
-                    lightningDragon.forceFireTicks(0);
+                    lightningDragon.setRemainingFireTicks(0);
                     event.setCanceled(true);
                 } else if (lightningDragon.getDragonStage() >= 3 && medianDamages) {
                     event.setCanceled(true);
@@ -404,8 +404,8 @@ public class IafServerEvent {
         boolean lightningDamage = damageSource == DamageSource.LIGHTNING_BOLT;
 
 
-        if (entity instanceof PlayerEntity) {
-            PlayerEntity playerEntity = (PlayerEntity) entity;
+        if (entity instanceof Player) {
+            Player playerEntity = (Player) entity;
             String setName = IafHelperClass.isFullSetOf(playerEntity);
             if (setName != null) {
                 switch (setName) {
@@ -416,7 +416,7 @@ public class IafServerEvent {
                         break;
                     case "fire":
                         if (fireDamage) {
-                            playerEntity.forceFireTicks(0);
+                            playerEntity.setRemainingFireTicks(0);
                             event.setCanceled(true);
                         }
                         break;
@@ -429,7 +429,7 @@ public class IafServerEvent {
                     case "dragonsteel_ice":
                     case "dragonsteel_fire":
                         if (iceDamage || fireDamage || lightningDamage ) {
-                            playerEntity.forceFireTicks(0);
+                            playerEntity.setRemainingFireTicks(0);
                             event.setCanceled(true);
                         }
                         break;

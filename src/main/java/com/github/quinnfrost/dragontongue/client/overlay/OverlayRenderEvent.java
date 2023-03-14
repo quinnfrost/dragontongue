@@ -1,13 +1,13 @@
 package com.github.quinnfrost.dragontongue.client.overlay;
 
 import com.github.quinnfrost.dragontongue.client.preview.RenderTrajectory;
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.IngameGui;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.util.math.vector.Matrix4f;
+import net.minecraft.client.gui.Gui;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.math.Matrix4f;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -15,7 +15,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 @OnlyIn(Dist.CLIENT)
-public class OverlayRenderEvent extends IngameGui {
+public class OverlayRenderEvent extends Gui {
     public OverlayRenderEvent(Minecraft minecraft) {
         super(minecraft);
     }
@@ -47,16 +47,16 @@ public class OverlayRenderEvent extends IngameGui {
 //        GL11.glDisable(3042);
 //    }
 
-    public void drawTexturedModalRect(MatrixStack ms, int x, int y, int textureX, int textureY, int width, int height) {
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
-        Matrix4f matrix4f = ms.getLast().getMatrix();
-        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
-        bufferbuilder.pos(matrix4f, x + 0, y + height, 0).tex((float) (textureX + 0) * 0.00390625F, (float) (textureY + height) * 0.00390625F).endVertex();
-        bufferbuilder.pos(matrix4f, x + width, y + height, 0).tex((float) (textureX + width) * 0.00390625F, (float) (textureY + height) * 0.00390625F).endVertex();
-        bufferbuilder.pos(matrix4f, x + width, y + 0, 0).tex((float) (textureX + width) * 0.00390625F, (float) (textureY + 0) * 0.00390625F).endVertex();
-        bufferbuilder.pos(matrix4f, x + 0, y + 0, 0).tex((float) (textureX + 0) * 0.00390625F, (float) (textureY + 0) * 0.00390625F).endVertex();
-        tessellator.draw();
+    public void drawTexturedModalRect(PoseStack ms, int x, int y, int textureX, int textureY, int width, int height) {
+        Tesselator tessellator = Tesselator.getInstance();
+        BufferBuilder bufferbuilder = tessellator.getBuilder();
+        Matrix4f matrix4f = ms.last().pose();
+        bufferbuilder.begin(7, DefaultVertexFormat.POSITION_TEX);
+        bufferbuilder.vertex(matrix4f, x + 0, y + height, 0).uv((float) (textureX + 0) * 0.00390625F, (float) (textureY + height) * 0.00390625F).endVertex();
+        bufferbuilder.vertex(matrix4f, x + width, y + height, 0).uv((float) (textureX + width) * 0.00390625F, (float) (textureY + height) * 0.00390625F).endVertex();
+        bufferbuilder.vertex(matrix4f, x + width, y + 0, 0).uv((float) (textureX + width) * 0.00390625F, (float) (textureY + 0) * 0.00390625F).endVertex();
+        bufferbuilder.vertex(matrix4f, x + 0, y + 0, 0).uv((float) (textureX + 0) * 0.00390625F, (float) (textureY + 0) * 0.00390625F).endVertex();
+        tessellator.end();
     }
 }
 

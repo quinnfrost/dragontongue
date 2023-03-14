@@ -1,6 +1,7 @@
 package com.github.quinnfrost.dragontongue;
 
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
+import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.client.KeyBindRegistry;
 import com.github.quinnfrost.dragontongue.client.render.RenderEvent;
 import com.github.quinnfrost.dragontongue.iceandfire.event.IafServerEvent;
@@ -12,11 +13,12 @@ import com.github.quinnfrost.dragontongue.iceandfire.container.RegistryContainer
 import com.github.quinnfrost.dragontongue.event.ClientEvents;
 import com.github.quinnfrost.dragontongue.event.ServerEvents;
 import com.github.quinnfrost.dragontongue.utils.util;
-import net.minecraft.block.Block;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.ScreenManager;
-import net.minecraft.entity.Entity;
+import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
@@ -27,10 +29,10 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
-import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
-import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraftforge.fmlserverevents.FMLServerStartedEvent;
+import net.minecraftforge.fmlserverevents.FMLServerStartingEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -108,7 +110,11 @@ public class DragonTongue
 //        CommonProxy.commonInit();
 
         // Register the custom capability
-        CapabilityInfoHolder.register();
+//        CapabilityInfoHolder.register();
+    }
+
+    private void registerCaps(final RegisterCapabilitiesEvent event) {
+        event.register(ICapabilityInfoHolder.class);
     }
 
     private void doClientStuff(final FMLClientSetupEvent event) {
@@ -126,7 +132,7 @@ public class DragonTongue
 
 
         event.enqueueWork(() -> {
-            ScreenManager.registerFactory(RegistryContainers.CONTAINER_DRAGON.get(), ScreenDragon::new);
+            MenuScreens.register(RegistryContainers.CONTAINER_DRAGON.get(), ScreenDragon::new);
         });
     }
 
@@ -148,7 +154,7 @@ public class DragonTongue
     public void onServerStarting(FMLServerStartingEvent event) {
         // do something when the server starts
 //        LOGGER.info("HELLO from server starting");
-        RegistryCommands.registerCommands(event.getServer().getFunctionManager().getCommandDispatcher());
+        RegistryCommands.registerCommands(event.getServer().getFunctions().getDispatcher());
     }
 
     @SubscribeEvent

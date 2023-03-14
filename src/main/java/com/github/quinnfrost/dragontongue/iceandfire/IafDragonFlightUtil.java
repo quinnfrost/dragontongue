@@ -3,35 +3,35 @@ package com.github.quinnfrost.dragontongue.iceandfire;
 import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.mojang.datafixers.util.Pair;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
-import net.minecraft.world.gen.Heightmap;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.Heightmap;
 
 import javax.annotation.Nullable;
 
 // This class came from DragonUtils, with some modification
 public class IafDragonFlightUtil {
     public static int getPreferredFlightLevel(EntityDragonBase dragon) {
-        return (int) Math.ceil(dragon.getRenderSize() + dragon.getBoundingBox().getYSize());
+        return (int) Math.ceil(dragon.getRenderSize() + dragon.getBoundingBox().getYsize());
     }
     public static BlockPos getBlockInViewEscort(EntityDragonBase dragon) {
         int preferredFlightHeight = getPreferredFlightLevel(dragon);
 
         BlockPos escortPos = dragon.getEscortPosition();
-        BlockPos ground = dragon.world.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, escortPos);
+        BlockPos ground = dragon.level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, escortPos);
         int distFromGround = escortPos.getY() - ground.getY();
         for (int i = 0; i < 10; i++) {
-            BlockPos pos = new BlockPos(escortPos.getX() + dragon.getRNG().nextInt(IafConfig.dragonWanderFromHomeDistance) - IafConfig.dragonWanderFromHomeDistance / 2,
+            BlockPos pos = new BlockPos(escortPos.getX() + dragon.getRandom().nextInt(IafConfig.dragonWanderFromHomeDistance) - IafConfig.dragonWanderFromHomeDistance / 2,
                     (distFromGround > preferredFlightHeight
-                            ? escortPos.getY() + preferredFlightHeight - dragon.getRNG().nextInt(preferredFlightHeight / 2)
-                            : escortPos.getY() + preferredFlightHeight + dragon.getRNG().nextInt(preferredFlightHeight / 2)),
-                    (escortPos.getZ() + dragon.getRNG().nextInt(IafConfig.dragonWanderFromHomeDistance) - IafConfig.dragonWanderFromHomeDistance / 2));
-            if (dragon.getDistanceSquared(Vector3d.copyCentered(pos)) > 6 && !dragon.isTargetBlocked(Vector3d.copyCentered(pos))) {
+                            ? escortPos.getY() + preferredFlightHeight - dragon.getRandom().nextInt(preferredFlightHeight / 2)
+                            : escortPos.getY() + preferredFlightHeight + dragon.getRandom().nextInt(preferredFlightHeight / 2)),
+                    (escortPos.getZ() + dragon.getRandom().nextInt(IafConfig.dragonWanderFromHomeDistance) - IafConfig.dragonWanderFromHomeDistance / 2));
+            if (dragon.getDistanceSquared(Vec3.atCenterOf(pos)) > 6 && !dragon.isTargetBlocked(Vec3.atCenterOf(pos))) {
                 return pos;
             }
         }
@@ -42,12 +42,12 @@ public class IafDragonFlightUtil {
         // In water escort
         BlockPos inWaterEscortPos = dragon.getEscortPosition();
         // We don't need to get too close
-        if (MathHelper.abs(dragon.getPosition().getX() - inWaterEscortPos.getX()) < dragon.getBoundingBox().getAverageEdgeLength()
-                && MathHelper.abs(dragon.getPosition().getZ() - inWaterEscortPos.getZ()) < dragon.getBoundingBox().getAverageEdgeLength()) {
-            return dragon.getPosition();
+        if (Mth.abs(dragon.blockPosition().getX() - inWaterEscortPos.getX()) < dragon.getBoundingBox().getSize()
+                && Mth.abs(dragon.blockPosition().getZ() - inWaterEscortPos.getZ()) < dragon.getBoundingBox().getSize()) {
+            return dragon.blockPosition();
         }
         // Takes off if the escort position is no longer in water, mainly for using elytra to fly out of the water
-        if (inWaterEscortPos.getY() - dragon.getPosY() > 8 + dragon.getYNavSize() && !dragon.world.getFluidState(inWaterEscortPos.down()).isTagged(FluidTags.WATER)) {
+        if (inWaterEscortPos.getY() - dragon.getY() > 8 + dragon.getYNavSize() && !dragon.level.getFluidState(inWaterEscortPos.below()).is(FluidTags.WATER)) {
             dragon.setHovering(true);
         }
         // Swim directly to the escort position
@@ -55,18 +55,18 @@ public class IafDragonFlightUtil {
     }
 
     public static BlockPos getWaterBlockInView(EntityDragonBase dragon) {
-        float radius = 0.75F * (0.7F * dragon.getRenderSize() / 3) * -7 - dragon.getRNG().nextInt(dragon.getDragonStage() * 6);
-        float neg = dragon.getRNG().nextBoolean() ? 1 : -1;
-        float angle = (0.01745329251F * dragon.renderYawOffset) + 3.15F + (dragon.getRNG().nextFloat() * neg);
-        double extraX = radius * MathHelper.sin((float) (Math.PI + angle));
-        double extraZ = radius * MathHelper.cos(angle);
-        BlockPos radialPos = new BlockPos(dragon.getPosX() + extraX, 0, dragon.getPosZ() + extraZ);
-        BlockPos ground = dragon.world.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, radialPos);
-        int distFromGround = (int) dragon.getPosY() - ground.getY();
-        BlockPos newPos = radialPos.up(distFromGround > 16 ? (int) Math.min(IafConfig.maxDragonFlight, dragon.getPosY() + dragon.getRNG().nextInt(16) - 8) : (int) dragon.getPosY() + dragon.getRNG().nextInt(16) + 1);
+        float radius = 0.75F * (0.7F * dragon.getRenderSize() / 3) * -7 - dragon.getRandom().nextInt(dragon.getDragonStage() * 6);
+        float neg = dragon.getRandom().nextBoolean() ? 1 : -1;
+        float angle = (0.01745329251F * dragon.yBodyRot) + 3.15F + (dragon.getRandom().nextFloat() * neg);
+        double extraX = radius * Mth.sin((float) (Math.PI + angle));
+        double extraZ = radius * Mth.cos(angle);
+        BlockPos radialPos = new BlockPos(dragon.getX() + extraX, 0, dragon.getZ() + extraZ);
+        BlockPos ground = dragon.level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, radialPos);
+        int distFromGround = (int) dragon.getY() - ground.getY();
+        BlockPos newPos = radialPos.above(distFromGround > 16 ? (int) Math.min(IafConfig.maxDragonFlight, dragon.getY() + dragon.getRandom().nextInt(16) - 8) : (int) dragon.getY() + dragon.getRandom().nextInt(16) + 1);
         BlockPos pos = dragon.doesWantToLand() ? ground : newPos;
-        BlockPos surface = dragon.world.getFluidState(newPos.down(2)).isTagged(FluidTags.WATER) ? newPos.down(dragon.getRNG().nextInt(10) + 1) : newPos;
-        if (dragon.getDistanceSquared(Vector3d.copyCentered(surface)) > 6 && dragon.world.getFluidState(surface).isTagged(FluidTags.WATER)) {
+        BlockPos surface = dragon.level.getFluidState(newPos.below(2)).is(FluidTags.WATER) ? newPos.below(dragon.getRandom().nextInt(10) + 1) : newPos;
+        if (dragon.getDistanceSquared(Vec3.atCenterOf(surface)) > 6 && dragon.level.getFluidState(surface).is(FluidTags.WATER)) {
             return surface;
         }
         return null;
@@ -77,78 +77,78 @@ public class IafDragonFlightUtil {
         int preferredFlightHeight = getPreferredFlightLevel(dragon);
 
         float radius = 12 * (0.7F * dragon.getRenderSize() / 3);
-        float neg = dragon.getRNG().nextBoolean() ? 1 : -1;
-        float renderYawOffset = dragon.renderYawOffset;
+        float neg = dragon.getRandom().nextBoolean() ? 1 : -1;
+        float renderYawOffset = dragon.yBodyRot;
         // Wander around roost
         if (dragon.hasHomePosition && dragon.homePos != null) {
-            BlockPos dragonPos = dragon.getPosition();
-            BlockPos ground = dragon.world.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, dragonPos);
-            int distFromGround = (int) dragon.getPosY() - ground.getY();
+            BlockPos dragonPos = dragon.blockPosition();
+            BlockPos ground = dragon.level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, dragonPos);
+            int distFromGround = (int) dragon.getY() - ground.getY();
             for (int i = 0; i < 10; i++) {
                 BlockPos homePos = dragon.homePos.getPosition();
                 // Get a random position
                 BlockPos pos = new BlockPos(
-                        homePos.getX() + dragon.getRNG().nextInt(IafConfig.dragonWanderFromHomeDistance * 2) - IafConfig.dragonWanderFromHomeDistance,
+                        homePos.getX() + dragon.getRandom().nextInt(IafConfig.dragonWanderFromHomeDistance * 2) - IafConfig.dragonWanderFromHomeDistance,
                         (distFromGround > preferredFlightHeight
-                                ? (int) Math.min(IafConfig.maxDragonFlight, dragon.getPosY() + dragon.getRNG().nextInt(preferredFlightHeight) - preferredFlightHeight * 2f / 3f)
-                                : (int) dragon.getPosY() + dragon.getRNG().nextInt(preferredFlightHeight) + 1),
-                        (homePos.getZ() + dragon.getRNG().nextInt(IafConfig.dragonWanderFromHomeDistance * 2) - IafConfig.dragonWanderFromHomeDistance));
-                if (dragon.getDistanceSquared(Vector3d.copyCentered(pos)) > 6 && !dragon.isTargetBlocked(Vector3d.copyCentered(pos))) {
+                                ? (int) Math.min(IafConfig.maxDragonFlight, dragon.getY() + dragon.getRandom().nextInt(preferredFlightHeight) - preferredFlightHeight * 2f / 3f)
+                                : (int) dragon.getY() + dragon.getRandom().nextInt(preferredFlightHeight) + 1),
+                        (homePos.getZ() + dragon.getRandom().nextInt(IafConfig.dragonWanderFromHomeDistance * 2) - IafConfig.dragonWanderFromHomeDistance));
+                if (dragon.getDistanceSquared(Vec3.atCenterOf(pos)) > 6 && !dragon.isTargetBlocked(Vec3.atCenterOf(pos))) {
                     return pos;
                 }
             }
         }
         // Wander for homeless
-        float angle = (0.01745329251F * renderYawOffset) + 3.15F + (dragon.getRNG().nextFloat() * neg);
-        double extraX = radius * MathHelper.sin((float) (Math.PI + angle));
-        double extraZ = radius * MathHelper.cos(angle);
-        BlockPos radialPos = new BlockPos(dragon.getPosX() + extraX, 0, dragon.getPosZ() + extraZ);
-        BlockPos ground = dragon.world.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, radialPos);
-        int distFromGround = (int) dragon.getPosY() - ground.getY();
-        BlockPos newPos = radialPos.up(distFromGround > preferredFlightHeight
-                ? (int) Math.min(IafConfig.maxDragonFlight, dragon.getPosY() + dragon.getRNG().nextInt(preferredFlightHeight) - preferredFlightHeight * 2f / 3f)
-                : (int) dragon.getPosY() + dragon.getRNG().nextInt(preferredFlightHeight) + 1);
+        float angle = (0.01745329251F * renderYawOffset) + 3.15F + (dragon.getRandom().nextFloat() * neg);
+        double extraX = radius * Mth.sin((float) (Math.PI + angle));
+        double extraZ = radius * Mth.cos(angle);
+        BlockPos radialPos = new BlockPos(dragon.getX() + extraX, 0, dragon.getZ() + extraZ);
+        BlockPos ground = dragon.level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, radialPos);
+        int distFromGround = (int) dragon.getY() - ground.getY();
+        BlockPos newPos = radialPos.above(distFromGround > preferredFlightHeight
+                ? (int) Math.min(IafConfig.maxDragonFlight, dragon.getY() + dragon.getRandom().nextInt(preferredFlightHeight) - preferredFlightHeight * 2f / 3f)
+                : (int) dragon.getY() + dragon.getRandom().nextInt(preferredFlightHeight) + 1);
         BlockPos pos = dragon.doesWantToLand() ? ground : newPos;
-        if (dragon.getDistanceSquared(Vector3d.copyCentered(newPos)) > 6 && !dragon.isTargetBlocked(Vector3d.copyCentered(newPos))) {
+        if (dragon.getDistanceSquared(Vec3.atCenterOf(newPos)) > 6 && !dragon.isTargetBlocked(Vec3.atCenterOf(newPos))) {
             return pos;
         }
         return null;
     }
 
-    public static BlockPos getBlockUp(World world, Heightmap.Type heightmapType, BlockPos blockPos) {
-        while (!heightmapType.getHeightLimitPredicate().test(world.getBlockState(blockPos)) && blockPos.getY() < world.getHeight()) {
-            blockPos = blockPos.up();
+    public static BlockPos getBlockUp(Level world, Heightmap.Types heightmapType, BlockPos blockPos) {
+        while (!heightmapType.isOpaque().test(world.getBlockState(blockPos)) && blockPos.getY() < world.getMaxBuildHeight()) {
+            blockPos = blockPos.above();
         }
         return blockPos;
     }
 
-    public static BlockPos getBlockUnder(World world, Heightmap.Type heightmapType, BlockPos blockPos) {
-        while (!heightmapType.getHeightLimitPredicate().test(world.getBlockState(blockPos)) && blockPos.getY() > 0) {
-            blockPos = blockPos.down();
+    public static BlockPos getBlockUnder(Level world, Heightmap.Types heightmapType, BlockPos blockPos) {
+        while (!heightmapType.isOpaque().test(world.getBlockState(blockPos)) && blockPos.getY() > 0) {
+            blockPos = blockPos.below();
         }
         return blockPos;
     }
 
     // Return the block up to match the World#getHeight
-    public static BlockPos getGround(World world, BlockPos blockPos) {
-        return getBlockUnder(world, Heightmap.Type.MOTION_BLOCKING, blockPos).up();
+    public static BlockPos getGround(Level world, BlockPos blockPos) {
+        return getBlockUnder(world, Heightmap.Types.MOTION_BLOCKING, blockPos).above();
     }
     public static BlockPos getGround(LivingEntity entityIn) {
-        return getBlockUnder(entityIn.world, Heightmap.Type.MOTION_BLOCKING, entityIn.getPosition()).up();
+        return getBlockUnder(entityIn.level, Heightmap.Types.MOTION_BLOCKING, entityIn.blockPosition()).above();
     }
 
-    public static BlockPos getHighestBlock(World worldIn, BlockPos positionIn) {
-        return worldIn.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, positionIn);
+    public static BlockPos getHighestBlock(Level worldIn, BlockPos positionIn) {
+        return worldIn.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, positionIn);
     }
 
-    public static int getTerrainHeight(World worldIn, BlockPos positionIn) {
+    public static int getTerrainHeight(Level worldIn, BlockPos positionIn) {
         return getHighestBlock(worldIn, positionIn).getY();
     }
     public static int getTerrainHeight(LivingEntity entityIn) {
-        return getHighestBlock(entityIn.world, entityIn.getPosition()).getY();
+        return getHighestBlock(entityIn.level, entityIn.blockPosition()).getY();
     }
 
-    public static Pair<BlockPos, BlockPos> getTerrainFeatureInRadius(World worldIn, BlockPos positionIn, int radius) {
+    public static Pair<BlockPos, BlockPos> getTerrainFeatureInRadius(Level worldIn, BlockPos positionIn, int radius) {
         BlockPos areaTerrainHighest = getHighestBlock(worldIn, positionIn);
         BlockPos areaTerrainLowest = getHighestBlock(worldIn, positionIn);
         for (int i = positionIn.getX() - radius; i <= positionIn.getX() + radius; i++) {
@@ -169,22 +169,22 @@ public class IafDragonFlightUtil {
         return null;
     }
     @Nullable
-    public static BlockPos getSkyPosOnPath(World worldIn, Vector3d startIn, Vector3d direction, float maxLength, int radius) {
-        Vector3d directionXZ = new Vector3d(direction.x, 0, direction.z).normalize();
+    public static BlockPos getSkyPosOnPath(Level worldIn, Vec3 startIn, Vec3 direction, float maxLength, int radius) {
+        Vec3 directionXZ = new Vec3(direction.x, 0, direction.z).normalize();
 
         for (int i = 0; i < maxLength; i++) {
             BlockPos currentBlockpos = new BlockPos(getDirectionOffset(startIn, directionXZ, i));
             if (canAreaSeeSky(worldIn, currentBlockpos, radius)) {
-                return new BlockPos(currentBlockpos.getX(), startIn.getY(), currentBlockpos.getZ());
+                return new BlockPos(currentBlockpos.getX(), startIn.y(), currentBlockpos.getZ());
             }
         }
         return null;
     }
 
-    public static boolean canAreaSeeSky(World worldIn, BlockPos blockPosIn, int radius) {
+    public static boolean canAreaSeeSky(Level worldIn, BlockPos blockPosIn, int radius) {
         for (int i = blockPosIn.getX() - radius; i <= blockPosIn.getX() + radius; i++) {
             for (int j = blockPosIn.getZ() - radius; j <= blockPosIn.getZ() + radius; j++) {
-                if (!worldIn.canBlockSeeSky(new BlockPos(i, blockPosIn.getY(), j))) {
+                if (!worldIn.canSeeSkyFromBelowWater(new BlockPos(i, blockPosIn.getY(), j))) {
                     return false;
                 }
             }
@@ -192,10 +192,10 @@ public class IafDragonFlightUtil {
         return true;
     }
 
-    public static boolean isAreaPassable(World worldIn, BlockPos blockPosIn, int radius) {
+    public static boolean isAreaPassable(Level worldIn, BlockPos blockPosIn, int radius) {
         for (int i = blockPosIn.getX() - radius; i <= blockPosIn.getX() + radius; i++) {
             for (int j = blockPosIn.getZ() - radius; j <= blockPosIn.getZ() + radius; j++) {
-                if (Heightmap.Type.MOTION_BLOCKING.getHeightLimitPredicate().test(worldIn.getBlockState(blockPosIn))) {
+                if (Heightmap.Types.MOTION_BLOCKING.isOpaque().test(worldIn.getBlockState(blockPosIn))) {
                     return false;
                 }
             }
@@ -203,24 +203,24 @@ public class IafDragonFlightUtil {
         return true;
     }
 
-    public static BlockPos getHighestPosOnPath(EntityDragonBase dragonIn, Vector3d targetPos) {
-        return getHighestPosOnPath(dragonIn.world, dragonIn.getHeadPosition(), targetPos, dragonIn.getWidth());
+    public static BlockPos getHighestPosOnPath(EntityDragonBase dragonIn, Vec3 targetPos) {
+        return getHighestPosOnPath(dragonIn.level, dragonIn.getHeadPosition(), targetPos, dragonIn.getBbWidth());
     }
 
-    public static BlockPos getHighestPosOnPath(World worldIn, Vector3d startIn, Vector3d endIn, float width) {
+    public static BlockPos getHighestPosOnPath(Level worldIn, Vec3 startIn, Vec3 endIn, float width) {
         double length = endIn.distanceTo(startIn);
-        Vector3d direction = endIn.subtract(startIn).normalize();
-        Vector3d directionXZ = new Vector3d(direction.x, 0, direction.z).normalize();
+        Vec3 direction = endIn.subtract(startIn).normalize();
+        Vec3 directionXZ = new Vec3(direction.x, 0, direction.z).normalize();
 
-        Vector3d central = startIn;
-        Vector3d leftWing = central.add(directionXZ.rotateYaw(90 * ((float) Math.PI / 180F)).scale(width));
-        leftWing = worldIn.isAirBlock(new BlockPos(leftWing)) || width == 0 ? leftWing : null;
-        Vector3d rightWing = central.add(directionXZ.rotateYaw(-90 * ((float) Math.PI / 180F)).scale(width));
-        rightWing = worldIn.isAirBlock(new BlockPos(rightWing)) || width == 0 ? rightWing : null;
+        Vec3 central = startIn;
+        Vec3 leftWing = central.add(directionXZ.yRot(90 * ((float) Math.PI / 180F)).scale(width));
+        leftWing = worldIn.isEmptyBlock(new BlockPos(leftWing)) || width == 0 ? leftWing : null;
+        Vec3 rightWing = central.add(directionXZ.yRot(-90 * ((float) Math.PI / 180F)).scale(width));
+        rightWing = worldIn.isEmptyBlock(new BlockPos(rightWing)) || width == 0 ? rightWing : null;
 
-        Vector3d centralTarget = endIn;
-        Vector3d leftWingTarget = centralTarget.add(directionXZ.rotateYaw(90 * ((float) Math.PI / 180F)).scale(width));
-        Vector3d rightWingTarget = centralTarget.add(directionXZ.rotateYaw(-90 * ((float) Math.PI / 180F)).scale(width));
+        Vec3 centralTarget = endIn;
+        Vec3 leftWingTarget = centralTarget.add(directionXZ.yRot(90 * ((float) Math.PI / 180F)).scale(width));
+        Vec3 rightWingTarget = centralTarget.add(directionXZ.yRot(-90 * ((float) Math.PI / 180F)).scale(width));
 
         BlockPos highestBlock = new BlockPos(startIn.x, 0, startIn.z);
         int highestDistance = 0;
@@ -255,10 +255,10 @@ public class IafDragonFlightUtil {
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
 
-        return dragon.getPositionVec().y - getGround(dragon.world, dragon.getPosition()).getY();
+        return dragon.position().y - getGround(dragon.level, dragon.blockPosition()).getY();
     }
 
-    public static Vector3d getDirectionOffset(Vector3d startIn, Vector3d direction, float length) {
+    public static Vec3 getDirectionOffset(Vec3 startIn, Vec3 direction, float length) {
         return startIn.add(direction.normalize().scale(length));
     }
 

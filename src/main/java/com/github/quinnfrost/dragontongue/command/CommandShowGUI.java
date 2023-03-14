@@ -8,50 +8,50 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.command.arguments.EntityArgument;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 
 import javax.annotation.Nullable;
 
-public class CommandShowGUI implements Command<CommandSource> {
+public class CommandShowGUI implements Command<CommandSourceStack> {
     private static final CommandShowGUI CMD = new CommandShowGUI();
-    public static ArgumentBuilder<CommandSource, ?> register(CommandDispatcher<CommandSource> dispatcher) {
+    public static ArgumentBuilder<CommandSourceStack, ?> register(CommandDispatcher<CommandSourceStack> dispatcher) {
         return Commands.literal("showgui")
                 .requires(commandSource ->
-                        commandSource.hasPermissionLevel(0)
+                        commandSource.hasPermission(0)
                 )
                 .then(Commands.argument("target", EntityArgument.entity()))
                 .executes(CMD);
     }
     @Override
-    public int run(CommandContext<CommandSource> context) throws CommandSyntaxException {
-        context.getSource().sendFeedback(
-                new StringTextComponent("Command showGUI called"),
+    public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        context.getSource().sendSuccess(
+                new TextComponent("Command showGUI called"),
                 false
         );
 
         try {
             Entity entity = context.getArgument("target", Entity.class);
             if (IafHelperClass.isDragon(entity)) {
-                ServerPlayerEntity serverPlayerEntity = context.getSource().asPlayer();
-                serverPlayerEntity.openContainer(new INamedContainerProvider() {
+                ServerPlayer serverPlayerEntity = context.getSource().getPlayerOrException();
+                serverPlayerEntity.openMenu(new MenuProvider() {
                                                      @Override
-                                                     public ITextComponent getDisplayName() {
+                                                     public Component getDisplayName() {
                                                          return serverPlayerEntity.getDisplayName();
                                                      }
 
                                                      @Nullable
                                                      @Override
-                                                     public Container createMenu(int p_createMenu_1_, PlayerInventory p_createMenu_2_, PlayerEntity p_createMenu_3_) {
+                                                     public AbstractContainerMenu createMenu(int p_createMenu_1_, Inventory p_createMenu_2_, Player p_createMenu_3_) {
                                                          return new ContainerDragon(
                                                                  p_createMenu_1_,
                                                                  p_createMenu_2_,
@@ -63,8 +63,8 @@ public class CommandShowGUI implements Command<CommandSource> {
 
                 );
             } else {
-                context.getSource().sendFeedback(
-                        new StringTextComponent("None dragon entity selected"),
+                context.getSource().sendSuccess(
+                        new TextComponent("None dragon entity selected"),
                         false
                 );
                 return 1;

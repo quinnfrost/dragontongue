@@ -6,7 +6,7 @@ package com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms;
 import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjobs.AbstractPathJob;
-import net.minecraft.util.concurrent.ThreadTaskExecutor;
+import net.minecraft.util.thread.BlockableEventLoop;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.LogicalSidedProvider;
 
@@ -87,9 +87,9 @@ public final class Pathfinding {
 
         @Override
         public Thread newThread(final Runnable runnable) {
-            ThreadTaskExecutor<?> workqueue = LogicalSidedProvider.WORKQUEUE.get(LogicalSide.SERVER);
+            BlockableEventLoop<?> workqueue = LogicalSidedProvider.WORKQUEUE.get(LogicalSide.SERVER);
             ClassLoader classLoader;
-            if (workqueue.isOnExecutionThread()) {
+            if (workqueue.isSameThread()) {
                 classLoader = Thread.currentThread().getContextClassLoader();
             } else {
                 classLoader = CompletableFuture.supplyAsync(() -> Thread.currentThread().getContextClassLoader(), workqueue).join();

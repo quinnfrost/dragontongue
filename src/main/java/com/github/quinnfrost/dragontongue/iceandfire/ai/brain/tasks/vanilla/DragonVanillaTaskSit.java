@@ -2,11 +2,11 @@ package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks.vanilla;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.google.common.collect.ImmutableMap;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.server.level.ServerLevel;
 
-public class DragonVanillaTaskSit extends Task<EntityDragonBase> {
+public class DragonVanillaTaskSit extends Behavior<EntityDragonBase> {
     public DragonVanillaTaskSit(int durationMinIn, int durationMaxIn) {
         super(ImmutableMap.of(
 
@@ -14,10 +14,10 @@ public class DragonVanillaTaskSit extends Task<EntityDragonBase> {
     }
 
     @Override
-    protected boolean shouldExecute(ServerWorld worldIn, EntityDragonBase owner) {
-        if (!owner.isTamed()) {
+    protected boolean checkExtraStartConditions(ServerLevel worldIn, EntityDragonBase owner) {
+        if (!owner.isTame()) {
             return false;
-        } else if (owner.isInWaterOrBubbleColumn()) {
+        } else if (owner.isInWaterOrBubble()) {
             return false;
         } else if (!owner.isOnGround()) {
             return false;
@@ -26,24 +26,24 @@ public class DragonVanillaTaskSit extends Task<EntityDragonBase> {
             if (livingentity == null) {
                 return true;
             } else {
-                return owner.getDistanceSq(livingentity) < 144.0D && livingentity.getRevengeTarget() != null ? false : owner.isQueuedToSit();
+                return owner.distanceToSqr(livingentity) < 144.0D && livingentity.getLastHurtByMob() != null ? false : owner.isOrderedToSit();
             }
         }
     }
 
     @Override
-    protected boolean shouldContinueExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
-        return entityIn.isQueuedToSit();
+    protected boolean canStillUse(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+        return entityIn.isOrderedToSit();
     }
 
     @Override
-    protected void startExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
-        entityIn.getNavigator().clearPath();
-        entityIn.setQueuedToSit(true);
+    protected void start(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+        entityIn.getNavigation().stop();
+        entityIn.setInSittingPose(true);
     }
 
     @Override
-    protected void resetTask(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
-        entityIn.setQueuedToSit(false);
+    protected void stop(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+        entityIn.setInSittingPose(false);
     }
 }

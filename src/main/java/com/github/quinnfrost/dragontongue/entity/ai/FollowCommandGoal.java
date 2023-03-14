@@ -4,40 +4,40 @@ import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.goal.Goal;
 
 import java.util.EnumSet;
 
 public class FollowCommandGoal extends Goal {
-    MobEntity mobEntity;
+    Mob mobEntity;
     ICapabilityInfoHolder capabilityInfoHolder;
-    public FollowCommandGoal(MobEntity entity) {
+    public FollowCommandGoal(Mob entity) {
         this.mobEntity = entity;
         this.capabilityInfoHolder = entity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(entity));
-        this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE));
+        this.setFlags(EnumSet.of(Goal.Flag.MOVE));
     }
 
     @Override
-    public boolean shouldExecute() {
+    public boolean canUse() {
         return capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE
-                && mobEntity.getAttackTarget() == null;
+                && mobEntity.getTarget() == null;
     }
     @Override
-    public boolean shouldContinueExecuting() {
-        return shouldExecute();
+    public boolean canContinueToUse() {
+        return canUse();
     }
     @Override
-    public void startExecuting() {
+    public void start() {
 
     }
 
     @Override
     public void tick() {
         if (capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE
-                && mobEntity.getAttackTarget() == null) {
+                && mobEntity.getTarget() == null) {
             capabilityInfoHolder.getDestination().ifPresent(blockPos -> {
-                mobEntity.getNavigator().tryMoveToXYZ(
+                mobEntity.getNavigation().moveTo(
                         blockPos.getX(),
                         blockPos.getY(),
                         blockPos.getZ(),

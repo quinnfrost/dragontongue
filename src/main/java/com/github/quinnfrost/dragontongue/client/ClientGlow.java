@@ -4,10 +4,10 @@ import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.client.render.RenderNode;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
@@ -17,7 +17,7 @@ import java.util.function.Predicate;
 
 public class ClientGlow {
     public static Map<Integer, Integer> glowList;
-    public static World world = Minecraft.getInstance().world;
+    public static Level world = Minecraft.getInstance().level;
 
     static {
         glowList = new HashMap<>();
@@ -25,8 +25,8 @@ public class ClientGlow {
 
     public static void setGlowing(Entity entity, int timeInTick) {
         if (entity != null) {
-            world = entity.world;
-            glowList.put(entity.getEntityId(), timeInTick);
+            world = entity.level;
+            glowList.put(entity.getId(), timeInTick);
             entity.setGlowing(true);
         }
     }
@@ -37,8 +37,8 @@ public class ClientGlow {
             glowList.replaceAll((entityID, time) -> {
                 if (time > 0) {
                     return time - 1;
-                } else if (world.getEntityByID(entityID) != null) {
-                    world.getEntityByID(entityID).setGlowing(false);
+                } else if (world.getEntity(entityID) != null) {
+                    world.getEntity(entityID).setGlowing(false);
                 }
                 return 0;
             });
@@ -49,12 +49,12 @@ public class ClientGlow {
         if (excludeEntity == null) {
             excludeEntity = (Predicate<Entity>) notExclude -> true;
         }
-        List<Entity> entities = centralEntity.world.getEntitiesInAABBexcluding(centralEntity,
-                (new AxisAlignedBB(centralEntity.getPosX(), centralEntity.getPosY(), centralEntity.getPosZ(),
-                        centralEntity.getPosX() + 1.0d, centralEntity.getPosY() + 1.0d, centralEntity.getPosZ() + 1.0d)
-                        .grow(radius)),
+        List<Entity> entities = centralEntity.level.getEntities(centralEntity,
+                (new AABB(centralEntity.getX(), centralEntity.getY(), centralEntity.getZ(),
+                        centralEntity.getX() + 1.0d, centralEntity.getY() + 1.0d, centralEntity.getZ() + 1.0d)
+                        .inflate(radius)),
                 ((Predicate<Entity>) entityGet -> !entityGet.isSpectator()
-                        && entityGet.canBeCollidedWith()
+                        && entityGet.isPickable()
                         && (entityGet instanceof LivingEntity)
                         && util.isOwner((LivingEntity) entityGet, centralEntity))
                         .and(excludeEntity));

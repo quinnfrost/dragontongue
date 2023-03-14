@@ -23,22 +23,22 @@ import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.message.MessageClientDraw;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.Item;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.Item;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 
 import java.util.*;
 
 public class IafHelperClass {
-    public static void startIafPathDebug(PlayerEntity playerEntity, LivingEntity livingEntity) {
-        AbstractPathJob.trackingMap.put(playerEntity, livingEntity.getUniqueID());
+    public static void startIafPathDebug(Player playerEntity, LivingEntity livingEntity) {
+        AbstractPathJob.trackingMap.put(playerEntity, livingEntity.getUUID());
     }
 
     public static void stopIafPathDebug() {
@@ -83,10 +83,10 @@ public class IafHelperClass {
      * @param entity
      * @return
      */
-    public static BlockPos getReachTarget(MobEntity entity) {
+    public static BlockPos getReachTarget(Mob entity) {
         try {
-            if (entity.getNavigator() instanceof AdvancedPathNavigate) {
-                AdvancedPathNavigate navigate = (AdvancedPathNavigate) entity.getNavigator();
+            if (entity.getNavigation() instanceof AdvancedPathNavigate) {
+                AdvancedPathNavigate navigate = (AdvancedPathNavigate) entity.getNavigation();
                 // What is this?
                 if (navigate.getTargetPos() != null) {
                     return navigate.getTargetPos();
@@ -98,8 +98,8 @@ public class IafHelperClass {
                     return null;
                 }
 
-            } else if (entity.getNavigator().getTargetPos() != null) {
-                return entity.getNavigator().getTargetPos();
+            } else if (entity.getNavigation().getTargetPos() != null) {
+                return entity.getNavigation().getTargetPos();
             }
         } catch (Exception ignored) {
 
@@ -115,13 +115,13 @@ public class IafHelperClass {
             return new ArrayList<>();
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-        IafAdvancedDragonPathNavigator navigator = (IafAdvancedDragonPathNavigator) dragon.getNavigator();
+        IafAdvancedDragonPathNavigator navigator = (IafAdvancedDragonPathNavigator) dragon.getNavigation();
 
         ICapabilityInfoHolder capabilityInfoHolder = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
         BlockPos targetPos = getReachTarget(dragon);
 
         IafAdvancedDragonFlightManager flightManager = (IafAdvancedDragonFlightManager) dragon.flightManager;
-        Vector3d currentFlightTarget = dragon.flightManager.getFlightTarget();
+        Vec3 currentFlightTarget = dragon.flightManager.getFlightTarget();
 //        float distX = (float) (currentFlightTarget.x - dragon.getPosX());
 //        float distY = (float) (currentFlightTarget.y - dragon.getPosY());
 //        float distZ = (float) (currentFlightTarget.z - dragon.getPosZ());
@@ -135,14 +135,14 @@ public class IafHelperClass {
             reachDestString = "false";
         }
         String timeSinceLastPath = "";
-        if (navigator.noPath()) {
-            timeSinceLastPath = String.valueOf(dragon.world.getGameTime() - navigator.pathStartTime);
+        if (navigator.isDone()) {
+            timeSinceLastPath = String.valueOf(dragon.level.getGameTime() - navigator.pathStartTime);
         }
         String ownerAttackTime = "";
         String ownerTickExisted = "";
         if (dragon.getOwner() != null) {
-            ownerAttackTime = String.valueOf(dragon.getOwner().getLastAttackedEntityTime());
-            ownerTickExisted = String.valueOf(dragon.getOwner().ticksExisted);
+            ownerAttackTime = String.valueOf(dragon.getOwner().getLastHurtMobTimestamp());
+            ownerTickExisted = String.valueOf(dragon.getOwner().tickCount);
         }
 
         return Arrays.asList(
@@ -150,9 +150,9 @@ public class IafHelperClass {
 //                "HeadPos: " + EntityBehaviorDebugger.formatVector(dragon.getHeadPosition()),
 //                "AnimationTicks: " + dragon.getAnimationTick(),
                 "Pitch: " + String.format("%.4f", dragon.getDragonPitch()),
-                "Yaw: " + String.format("%.4f", dragon.rotationYaw),
-                "HorizontalCollide? " + dragon.collidedHorizontally,
-                "VerticalCollide? " + dragon.collidedVertically,
+                "Yaw: " + String.format("%.4f", dragon.yRot),
+                "HorizontalCollide? " + dragon.horizontalCollision,
+                "VerticalCollide? " + dragon.verticalCollision,
                 "Flying | Hovering? " + dragon.isFlying() + "|" + dragon.isHovering(),
 //                "PlaneDist: " + String.format("%.4f", (float) ((Math.abs(dragon.getMotion().x) + Math.abs(dragon.getMotion().z)) * 6F)),
 //                "NoPath? " + dragon.getNavigator().noPath(),
@@ -162,14 +162,14 @@ public class IafHelperClass {
 //                "Render size:" + dragon.getRenderSize() + String.format("(%.2f)", dragon.getRenderScale()),
                 "Terrain height:" +  String.format("%d (%d)", IafDragonFlightUtil.getTerrainHeight(dragon), IafDragonFlightUtil.getGround(dragon).getY()),
                 "Flight height:" + String.format("%.4f", IafDragonFlightUtil.getFlightHeight(dragon)),
-                "CanSeeSky? " + dragon.world.canBlockSeeSky(dragon.getPosition()),
+                "CanSeeSky? " + dragon.level.canSeeSkyFromBelowWater(dragon.blockPosition()),
                 "Navigator target:" + (targetPos != null ? targetPos : ""),
                 "TimeSince:" + timeSinceLastPath,
-                "Speed:" + ((IafAdvancedDragonPathNavigator) dragon.getNavigator()).getSpeedFactor(),
-                "AIMoveSpeed:" + dragon.getAIMoveSpeed(),
-                "FlightCurrent:" + (flightManager.currentFlightTarget == null ? "" : flightManager.currentFlightTarget + "(" + util.getDistance(flightManager.currentFlightTarget, dragon.getPositionVec()) + ")"),
-                "FlightFinal:" + (flightManager.finalFlightTarget == null ? "" : flightManager.finalFlightTarget + "(" + util.getDistance(flightManager.finalFlightTarget, dragon.getPositionVec()) + ")"),
-                "FlightXZDistance:" + util.getDistanceXZ(dragon.getPositionVec(), flightManager.finalFlightTarget),
+                "Speed:" + ((IafAdvancedDragonPathNavigator) dragon.getNavigation()).getSpeedFactor(),
+                "AIMoveSpeed:" + dragon.getSpeed(),
+                "FlightCurrent:" + (flightManager.currentFlightTarget == null ? "" : flightManager.currentFlightTarget + "(" + util.getDistance(flightManager.currentFlightTarget, dragon.position()) + ")"),
+                "FlightFinal:" + (flightManager.finalFlightTarget == null ? "" : flightManager.finalFlightTarget + "(" + util.getDistance(flightManager.finalFlightTarget, dragon.position()) + ")"),
+                "FlightXZDistance:" + util.getDistanceXZ(dragon.position(), flightManager.finalFlightTarget),
                 "FlightLevel:" + flightManager.flightLevel,
                 "FlightPhase:" + flightManager.flightPhase,
                 "TargetBlocked? " + dragon.isTargetBlocked(flightManager.finalFlightTarget),
@@ -203,11 +203,11 @@ public class IafHelperClass {
      * @param playerEntity
      * @return Empty string returned if not a valid set. For scale set, "ice","fire","lightning". For steel set, "dragonsteel_ice", "dragonsteel_fire", "dragonsteel_lightning".
      */
-    public static String isFullSetOf(PlayerEntity playerEntity) {
-        Item headItem = playerEntity.getItemStackFromSlot(EquipmentSlotType.HEAD).getItem();
-        Item chestItem = playerEntity.getItemStackFromSlot(EquipmentSlotType.CHEST).getItem();
-        Item legItem = playerEntity.getItemStackFromSlot(EquipmentSlotType.LEGS).getItem();
-        Item feetItem = playerEntity.getItemStackFromSlot(EquipmentSlotType.FEET).getItem();
+    public static String isFullSetOf(Player playerEntity) {
+        Item headItem = playerEntity.getItemBySlot(EquipmentSlot.HEAD).getItem();
+        Item chestItem = playerEntity.getItemBySlot(EquipmentSlot.CHEST).getItem();
+        Item legItem = playerEntity.getItemBySlot(EquipmentSlot.LEGS).getItem();
+        Item feetItem = playerEntity.getItemBySlot(EquipmentSlot.FEET).getItem();
 
         if (!(headItem instanceof ItemScaleArmor) && !(headItem instanceof ItemDragonsteelArmor)) {
             return "";
@@ -239,12 +239,12 @@ public class IafHelperClass {
             ItemDragonsteelArmor legSteelArmor = (ItemDragonsteelArmor) legItem;
             ItemDragonsteelArmor feetSteelArmor = (ItemDragonsteelArmor) feetItem;
 
-            if (headSteelArmor.getArmorMaterial() == chestSteelArmor.getArmorMaterial() && chestSteelArmor.getArmorMaterial() == legSteelArmor.getArmorMaterial() && legSteelArmor.getArmorMaterial() == feetSteelArmor.getArmorMaterial()) {
-                if (headSteelArmor.getArmorMaterial() == IafItemRegistry.DRAGONSTEEL_ICE_ARMOR_MATERIAL) {
+            if (headSteelArmor.getMaterial() == chestSteelArmor.getMaterial() && chestSteelArmor.getMaterial() == legSteelArmor.getMaterial() && legSteelArmor.getMaterial() == feetSteelArmor.getMaterial()) {
+                if (headSteelArmor.getMaterial() == IafItemRegistry.DRAGONSTEEL_ICE_ARMOR_MATERIAL) {
                     return "dragonsteel_ice";
-                } else if (headSteelArmor.getArmorMaterial() == IafItemRegistry.DRAGONSTEEL_FIRE_ARMOR_MATERIAL) {
+                } else if (headSteelArmor.getMaterial() == IafItemRegistry.DRAGONSTEEL_FIRE_ARMOR_MATERIAL) {
                     return "dragonsteel_fire";
-                } else if (headSteelArmor.getArmorMaterial() == IafItemRegistry.DRAGONSTEEL_LIGHTNING_ARMOR_MATERIAL) {
+                } else if (headSteelArmor.getMaterial() == IafItemRegistry.DRAGONSTEEL_LIGHTNING_ARMOR_MATERIAL) {
                     return "dragonsteel_lightning";
                 }
 
@@ -258,8 +258,8 @@ public class IafHelperClass {
         if (!DragonTongue.isIafPresent) {
             return false;
         }
-        if (entityIn instanceof PlayerEntity) {
-            return isFullSetOf((PlayerEntity) entityIn).contains("fire") || isFullSetOf((PlayerEntity) entityIn).contains("dragonsteel");
+        if (entityIn instanceof Player) {
+            return isFullSetOf((Player) entityIn).contains("fire") || isFullSetOf((Player) entityIn).contains("dragonsteel");
         }
         if (entityIn instanceof EntityFireDragon) {
             return true;
@@ -267,7 +267,7 @@ public class IafHelperClass {
         return false;
     }
 
-    public static float getXZDistanceSq(Vector3d startIn, Vector3d endIn) {
+    public static float getXZDistanceSq(Vec3 startIn, Vec3 endIn) {
         float dx = (float) (startIn.x - endIn.x);
         float dz = (float) (startIn.z - endIn.z);
         return dx * dx + dz * dz;

@@ -3,14 +3,14 @@ package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks.vanilla;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.util.IFlyingMount;
 import com.google.common.collect.ImmutableMap;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.server.level.ServerLevel;
 
-public class DragonVanillaTaskRide<T extends MobEntity & IFlyingMount> extends Task<EntityDragonBase> {
-    private PlayerEntity player;
+public class DragonVanillaTaskRide<T extends Mob & IFlyingMount> extends Behavior<EntityDragonBase> {
+    private Player player;
     public DragonVanillaTaskRide(int durationMinIn, int durationMaxIn) {
         super(ImmutableMap.of(
 
@@ -18,42 +18,42 @@ public class DragonVanillaTaskRide<T extends MobEntity & IFlyingMount> extends T
     }
 
     @Override
-    protected boolean shouldExecute(ServerWorld worldIn, EntityDragonBase owner) {
+    protected boolean checkExtraStartConditions(ServerLevel worldIn, EntityDragonBase owner) {
         player = owner.getRidingPlayer();
 
         return player != null;
     }
 
     @Override
-    protected boolean shouldContinueExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
-        return shouldExecute(worldIn, entityIn);
+    protected boolean canStillUse(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+        return checkExtraStartConditions(worldIn, entityIn);
     }
 
     @Override
-    protected void startExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
-        entityIn.getNavigator().clearPath();
+    protected void start(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+        entityIn.getNavigation().stop();
     }
 
     @Override
-    protected void updateTask(ServerWorld worldIn, EntityDragonBase owner, long gameTime) {
-        owner.getNavigator().clearPath();
-        owner.setAttackTarget(null);
-        double x = owner.getPosX();
-        double y = owner.getPosY();
-        double z = owner.getPosZ();
+    protected void tick(ServerLevel worldIn, EntityDragonBase owner, long gameTime) {
+        owner.getNavigation().stop();
+        owner.setTarget(null);
+        double x = owner.getX();
+        double y = owner.getY();
+        double z = owner.getZ();
         double speed = 1.8F * owner.getFlightSpeedModifier();
-        Vector3d lookVec = player.getLookVec();
-        if (player.moveForward < 0) {
-            lookVec = lookVec.rotateYaw((float) Math.PI);
-        } else if (player.moveStrafing > 0) {
-            lookVec = lookVec.rotateYaw((float) Math.PI * 0.5f);
-        } else if (player.moveStrafing < 0) {
-            lookVec = lookVec.rotateYaw((float) Math.PI * -0.5f);
+        Vec3 lookVec = player.getLookAngle();
+        if (player.zza < 0) {
+            lookVec = lookVec.yRot((float) Math.PI);
+        } else if (player.xxa > 0) {
+            lookVec = lookVec.yRot((float) Math.PI * 0.5f);
+        } else if (player.xxa < 0) {
+            lookVec = lookVec.yRot((float) Math.PI * -0.5f);
         }
-        if (Math.abs(player.moveStrafing) > 0.0) {
+        if (Math.abs(player.xxa) > 0.0) {
             speed *= 0.25D;
         }
-        if (player.moveForward < 0.0) {
+        if (player.zza < 0.0) {
             speed *= 0.15D;
         }
         if (owner.isGoingUp()) {
@@ -61,7 +61,7 @@ public class DragonVanillaTaskRide<T extends MobEntity & IFlyingMount> extends T
         } else if (owner.isGoingDown()) {
             lookVec = lookVec.add(0, -1, 0);
         }
-        if (player.moveStrafing != 0 || player.moveForward != 0 || (owner.fliesLikeElytra())) {
+        if (player.xxa != 0 || player.zza != 0 || (owner.fliesLikeElytra())) {
             x += lookVec.x * 10;
             z += lookVec.z * 10;
         }
@@ -71,7 +71,7 @@ public class DragonVanillaTaskRide<T extends MobEntity & IFlyingMount> extends T
         if (owner.fliesLikeElytra() && lookVec.y == -1 || !(owner.isFlying() || hovering(owner)) && !owner.isOnGround()) {
             y -= 1;
         }
-        owner.getMoveHelper().setMoveTo(x, y, z, speed);
+        owner.getMoveControl().setWantedPosition(x, y, z, speed);
 
     }
     private boolean hovering(EntityDragonBase entityIn) {

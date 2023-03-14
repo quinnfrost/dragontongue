@@ -23,38 +23,38 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.serialization.Dynamic;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.entity.*;
-import net.minecraft.entity.ai.EntitySenses;
-import net.minecraft.entity.ai.attributes.AttributeModifier;
-import net.minecraft.entity.ai.attributes.AttributeModifierMap;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.schedule.Activity;
-import net.minecraft.entity.ai.brain.sensor.Sensor;
-import net.minecraft.entity.ai.brain.sensor.SensorType;
-import net.minecraft.entity.ai.goal.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.sensing.Sensing;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.schedule.Activity;
+import net.minecraft.world.entity.ai.sensing.Sensor;
+import net.minecraft.world.entity.ai.sensing.SensorType;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.entity.ai.goal.OwnerHurtByTargetGoal;
 import net.minecraft.entity.ai.goal.OwnerHurtTargetGoal;
-import net.minecraft.entity.ai.goal.SitGoal;
-import net.minecraft.entity.passive.TameableEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTDynamicOps;
-import net.minecraft.pathfinding.PathNavigator;
-import net.minecraft.pathfinding.PathNodeType;
-import net.minecraft.potion.EffectInstance;
-import net.minecraft.potion.Effects;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.GlobalPos;
+import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.common.MinecraftForge;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -68,9 +68,15 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.UUID;
 
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MoverType;
+
 @Mixin(EntityDragonBase.class)
-public abstract class MixinEntityDragonBase extends TameableEntity {
-    protected MixinEntityDragonBase(EntityType<? extends TameableEntity> type, World worldIn) {
+public abstract class MixinEntityDragonBase extends TamableAnimal {
+    protected MixinEntityDragonBase(EntityType<? extends TamableAnimal> type, Level worldIn) {
         super(type, worldIn);
     }
 
@@ -141,10 +147,10 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     protected abstract PathingStuckHandler createStuckHandler();
 
     @Shadow
-    protected abstract PathNavigator createNavigator(World worldIn, AdvancedPathNavigate.MovementType type);
+    protected abstract PathNavigation createNavigator(Level worldIn, AdvancedPathNavigate.MovementType type);
 
     @Shadow
-    protected abstract PathNavigator createNavigator(World worldIn, AdvancedPathNavigate.MovementType type, PathingStuckHandler stuckHandler);
+    protected abstract PathNavigation createNavigator(Level worldIn, AdvancedPathNavigate.MovementType type, PathingStuckHandler stuckHandler);
 
     @Shadow
     public abstract Animation getAnimation();
@@ -212,7 +218,7 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     public abstract void breakBlock();
 
     @Shadow
-    public abstract BlockPos getHomePosition();
+    public abstract BlockPos getRestrictCenter();
 
     @Shadow
     public abstract int getAgeInDays();
@@ -239,8 +245,8 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
             MemoryModuleType.WALK_TARGET,
             MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
 
-            MemoryModuleType.MOBS,
-            MemoryModuleType.VISIBLE_MOBS,
+            MemoryModuleType.LIVING_ENTITIES,
+            MemoryModuleType.VISIBLE_LIVING_ENTITIES,
             MemoryModuleType.NEAREST_VISIBLE_PLAYER,
             MemoryModuleType.NEAREST_VISIBLE_TARGETABLE_PLAYER,
 
@@ -260,49 +266,49 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
             method = "<init>",
             at = @At(value = "RETURN")
     )
-    public void $EntityDragonBase(EntityType t, World world, DragonType type, double minimumDamage, double maximumDamage, double minimumHealth, double maximumHealth, double minimumSpeed, double maximumSpeed, CallbackInfo ci) {
+    public void $EntityDragonBase(EntityType t, Level world, DragonType type, double minimumDamage, double maximumDamage, double minimumHealth, double maximumHealth, double minimumSpeed, double maximumSpeed, CallbackInfo ci) {
         this.minimumSpeed = 0.18d;
         this.maximumSpeed = 0.45d;
         this.minimumArmor = 1D;
         this.maximumArmor = 20D;
 
-        this.senses = new EntitySenses(this);
+        this.sensing = new Sensing(this);
 
-        NBTDynamicOps nbtdynamicops = NBTDynamicOps.INSTANCE;
-        this.brain = this.createBrain(new Dynamic<>(nbtdynamicops, nbtdynamicops.createMap(ImmutableMap.of(nbtdynamicops.createString("memories"), nbtdynamicops.emptyMap()))));
+        NbtOps nbtdynamicops = NbtOps.INSTANCE;
+        this.brain = this.makeBrain(new Dynamic<>(nbtdynamicops, nbtdynamicops.createMap(ImmutableMap.of(nbtdynamicops.createString("memories"), nbtdynamicops.emptyMap()))));
 
         this.flightManager = new IafAdvancedDragonFlightManager((EntityDragonBase) (Object) this);
         this.logic = new IafAdvancedDragonLogic((EntityDragonBase) (Object) this);
 
-        this.setPathPriority(PathNodeType.FENCE, 0.0F);
+        this.setPathfindingMalus(BlockPathTypes.FENCE, 0.0F);
 
     }
 
     @Override
-    protected void updateAITasks() {
-        super.updateAITasks();
+    protected void customServerAiStep() {
+        super.customServerAiStep();
         breakBlock();
 
         if (this.hasHomePosition) {
-            this.getBrain().setMemory(MemoryModuleType.HOME, GlobalPos.getPosition(this.world.getDimensionKey(), this.getHomePosition()));
+            this.getBrain().setMemory(MemoryModuleType.HOME, GlobalPos.of(this.level.dimension(), this.getRestrictCenter()));
         }
 
-        this.world.getProfiler().startSection("dragonBrain");
-        this.getBrain().tick((ServerWorld) this.world, (EntityDragonBase) (Object) this);
-        this.world.getProfiler().endSection();
+        this.level.getProfiler().push("dragonBrain");
+        this.getBrain().tick((ServerLevel) this.level, (EntityDragonBase) (Object) this);
+        this.level.getProfiler().pop();
     }
 
     public Brain<EntityDragonBase> getBrain() {
         return (Brain<EntityDragonBase>) super.getBrain();
     }
 
-    protected Brain.BrainCodec<EntityDragonBase> getBrainCodec() {
-        return Brain.createCodec(MEMORY_TYPES, SENSOR_TYPES);
+    protected Brain.Provider<EntityDragonBase> brainProvider() {
+        return Brain.provider(MEMORY_TYPES, SENSOR_TYPES);
     }
 
     @Override
-    protected Brain<?> createBrain(Dynamic<?> dynamicIn) {
-        Brain<EntityDragonBase> brain = this.getBrainCodec().deserialize(dynamicIn);
+    protected Brain<?> makeBrain(Dynamic<?> dynamicIn) {
+        Brain<EntityDragonBase> brain = this.brainProvider().makeBrain(dynamicIn);
 //        this.initBrain(brain);
         return brain;
     }
@@ -311,49 +317,49 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
         dragonBrain.setSchedule(RegistryBrains.SCHEDULE_DEFAULT);
 
         // Core activity should be the very basic activity, handles the basic movement when the specific memory item is set
-        dragonBrain.registerActivity(Activity.CORE, RegistryBrains.core());
+        dragonBrain.addActivity(Activity.CORE, RegistryBrains.core());
         // Other activities should only set correspond memory item base on condition
 //        dragonBrain.registerActivity(RegistryBrains.ACTIVITY_DRAGON_DEFAULT, RegistryBrains.vanilla());
-        dragonBrain.registerActivity(RegistryBrains.ACTIVITY_IDLE, RegistryBrains.idle());
-        dragonBrain.registerActivity(RegistryBrains.ACTIVITY_ATTACK, RegistryBrains.attack());
+        dragonBrain.addActivity(RegistryBrains.ACTIVITY_IDLE, RegistryBrains.idle());
+        dragonBrain.addActivity(RegistryBrains.ACTIVITY_ATTACK, RegistryBrains.attack());
 
-        dragonBrain.setPersistentActivities(ImmutableSet.of(Activity.CORE));
-        dragonBrain.setFallbackActivity(RegistryBrains.ACTIVITY_IDLE);
-        dragonBrain.switchToFallbackActivity();
+        dragonBrain.setCoreActivities(ImmutableSet.of(Activity.CORE));
+        dragonBrain.setDefaultActivity(RegistryBrains.ACTIVITY_IDLE);
+        dragonBrain.useDefaultActivity();
 
-        dragonBrain.updateActivity(this.world.getDayTime(), this.world.getGameTime());
+        dragonBrain.updateActivityFromSchedule(this.level.getDayTime(), this.level.getGameTime());
     }
 
     @Override
-    public boolean canBePushed() {
-        if (!super.canBePushed()) {
+    public boolean isPushable() {
+        if (!super.isPushable()) {
             return false;
         }
         return this.getDragonStage() < 4;
     }
 
     @Override
-    protected void collideWithNearbyEntities() {
-        Vector3d oldMotion = this.getMotion();
-        super.collideWithNearbyEntities();
-        if (!canBePushed()) {
-            this.setMotion(oldMotion);
+    protected void pushEntities() {
+        Vec3 oldMotion = this.getDeltaMovement();
+        super.pushEntities();
+        if (!isPushable()) {
+            this.setDeltaMovement(oldMotion);
         }
     }
 
     @Override
     public boolean isInWater() {
-        return super.isInWater() && this.eyesInWater;
+        return super.isInWater() && this.wasEyeInWater;
 //        return super.isInWater();
     }
 
     @Override
-    public void travel(Vector3d Vector3d) {
-        if (this.getAnimation() == ANIMATION_SHAKEPREY || !this.canMove() && !this.isBeingRidden() || this.isQueuedToSit()) {
-            if (this.getNavigator().getPath() != null) {
-                this.getNavigator().clearPath();
+    public void travel(Vec3 Vector3d) {
+        if (this.getAnimation() == ANIMATION_SHAKEPREY || !this.canMove() && !this.isVehicle() || this.isOrderedToSit()) {
+            if (this.getNavigation().getPath() != null) {
+                this.getNavigation().stop();
             }
-            Vector3d = new Vector3d(0, 0, 0);
+            Vector3d = new Vec3(0, 0, 0);
         }
         super.travel(Vector3d);
     }
@@ -368,23 +374,23 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
             at = @At(value = "HEAD"),
             cancellable = true
     )
-    private static void roadblock$bakeAttributes(CallbackInfoReturnable<AttributeModifierMap.MutableAttribute> cir) {
+    private static void roadblock$bakeAttributes(CallbackInfoReturnable<AttributeSupplier.Builder> cir) {
         cir.setReturnValue(head$bakeAttributes());
         cir.cancel();
     }
 
-    private static AttributeModifierMap.MutableAttribute head$bakeAttributes() {
-        return MobEntity.func_233666_p_()
+    private static AttributeSupplier.Builder head$bakeAttributes() {
+        return Mob.createMobAttributes()
                 //HEALTH
-                .createMutableAttribute(Attributes.MAX_HEALTH, 20.0D)
+                .add(Attributes.MAX_HEALTH, 20.0D)
                 //SPEED
-                .createMutableAttribute(Attributes.MOVEMENT_SPEED, 0.3D)
+                .add(Attributes.MOVEMENT_SPEED, 0.3D)
                 //ATTACK
-                .createMutableAttribute(Attributes.ATTACK_DAMAGE, 1)
+                .add(Attributes.ATTACK_DAMAGE, 1)
                 //FOLLOW RANGE
-                .createMutableAttribute(Attributes.FOLLOW_RANGE, Math.min(2048, IafConfig.dragonTargetSearchLength))
+                .add(Attributes.FOLLOW_RANGE, Math.min(2048, IafConfig.dragonTargetSearchLength))
                 //ARMOR
-                .createMutableAttribute(Attributes.ARMOR, 4);
+                .add(Attributes.ARMOR, 4);
     }
 
     @Inject(
@@ -403,7 +409,7 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
         this.targetSelector.addGoal(3, new DragonAIGuard<>((EntityDragonBase) (Object) this, LivingEntity.class, false, new Predicate<LivingEntity>() {
             @Override
             public boolean apply(@Nullable LivingEntity entity) {
-                return (!(entity instanceof PlayerEntity) || !((PlayerEntity) entity).isCreative())
+                return (!(entity instanceof Player) || !((Player) entity).isCreative())
                         && DragonUtils.canHostilesTarget(entity)
                         && DragonUtils.isAlive(entity)
                         && util.isHostile(entity);
@@ -411,7 +417,7 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
         }));
 
         this.goalSelector.addGoal(0, new DragonAIRide<>((EntityDragonBase) (Object) this));
-        this.goalSelector.addGoal(1, new SitGoal(this));
+        this.goalSelector.addGoal(1, new SitWhenOrderedToGoal(this));
         this.goalSelector.addGoal(2, new DragonAIMate((EntityDragonBase) (Object) this, 1.0D));
         this.goalSelector.addGoal(3, new DragonAIReturnToRoost((EntityDragonBase) (Object) this, 1.0D));
         this.goalSelector.addGoal(4, new DragonAIEscort((EntityDragonBase) (Object) this, 1.0D));
@@ -429,7 +435,7 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
             public boolean apply(@Nullable LivingEntity entity) {
 //                DragonTongue.LOGGER.debug("Getting inner class instance: " + this);
 //                DragonTongue.LOGGER.debug("Getting outer class instance: " + MixinEntityDragonBase.this);
-                return (!(entity instanceof PlayerEntity) || !((PlayerEntity) entity).isCreative()) && DragonUtils.canHostilesTarget(entity) && entity.getType() != MixinEntityDragonBase.this.getType() && MixinEntityDragonBase.this.shouldTarget(entity) && DragonUtils.isAlive(entity);
+                return (!(entity instanceof Player) || !((Player) entity).isCreative()) && DragonUtils.canHostilesTarget(entity) && entity.getType() != MixinEntityDragonBase.this.getType() && MixinEntityDragonBase.this.shouldTarget(entity) && DragonUtils.isAlive(entity);
             }
         }));
         this.targetSelector.addGoal(5, new DragonAITarget((EntityDragonBase) (Object) this, LivingEntity.class, true, new Predicate<LivingEntity>() {
@@ -447,19 +453,19 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
             at = @At(value = "HEAD"),
             cancellable = true
     )
-    public void $createNavigator(World worldIn, AdvancedPathNavigate.MovementType type, PathingStuckHandler stuckHandler, float width, float height, CallbackInfoReturnable<PathNavigator> cir) {
+    public void $createNavigator(Level worldIn, AdvancedPathNavigate.MovementType type, PathingStuckHandler stuckHandler, float width, float height, CallbackInfoReturnable<PathNavigation> cir) {
         cir.setReturnValue(roadblock$createNavigator(worldIn, type, stuckHandler, width, height));
         cir.cancel();
     }
 
-    protected PathNavigator roadblock$createNavigator(World worldIn, AdvancedPathNavigate.MovementType type, PathingStuckHandler stuckHandler, float width, float height) {
-        IafAdvancedDragonPathNavigator newNavigator = new IafAdvancedDragonPathNavigator((EntityDragonBase) (Object) this, world, IafAdvancedDragonPathNavigator.MovementType.valueOf(type.name()), width, height);
-        this.navigator = newNavigator;
-        newNavigator.setCanSwim(true);
+    protected PathNavigation roadblock$createNavigator(Level worldIn, AdvancedPathNavigate.MovementType type, PathingStuckHandler stuckHandler, float width, float height) {
+        IafAdvancedDragonPathNavigator newNavigator = new IafAdvancedDragonPathNavigator((EntityDragonBase) (Object) this, level, IafAdvancedDragonPathNavigator.MovementType.valueOf(type.name()), width, height);
+        this.navigation = newNavigator;
+        newNavigator.setCanFloat(true);
 
         newNavigator.getPathingOptions().withJumpCost(0.7).withSwimCost(0.7);
 
-        newNavigator.getNodeProcessor().setCanOpenDoors(true);
+        newNavigator.getNodeEvaluator().setCanOpenDoors(true);
         return newNavigator;
     }
 
@@ -476,18 +482,18 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 
     protected void roadblock$switchNavigator(int navigatorType) {
         if (navigatorType == 0) {
-            this.moveController = new IafAdvancedDragonMoveController.GroundMoveHelper(this);
-            this.navigator = createNavigator(world, AdvancedPathNavigate.MovementType.WALKING, createStuckHandler().withTeleportSteps(5));
+            this.moveControl = new IafAdvancedDragonMoveController.GroundMoveHelper(this);
+            this.navigation = createNavigator(level, AdvancedPathNavigate.MovementType.WALKING, createStuckHandler().withTeleportSteps(5));
             this.navigatorType = 0;
             this.setFlying(false);
             this.setHovering(false);
         } else if (navigatorType == 1) {
-            this.moveController = new IafAdvancedDragonMoveController.FlightMoveHelper((EntityDragonBase) (Object) this);
-            this.navigator = createNavigator(world, AdvancedPathNavigate.MovementType.FLYING);
+            this.moveControl = new IafAdvancedDragonMoveController.FlightMoveHelper((EntityDragonBase) (Object) this);
+            this.navigation = createNavigator(level, AdvancedPathNavigate.MovementType.FLYING);
             this.navigatorType = 1;
         } else {
-            this.moveController = new IafAdvancedDragonMoveController.PlayerFlightMoveHelper<>((EntityDragonBase) (Object) this);
-            this.navigator = createNavigator(world, AdvancedPathNavigate.MovementType.FLYING);
+            this.moveControl = new IafAdvancedDragonMoveController.PlayerFlightMoveHelper<>((EntityDragonBase) (Object) this);
+            this.navigation = createNavigator(level, AdvancedPathNavigate.MovementType.FLYING);
             this.navigatorType = 2;
         }
     }
@@ -503,12 +509,12 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     }
 
     protected void head$updateAITasks() {
-        super.updateAITasks();
+        super.customServerAiStep();
         breakBlock();
 
-        this.world.getProfiler().startSection("dragonBrain");
-        this.getBrain().tick((ServerWorld) this.world, (EntityDragonBase) (Object) this);
-        this.world.getProfiler().endSection();
+        this.level.getProfiler().push("dragonBrain");
+        this.getBrain().tick((ServerLevel) this.level, (EntityDragonBase) (Object) this);
+        this.level.getProfiler().pop();
     }
 
     @Inject(
@@ -517,12 +523,12 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
             at = @At(value = "HEAD"),
             cancellable = true
     )
-    public void $openGUI(PlayerEntity playerEntity, CallbackInfo ci) {
+    public void $openGUI(Player playerEntity, CallbackInfo ci) {
 //        roadblock$openGUI(playerEntity);
 //        ci.cancel();
     }
 
-    public void roadblock$openGUI(PlayerEntity playerEntity) {
+    public void roadblock$openGUI(Player playerEntity) {
         ContainerDragon.openGui(playerEntity, this);
     }
 
@@ -539,10 +545,10 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 
     protected void head$updateAttributes() {
         prevArmorResLoc = armorResLoc;
-        final int armorHead = this.getArmorOrdinal(this.getItemStackFromSlot(EquipmentSlotType.HEAD));
-        final int armorNeck = this.getArmorOrdinal(this.getItemStackFromSlot(EquipmentSlotType.CHEST));
-        final int armorLegs = this.getArmorOrdinal(this.getItemStackFromSlot(EquipmentSlotType.LEGS));
-        final int armorFeet = this.getArmorOrdinal(this.getItemStackFromSlot(EquipmentSlotType.FEET));
+        final int armorHead = this.getArmorOrdinal(this.getItemBySlot(EquipmentSlot.HEAD));
+        final int armorNeck = this.getArmorOrdinal(this.getItemBySlot(EquipmentSlot.CHEST));
+        final int armorLegs = this.getArmorOrdinal(this.getItemBySlot(EquipmentSlot.LEGS));
+        final int armorFeet = this.getArmorOrdinal(this.getItemBySlot(EquipmentSlot.FEET));
         armorResLoc = dragonType.getName() + "|" + armorHead + "|" + armorNeck + "|" + armorLegs + "|" + armorFeet;
         IceAndFire.PROXY.updateDragonArmorRender(armorResLoc);
         if (this.getAgeInDays() <= 125) {
@@ -556,9 +562,9 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
             this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(minimumSpeed + (speedStep * this.getAgeInDays()));
             final double baseValue = minimumArmor + (armorStep * this.getAgeInDays());
             this.getAttribute(Attributes.ARMOR).setBaseValue(baseValue);
-            if (!this.world.isRemote) {
+            if (!this.level.isClientSide) {
                 this.getAttribute(Attributes.ARMOR).removeModifier(ARMOR_MODIFIER_UUID);
-                this.getAttribute(Attributes.ARMOR).applyNonPersistentModifier(new AttributeModifier(ARMOR_MODIFIER_UUID, "Dragon armor bonus", calculateArmorModifier(), AttributeModifier.Operation.ADDITION));
+                this.getAttribute(Attributes.ARMOR).addTransientModifier(new AttributeModifier(ARMOR_MODIFIER_UUID, "Dragon armor bonus", calculateArmorModifier(), AttributeModifier.Operation.ADDITION));
             }
         }
         this.getAttribute(Attributes.FOLLOW_RANGE).setBaseValue(Math.min(2048, IafConfig.dragonTargetSearchLength));
@@ -577,9 +583,9 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 
     private double head$calculateArmorModifier() {
         double val = 1D;
-        final EquipmentSlotType[] slots = {EquipmentSlotType.HEAD, EquipmentSlotType.CHEST, EquipmentSlotType.LEGS, EquipmentSlotType.FEET};
-        for (EquipmentSlotType slot : slots) {
-            switch (getArmorOrdinal(getItemStackFromSlot(slot))) {
+        final EquipmentSlot[] slots = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
+        for (EquipmentSlot slot : slots) {
+            switch (getArmorOrdinal(getItemBySlot(slot))) {
                 case 1:
                     val += 2D;
                     break;
@@ -617,18 +623,18 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     public void roadblock$breakBlock() {
         if (this.blockBreakCounter > 0 || IafConfig.dragonBreakBlockCooldown == 0) {
             --this.blockBreakCounter;
-            if ((this.blockBreakCounter == 0 || IafConfig.dragonBreakBlockCooldown == 0) && net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.world, this)) {
-                if (IafConfig.dragonGriefing != 2 && (!this.isTamed() || IafConfig.tamedDragonGriefing)) {
+            if ((this.blockBreakCounter == 0 || IafConfig.dragonBreakBlockCooldown == 0) && net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.level, this)) {
+                if (IafConfig.dragonGriefing != 2 && (!this.isTame() || IafConfig.tamedDragonGriefing)) {
                     if (!isModelDead() && this.getDragonStage() >= 3 && (this.canMove() || this.getControllingPassenger() != null)) {
                         final int bounds = 1;//(int)Math.ceil(this.getRenderSize() * 0.1);
                         final int flightModifier =
-                                (isFlying() && this.getAttackTarget() != null) ? -1 : 1;
+                                (isFlying() && this.getTarget() != null) ? -1 : 1;
 //                        final int yMinus = calculateDownY();
                         int yMinus = calculateDownY();
                         if (cap.getObjectSetting(EnumCommandSettingType.DESTROY_TYPE) == EnumCommandSettingType.DestroyType.DELIBERATE) {
                             yMinus = 0;
                         }
-                        BlockPos.getAllInBox(
+                        BlockPos.betweenClosedStream(
                                 (int) Math.floor(this.getBoundingBox().minX) - bounds,
                                 (int) Math.floor(this.getBoundingBox().minY) + yMinus,
                                 (int) Math.floor(this.getBoundingBox().minZ) - bounds,
@@ -638,15 +644,15 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
                         ).forEach(pos -> {
                             if (MinecraftForge.EVENT_BUS.post(new GenericGriefEvent(this, pos.getX(), pos.getY(), pos.getZ())))
                                 return;
-                            final BlockState state = world.getBlockState(pos);
+                            final BlockState state = level.getBlockState(pos);
                             final float hardness = IafConfig.dragonGriefing == 1 || this.getDragonStage() <= 3 ? 2.0F : 5.0F;
                             if (isBreakable(pos, state, hardness)) {
-                                this.setMotion(this.getMotion().mul(0.6F, 1, 0.6F));
-                                if (!world.isRemote) {
-                                    if (rand.nextFloat() <= IafConfig.dragonBlockBreakingDropChance && DragonUtils.canDropFromDragonBlockBreak(state)) {
-                                        world.destroyBlock(pos, true);
+                                this.setDeltaMovement(this.getDeltaMovement().multiply(0.6F, 1, 0.6F));
+                                if (!level.isClientSide) {
+                                    if (random.nextFloat() <= IafConfig.dragonBlockBreakingDropChance && DragonUtils.canDropFromDragonBlockBreak(state)) {
+                                        level.destroyBlock(pos, true);
                                     } else {
-                                        world.setBlockState(pos, Blocks.AIR.getDefaultState());
+                                        level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
                                     }
                                 }
                             }
@@ -683,22 +689,22 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
 
     public void roadblock$tick() {
         super.tick();
-        recalculateSize();
+        refreshDimensions();
         updateParts();
         this.prevDragonPitch = getDragonPitch();
-        world.getProfiler().startSection("dragonLogic");
+        level.getProfiler().push("dragonLogic");
 
         if (cap.getObjectSetting(EnumCommandSettingType.DESTROY_TYPE) == EnumCommandSettingType.DestroyType.DELIBERATE) {
-            this.stepHeight = 0.5F;
+            this.maxUpStep = 0.5F;
         } else {
-            this.stepHeight = Math.max(1.2F, 1.2F + (Math.min(this.getAgeInDays(), 125) - 25) * 1.8F / 100F);
+            this.maxUpStep = Math.max(1.2F, 1.2F + (Math.min(this.getAgeInDays(), 125) - 25) * 1.8F / 100F);
         }
 
         isOverAir = isOverAirLogic();
         logic.updateDragonCommon();
         if (this.isModelDead()) {
-            if (!world.isRemote && world.isAirBlock(new BlockPos(this.getPosX(), this.getBoundingBox().minY, this.getPosZ())) && this.getPosY() > -1) {
-                this.move(MoverType.SELF, new Vector3d(0, -0.2F, 0));
+            if (!level.isClientSide && level.isEmptyBlock(new BlockPos(this.getX(), this.getBoundingBox().minY, this.getZ())) && this.getY() > -1) {
+                this.move(MoverType.SELF, new Vec3(0, -0.2F, 0));
             }
             this.setBreathingFire(false);
 
@@ -711,19 +717,19 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
                 this.setDragonPitch(Math.max(0, dragonPitch + 5));
             }
         } else {
-            if (world.isRemote) {
+            if (level.isClientSide) {
                 logic.updateDragonClient();
             } else {
                 logic.updateDragonServer();
                 logic.updateDragonAttack();
             }
         }
-        world.getProfiler().endSection();
-        world.getProfiler().startSection("dragonFlight");
-        if (useFlyingPathFinder() && !world.isRemote) {
+        level.getProfiler().pop();
+        level.getProfiler().push("dragonFlight");
+        if (useFlyingPathFinder() && !level.isClientSide) {
             this.flightManager.update();
         }
-        world.getProfiler().endSection();
+        level.getProfiler().pop();
     }
 
     @Inject(
@@ -741,23 +747,23 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
         if (EntityGorgon.isStoneMob(this) || this.isModelDead()) {
             return;
         }
-        if (rand.nextBoolean()) {
+        if (random.nextBoolean()) {
             if (this.getAnimation() != ANIMATION_EPIC_ROAR) {
                 this.setAnimation(ANIMATION_EPIC_ROAR);
-                this.playSound(this.getRoarSound(), this.getSoundVolume() + 3 + Math.max(0, this.getDragonStage() - 2), this.getSoundPitch() * 0.7F);
+                this.playSound(this.getRoarSound(), this.getSoundVolume() + 3 + Math.max(0, this.getDragonStage() - 2), this.getVoicePitch() * 0.7F);
             }
             if (this.getDragonStage() > 3) {
                 final int size = (this.getDragonStage() - 3) * 30;
-                final List<Entity> entities = world.getEntitiesWithinAABBExcludingEntity(this, this.getBoundingBox().expand(size, size, size));
+                final List<Entity> entities = level.getEntities(this, this.getBoundingBox().expandTowards(size, size, size));
                 for (final Entity entity : entities) {
                     final boolean isStrongerDragon = entity instanceof EntityDragonBase && ((EntityDragonBase) entity).getDragonStage() >= this.getDragonStage();
                     if (entity instanceof LivingEntity && !isStrongerDragon) {
                         LivingEntity living = (LivingEntity) entity;
-                        if (this.isOwner(living) || this.isOwnersPet(living)) {
-                            living.addPotionEffect(new EffectInstance(Effects.STRENGTH, 50 * size, 0, false, false));
+                        if (this.isOwnedBy(living) || this.isOwnersPet(living)) {
+                            living.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 50 * size, 0, false, false));
                         } else {
-                            if (living.getItemStackFromSlot(EquipmentSlotType.HEAD).getItem() != IafItemRegistry.EARPLUGS) {
-                                living.addPotionEffect(new EffectInstance(Effects.WEAKNESS, 50 * size, 0, false, false));
+                            if (living.getItemBySlot(EquipmentSlot.HEAD).getItem() != IafItemRegistry.EARPLUGS) {
+                                living.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 50 * size, 0, false, false));
                             }
                         }
                     }
@@ -766,19 +772,19 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
         } else {
             if (this.getAnimation() != ANIMATION_ROAR) {
                 this.setAnimation(ANIMATION_ROAR);
-                this.playSound(this.getRoarSound(), this.getSoundVolume() + 2 + Math.max(0, this.getDragonStage() - 3), this.getSoundPitch());
+                this.playSound(this.getRoarSound(), this.getSoundVolume() + 2 + Math.max(0, this.getDragonStage() - 3), this.getVoicePitch());
             }
             if (this.getDragonStage() > 3) {
                 final int size = (this.getDragonStage() - 3) * 30;
-                final List<Entity> entities = world.getEntitiesWithinAABBExcludingEntity(this, this.getBoundingBox().expand(size, size, size));
+                final List<Entity> entities = level.getEntities(this, this.getBoundingBox().expandTowards(size, size, size));
                 for (final Entity entity : entities) {
                     final boolean isStrongerDragon = entity instanceof EntityDragonBase && ((EntityDragonBase) entity).getDragonStage() >= this.getDragonStage();
                     if (entity instanceof LivingEntity && !isStrongerDragon) {
                         LivingEntity living = (LivingEntity) entity;
-                        if (this.isOwner(living) || this.isOwnersPet(living)) {
-                            living.addPotionEffect(new EffectInstance(Effects.STRENGTH, 30 * size, 0, false, false));
+                        if (this.isOwnedBy(living) || this.isOwnersPet(living)) {
+                            living.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 30 * size, 0, false, false));
                         } else {
-                            living.addPotionEffect(new EffectInstance(Effects.WEAKNESS, 30 * size, 0, false, false));
+                            living.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 30 * size, 0, false, false));
                         }
                     }
                 }
@@ -798,7 +804,7 @@ public abstract class MixinEntityDragonBase extends TameableEntity {
     }
 
     public boolean roadblock$isAllowedToTriggerFlight() {
-        return (this.hasFlightClearance() && this.onGround || this.isInWater()) && !this.isQueuedToSit() && this.getPassengers().isEmpty() && !this.isChild() && !this.isSleeping() && this.canMove();
+        return (this.hasFlightClearance() && this.onGround || this.isInWater()) && !this.isOrderedToSit() && this.getPassengers().isEmpty() && !this.isBaby() && !this.isSleeping() && this.canMove();
     }
 
 }
