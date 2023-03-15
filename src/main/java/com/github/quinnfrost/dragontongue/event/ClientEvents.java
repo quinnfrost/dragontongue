@@ -59,7 +59,7 @@ public class ClientEvents {
         int maxDistance = Minecraft.getInstance().options.renderDistance * 16;
         LocalPlayer clientPlayerEntity = Minecraft.getInstance().player;
 
-        if (clientPlayerEntity != null && clientPlayerEntity.isShiftKeyDown() && (clientPlayerEntity.getItemInHand(InteractionHand.MAIN_HAND).getItem() == IafItemRegistry.DRAGON_BOW
+        if (clientPlayerEntity != null && clientPlayerEntity.isShiftKeyDown() && (clientPlayerEntity.getItemInHand(InteractionHand.MAIN_HAND).getItem() == IafItemRegistry.DRAGON_BOW.get()
         || clientPlayerEntity.getItemInHand(InteractionHand.MAIN_HAND).getItem() == Items.BOW)) {
             OverlayCrossHair.renderScope = true;
             HitResult rayTraceResult = util.getTargetBlockOrEntity(clientPlayerEntity, maxDistance, null);
@@ -107,13 +107,13 @@ public class ClientEvents {
 
     }
     @SubscribeEvent
-    public static void onGuiInit(GuiScreenEvent.InitGuiEvent.Post event) {
+    public static void onGuiInit(ScreenEvent.InitScreenEvent.Post event) {
         keySneakPressed = false;
         keySprintPressed = false;
     }
 
     @SubscribeEvent
-    public static void onGuiKeyPressed(GuiScreenEvent.KeyboardKeyPressedEvent event) {
+    public static void onGuiKeyPressed(ScreenEvent.KeyboardKeyPressedEvent event) {
         if (event.getKeyCode() == gameSettings.keyShift.getKey().getValue()) {
             keySneakPressed = true;
         }
@@ -122,7 +122,7 @@ public class ClientEvents {
         }
     }
     @SubscribeEvent
-    public static void onGuiKeyReleased(GuiScreenEvent.KeyboardKeyReleasedEvent event) {
+    public static void onGuiKeyReleased(ScreenEvent.KeyboardKeyReleasedEvent event) {
         if (event.getKeyCode() == gameSettings.keyShift.getKey().getValue()) {
             keySneakPressed = false;
         }
@@ -132,44 +132,44 @@ public class ClientEvents {
     }
 
     @SubscribeEvent
-    public static void onGuiMouseClick(GuiScreenEvent.MouseClickedEvent.Pre event) {
+    public static void onGuiMouseClick(ScreenEvent.MouseClickedEvent.Pre event) {
 
     }
 
     @SubscribeEvent
-    public static void onGuiMouseRelease(GuiScreenEvent.MouseReleasedEvent.Pre event) {
+    public static void onGuiMouseRelease(ScreenEvent.MouseReleasedEvent.Pre event) {
 
     }
 
-    @SubscribeEvent
-    public static void onSetFogDensity(EntityViewRenderEvent.FogDensity event) {
-        LocalPlayer player = Minecraft.getInstance().player;
-        if (player == null) {
-            return;
-        }
-        if (player.isCreative() || player.isSpectator()) {
-            event.setDensity(0f);
-            event.setCanceled(true);
-        } else if (player.isInLava() && util.canSwimInLava(player)) {
-            event.setDensity(0.03f);
-            event.setCanceled(true);
-        }
-    }
-
-    @SubscribeEvent
-    public static void renderOverlay(RenderBlockOverlayEvent event) {
-        LocalPlayer player = Minecraft.getInstance().player;
-        if (player == null) {
-            return;
-        }
-        if (event.getOverlayType() != RenderBlockOverlayEvent.OverlayType.FIRE) {
-            return;
-        }
-        if (event.getPlayer().isCreative()) {
-            event.setCanceled(true);
-        } else if (player.isInLava() && util.canSwimInLava(event.getPlayer())) {
-            event.getMatrixStack().translate(0, -0.25, 0);
-        }
-    }
+//    @SubscribeEvent
+//    public static void onSetFogDensity(EntityViewRenderEvent.FogDensity event) {
+//        LocalPlayer player = Minecraft.getInstance().player;
+//        if (player == null) {
+//            return;
+//        }
+//        if (player.isCreative() || player.isSpectator()) {
+//            event.setDensity(0f);
+//            event.setCanceled(true);
+//        } else if (player.isInLava() && util.canSwimInLava(player)) {
+//            event.setDensity(0.03f);
+//            event.setCanceled(true);
+//        }
+//    }
+//
+//    @SubscribeEvent
+//    public static void renderOverlay(RenderBlockOverlayEvent event) {
+//        LocalPlayer player = Minecraft.getInstance().player;
+//        if (player == null) {
+//            return;
+//        }
+//        if (event.getOverlayType() != RenderBlockOverlayEvent.OverlayType.FIRE) {
+//            return;
+//        }
+//        if (event.getPlayer().isCreative()) {
+//            event.setCanceled(true);
+//        } else if (player.isInLava() && util.canSwimInLava(event.getPlayer())) {
+//            event.getPoseStack().translate(0, -0.25, 0);
+//        }
+//    }
 
 }

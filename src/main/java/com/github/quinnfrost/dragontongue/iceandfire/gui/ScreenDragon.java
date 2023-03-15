@@ -20,6 +20,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.resources.language.I18n;
@@ -290,7 +292,7 @@ public class ScreenDragon extends AbstractContainerScreen<ContainerDragon> {
 
         for (Button button :
                 buttons) {
-            addButton(button);
+            addWidget(button);
         }
 
     }
@@ -324,16 +326,17 @@ public class ScreenDragon extends AbstractContainerScreen<ContainerDragon> {
         if (referencedDragon == null) {
             return;
         }
-        GlStateManager._color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShaderTexture(0, textureGuiDragon);
         int relX = (this.width - this.imageWidth) / 2;
         int relY = (this.height - this.imageHeight) / 2;
 
-        this.getMinecraft().getTextureManager().bind(textureGuiDragon);
         this.blit(matrixStack, relX, relY, 0, 0, imageWidth, imageHeight);
 
         float dragonScale = 1F / Math.max(0.0001F, referencedDragon.getScale());
 
-        drawEntityOnScreen(relX + 88, relY + (int) (0.5F * (referencedDragon.flyProgress)) + 55, dragonScale * 23F, relX + 51 - mousePosX, relY + 75 - 50 - mousePosY, referencedDragon);
+        InventoryScreen.renderEntityInInventory(relX + 88, relY + (int) (0.5F * (referencedDragon.flyProgress)) + 55, (int) (dragonScale * 23F), relX + 51 - mousePosX, relY + 75 - 50 - mousePosY, referencedDragon);
 
         Font font = this.getMinecraft().font;
         List<String> stringList = new ArrayList<>();
@@ -413,47 +416,47 @@ public class ScreenDragon extends AbstractContainerScreen<ContainerDragon> {
 
     }
 
-    // from GuiDragon#33
-    public static void drawEntityOnScreen(int posX, int posY, float scale, float mouseX, float mouseY, LivingEntity livingEntity) {
-        float f = (float) Math.atan(mouseX / 40.0F);
-        float f1 = (float) Math.atan(mouseY / 40.0F);
-        RenderSystem.pushMatrix();
-        RenderSystem.translatef(posX, posY, 1050.0F);
-        RenderSystem.scalef(1.0F, 1.0F, -1.0F);
-        PoseStack matrixstack = new PoseStack();
-        matrixstack.translate(0.0D, 0.0D, 1000.0D);
-        matrixstack.scale(scale, scale, scale);
-        Quaternion quaternion = Vector3f.ZP.rotationDegrees(180.0F);
-        Quaternion quaternion1 = Vector3f.XP.rotationDegrees(f1 * 20.0F);
-        quaternion.mul(quaternion1);
-        matrixstack.mulPose(quaternion);
-        float f2 = livingEntity.yBodyRot;
-        float f3 = livingEntity.yRot;
-        float f4 = livingEntity.xRot;
-        float f5 = livingEntity.yHeadRotO;
-        float f6 = livingEntity.yHeadRot;
-        livingEntity.yBodyRot = 180.0F + f * 20.0F;
-        livingEntity.yRot = 180.0F + f * 40.0F;
-        livingEntity.xRot = -f1 * 20.0F;
-        livingEntity.yHeadRot = livingEntity.yRot;
-        livingEntity.yHeadRotO = livingEntity.yRot;
-        EntityRenderDispatcher entityrenderermanager = Minecraft.getInstance().getEntityRenderDispatcher();
-        quaternion1.conj();
-        entityrenderermanager.overrideCameraOrientation(quaternion1);
-        entityrenderermanager.setRenderShadow(false);
-        MultiBufferSource.BufferSource irendertypebuffer$impl = Minecraft.getInstance().renderBuffers().bufferSource();
-        RenderSystem.runAsFancy(() -> {
-            entityrenderermanager.render(livingEntity, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F, matrixstack, irendertypebuffer$impl, 15728880);
-        });
-        irendertypebuffer$impl.endBatch();
-        entityrenderermanager.setRenderShadow(true);
-        livingEntity.yBodyRot = f2;
-        livingEntity.yRot = f3;
-        livingEntity.xRot = f4;
-        livingEntity.yHeadRotO = f5;
-        livingEntity.yHeadRot = f6;
-        RenderSystem.popMatrix();
-    }
+//    // from GuiDragon#33
+//    public static void drawEntityOnScreen(int posX, int posY, float scale, float mouseX, float mouseY, LivingEntity livingEntity) {
+//        float f = (float) Math.atan(mouseX / 40.0F);
+//        float f1 = (float) Math.atan(mouseY / 40.0F);
+//        RenderSystem.pushMatrix();
+//        RenderSystem.translatef(posX, posY, 1050.0F);
+//        RenderSystem.scalef(1.0F, 1.0F, -1.0F);
+//        PoseStack matrixstack = new PoseStack();
+//        matrixstack.translate(0.0D, 0.0D, 1000.0D);
+//        matrixstack.scale(scale, scale, scale);
+//        Quaternion quaternion = Vector3f.ZP.rotationDegrees(180.0F);
+//        Quaternion quaternion1 = Vector3f.XP.rotationDegrees(f1 * 20.0F);
+//        quaternion.mul(quaternion1);
+//        matrixstack.mulPose(quaternion);
+//        float f2 = livingEntity.yBodyRot;
+//        float f3 = livingEntity.yRot;
+//        float f4 = livingEntity.xRot;
+//        float f5 = livingEntity.yHeadRotO;
+//        float f6 = livingEntity.yHeadRot;
+//        livingEntity.yBodyRot = 180.0F + f * 20.0F;
+//        livingEntity.yRot = 180.0F + f * 40.0F;
+//        livingEntity.xRot = -f1 * 20.0F;
+//        livingEntity.yHeadRot = livingEntity.yRot;
+//        livingEntity.yHeadRotO = livingEntity.yRot;
+//        EntityRenderDispatcher entityrenderermanager = Minecraft.getInstance().getEntityRenderDispatcher();
+//        quaternion1.conj();
+//        entityrenderermanager.overrideCameraOrientation(quaternion1);
+//        entityrenderermanager.setRenderShadow(false);
+//        MultiBufferSource.BufferSource irendertypebuffer$impl = Minecraft.getInstance().renderBuffers().bufferSource();
+//        RenderSystem.runAsFancy(() -> {
+//            entityrenderermanager.render(livingEntity, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F, matrixstack, irendertypebuffer$impl, 15728880);
+//        });
+//        irendertypebuffer$impl.endBatch();
+//        entityrenderermanager.setRenderShadow(true);
+//        livingEntity.yBodyRot = f2;
+//        livingEntity.yRot = f3;
+//        livingEntity.xRot = f4;
+//        livingEntity.yHeadRotO = f5;
+//        livingEntity.yHeadRot = f6;
+//        RenderSystem.popMatrix();
+//    }
 
     public static String translateToLocal(String s) {
         return I18n.get(s);

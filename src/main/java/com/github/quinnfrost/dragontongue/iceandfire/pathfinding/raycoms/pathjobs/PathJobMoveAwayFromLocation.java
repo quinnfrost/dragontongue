@@ -4,7 +4,7 @@ package com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjo
  */
 
 import com.github.alexthe666.iceandfire.IceAndFire;
-import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Node;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.MNode;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Pathfinding;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.pathfinder.Path;
@@ -85,11 +85,11 @@ public class PathJobMoveAwayFromLocation extends AbstractPathJob
     /**
      * Checks if the destination has been reached. Meaning that the avoid distance has been reached.
      *
-     * @param n Node to test.
+     * @param n MNode to test.
      * @return true if so.
      */
     @Override
-    protected boolean isAtDestination(final Node n)
+    protected boolean isAtDestination(final MNode n)
     {
         return Math.sqrt(avoid.distSqr(n.pos)) > avoidDistance;
     }
@@ -97,11 +97,11 @@ public class PathJobMoveAwayFromLocation extends AbstractPathJob
     /**
      * Calculate the distance to the target.
      *
-     * @param n Node to test.
+     * @param n MNode to test.
      * @return double amount.
      */
     @Override
-    protected double getNodeResultScore(final Node n)
+    protected double getNodeResultScore(final MNode n)
     {
         return -avoid.distSqr(n.pos);
     }

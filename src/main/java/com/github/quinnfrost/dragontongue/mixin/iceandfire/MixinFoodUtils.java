@@ -1,7 +1,7 @@
 package com.github.quinnfrost.dragontongue.mixin.iceandfire;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
-import net.minecraft.world.entity.AgableMob;
+import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class MixinFoodUtils {
     @Inject(
             remap = false,
-            method = "Lcom/github/alexthe666/iceandfire/api/FoodUtils;getFoodPoints(Lnet/minecraft/entity/Entity;)I",
+            method = "getFoodPoints(Lnet/minecraft/world/entity/Entity;)I",
             at = @At(value = "HEAD"),
             cancellable = true
     )
@@ -24,7 +24,7 @@ public abstract class MixinFoodUtils {
     }
     private static int head$getFoodPoints(Entity entity) {
         int foodPoints = Math.round(entity.getBbWidth() * entity.getBbHeight() * 10);
-        if (entity instanceof AgableMob) {
+        if (entity instanceof AgeableMob) {
             return foodPoints;
         }
         if (entity instanceof Player) {

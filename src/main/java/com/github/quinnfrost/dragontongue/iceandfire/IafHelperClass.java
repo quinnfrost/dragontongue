@@ -10,9 +10,7 @@ import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import com.github.alexthe666.iceandfire.item.ItemDragonsteelArmor;
 import com.github.alexthe666.iceandfire.item.ItemScaleArmor;
 import com.github.quinnfrost.dragontongue.client.render.RenderPath;
-import com.github.quinnfrost.dragontongue.entity.ai.EntityBehaviorDebugger;
 import com.github.quinnfrost.dragontongue.iceandfire.message.MessageSyncPath;
-import com.github.quinnfrost.dragontongue.iceandfire.message.MessageSyncPathReached;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Pathfinding;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjobs.AbstractPathJob;
@@ -20,19 +18,17 @@ import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
-import com.github.quinnfrost.dragontongue.message.MessageClientDraw;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.event.RenderWorldLastEvent;
+import net.minecraftforge.client.event.RenderLevelLastEvent;
 
 import java.util.*;
 
@@ -51,9 +47,9 @@ public class IafHelperClass {
         RegistryMessages.sendToAll(new MessageSyncPath(new HashSet<>(), new HashSet<>(), new HashSet<>()));
     }
 
-    public static void renderWorldLastEvent(RenderWorldLastEvent event) {
+    public static void renderWorldLastEvent(RenderLevelLastEvent event) {
         if (!Pathfinding.lastDebugNodesNotVisited.isEmpty() && !Pathfinding.lastDebugNodesPath.isEmpty() && !Pathfinding.lastDebugNodesVisited.isEmpty()) {
-            RenderPath.debugDraw(event.getPartialTicks(), event.getMatrixStack());
+            RenderPath.debugDraw(event.getPartialTick(), event.getPoseStack());
         }
     }
 

@@ -4,7 +4,7 @@ package com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjo
  */
 
 import com.github.alexthe666.iceandfire.IceAndFire;
-import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Node;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.MNode;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Pathfinding;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.pathfinder.Path;
@@ -63,7 +63,7 @@ public class PathJobMoveToLocation extends AbstractPathJob {
     }
 
     @Override
-    protected BlockPos getPathTargetPos(final Node finalNode) {
+    protected BlockPos getPathTargetPos(final MNode finalMNode) {
         return destination;
     }
 
@@ -79,7 +79,7 @@ public class PathJobMoveToLocation extends AbstractPathJob {
      * @return true if has been reached.
      */
     @Override
-    protected boolean isAtDestination(final Node n) {
+    protected boolean isAtDestination(final MNode n) {
         if (destinationSlack <= DESTINATION_SLACK_NONE) {
             return n.pos.getX() == destination.getX()
                     && n.pos.getY() == destination.getY()
@@ -99,7 +99,7 @@ public class PathJobMoveToLocation extends AbstractPathJob {
      * @return double of the distance.
      */
     @Override
-    protected double getNodeResultScore(final Node n) {
+    protected double getNodeResultScore(final MNode n) {
         //  For Result Score lower is better
         return destination.distSqr(n.pos);
     }

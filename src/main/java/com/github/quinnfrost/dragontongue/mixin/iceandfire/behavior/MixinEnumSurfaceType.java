@@ -1,7 +1,6 @@
 package com.github.quinnfrost.dragontongue.mixin.iceandfire.behavior;
 
 import com.github.alexthe666.iceandfire.pathfinding.raycoms.SurfaceType;
-import net.minecraft.block.*;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.core.Direction;
@@ -42,7 +41,7 @@ public abstract class MixinEnumSurfaceType {
 
     @Inject(
             remap = false,
-            method = "Lcom/github/alexthe666/iceandfire/pathfinding/raycoms/SurfaceType;getSurfaceType(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;)Lcom/github/alexthe666/iceandfire/pathfinding/raycoms/SurfaceType;",
+            method = "getSurfaceType",
             at = @At(value = "HEAD"),
             cancellable = true
     )

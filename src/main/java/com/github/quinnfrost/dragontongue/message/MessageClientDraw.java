@@ -4,8 +4,8 @@ import com.github.quinnfrost.dragontongue.client.render.RenderNode;
 import com.github.quinnfrost.dragontongue.enums.EnumClientDraw;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.fml.network.NetworkDirection;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkDirection;
+import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 

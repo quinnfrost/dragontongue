@@ -3,11 +3,9 @@ package com.github.quinnfrost.dragontongue.proxy;
 import com.github.quinnfrost.dragontongue.client.KeyBindRegistry;
 import com.github.quinnfrost.dragontongue.event.ClientEvents;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.ScreenManager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.client.registry.RenderingRegistry;
 
 public class ClientProxy extends CommonProxy {
     public void init(){

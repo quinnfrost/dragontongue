@@ -116,23 +116,4 @@ public class GuardGoal<T extends LivingEntity> extends NearestAttackableTargetGo
         return mobEntity.getBoundingBox().inflate(targetDistance, 4.0D, targetDistance);
     }
 
-    public static LivingEntity findNearestTarget(Mob mobEntity) {
-        LivingEntity nearestTarget;
-        Predicate<LivingEntity> targetPredicate = new Predicate<LivingEntity>() {
-            @Override
-            public boolean test(@Nullable LivingEntity entity) {
-                return (!(entity instanceof Player) || !((Player) entity).isCreative())
-                        && util.isHostile(entity);
-            }
-        };
-        Class entityClazz = LivingEntity.class;
-        TargetingConditions targetEntitySelector = (new TargetingConditions()).range(getTargetDistance(mobEntity)).selector(targetPredicate);
-        if (entityClazz != Player.class && entityClazz != ServerPlayer.class) {
-            nearestTarget = mobEntity.level.getNearestLoadedEntity(LivingEntity.class, targetEntitySelector, mobEntity, mobEntity.getX(), mobEntity.getEyeY(), mobEntity.getZ(), getTargetableArea(mobEntity, getTargetDistance(mobEntity)));
-        } else {
-            nearestTarget = mobEntity.level.getNearestPlayer(targetEntitySelector, mobEntity, mobEntity.getX(), mobEntity.getEyeY(), mobEntity.getZ());
-        }
-        return nearestTarget;
-    }
-
 }

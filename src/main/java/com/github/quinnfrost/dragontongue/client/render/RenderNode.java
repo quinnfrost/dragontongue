@@ -1,6 +1,6 @@
 package com.github.quinnfrost.dragontongue.client.render;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.*;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
@@ -8,9 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.util.math.shapes.*;
 import com.mojang.math.Matrix4f;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.opengl.GL11;
@@ -19,8 +17,6 @@ import javax.annotation.Nullable;
 import java.awt.*;
 import java.util.*;
 
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.Tesselator;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
@@ -167,7 +163,6 @@ public class RenderNode {
             double dy = vec.y();
             double dz = vec.z();
 
-            RenderSystem.pushTextureAttributes();
 
             matrixStack.pushPose();
             matrixStack.translate(-dx, -dy, -dz);
@@ -175,7 +170,6 @@ public class RenderNode {
             RenderSystem.enableDepthTest();
             RenderSystem.disableTexture();
             RenderSystem.disableBlend();
-            RenderSystem.disableLighting();
 
             renderCubeList.forEach((integer, integerPairPair) -> {
                 Pair<Vec3, Boolean> renderInfo = integerPairPair.getSecond();
@@ -197,7 +191,6 @@ public class RenderNode {
             });
 
             RenderSystem.disableDepthTest();
-            RenderSystem.popAttributes();
             matrixStack.popPose();
         }
     }
@@ -236,7 +229,7 @@ public class RenderNode {
         final BufferBuilder vertexBuffer = tessellator.getBuilder();
 
         final Matrix4f matrix4f = matrixStack.last().pose();
-        vertexBuffer.begin(GL11.GL_QUADS, DefaultVertexFormat.POSITION_COLOR);
+        vertexBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
         //  X+
         vertexBuffer.vertex(matrix4f, 0.5f, -0.5f, -0.5f).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
@@ -299,7 +292,7 @@ public class RenderNode {
             final float pdx = (float) (lineStartPos.x() - lineEndPos.x());
             final float pdy = (float) (lineStartPos.y() - lineEndPos.y());
             final float pdz = (float) (lineStartPos.z() - lineEndPos.z());
-            vertexBuffer.begin(GL11.GL_LINES, DefaultVertexFormat.POSITION_COLOR);
+            vertexBuffer.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
             vertexBuffer.vertex(matrix4f, 0, 0, 0).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
             vertexBuffer.vertex(matrix4f, pdx, pdy, pdz).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
             tessellator.end();
@@ -323,7 +316,6 @@ public class RenderNode {
 
         matrixStack.pushPose();
         matrixStack.translate(pos.x, pos.y, pos.z);
-        RenderSystem.normal3f(0.0F, 1.0F, 0.0F);
 
         final EntityRenderDispatcher renderManager = Minecraft.getInstance().getEntityRenderDispatcher();
         matrixStack.mulPose(renderManager.cameraOrientation());
@@ -345,7 +337,7 @@ public class RenderNode {
         final Matrix4f matrix4f = matrixStack.last().pose();
         final Tesselator tessellator = Tesselator.getInstance();
         final BufferBuilder vertexBuffer = tessellator.getBuilder();
-        vertexBuffer.begin(GL11.GL_QUADS, DefaultVertexFormat.POSITION_COLOR);
+        vertexBuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         vertexBuffer.vertex(matrix4f, (-i - 1), 0f, 0.0f).color(colorBackground.getRed(), colorBackground.getGreen(), colorBackground.getBlue(), colorBackground.getAlpha()).endVertex();
         vertexBuffer.vertex(matrix4f, (-i - 1), lineHeight, 0.0f).color(colorBackground.getRed(), colorBackground.getGreen(), colorBackground.getBlue(), colorBackground.getAlpha()).endVertex();
         vertexBuffer.vertex(matrix4f, (i + 1), lineHeight, 0.0f).color(colorBackground.getRed(), colorBackground.getGreen(), colorBackground.getBlue(), colorBackground.getAlpha()).endVertex();

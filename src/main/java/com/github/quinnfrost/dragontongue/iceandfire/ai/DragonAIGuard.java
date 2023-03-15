@@ -176,9 +176,9 @@ public class DragonAIGuard<T extends LivingEntity> extends NearestAttackableTarg
             }
         };
         Class entityClazz = LivingEntity.class;
-        TargetingConditions targetEntitySelector = (new TargetingConditions()).range(getTargetDistance(mobEntity)).selector(targetPredicate);
+        TargetingConditions targetEntitySelector = TargetingConditions.DEFAULT.range(getTargetDistance(mobEntity)).selector(targetPredicate);
         if (entityClazz != Player.class && entityClazz != ServerPlayer.class) {
-            nearestTarget = mobEntity.level.getNearestLoadedEntity(LivingEntity.class, targetEntitySelector, mobEntity, mobEntity.getX(), mobEntity.getEyeY(), mobEntity.getZ(), getTargetableArea(mobEntity, getTargetDistance(mobEntity)));
+            nearestTarget = mobEntity.level.getNearestEntity(LivingEntity.class, targetEntitySelector, mobEntity, mobEntity.getX(), mobEntity.getEyeY(), mobEntity.getZ(), getTargetableArea(mobEntity, getTargetDistance(mobEntity)));
         } else {
             nearestTarget = mobEntity.level.getNearestPlayer(targetEntitySelector, mobEntity, mobEntity.getX(), mobEntity.getEyeY(), mobEntity.getZ());
         }

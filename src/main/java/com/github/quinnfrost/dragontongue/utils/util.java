@@ -20,7 +20,6 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.core.Direction;
-import net.minecraft.util.math.*;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
@@ -101,7 +100,7 @@ public class util {
             return false;
         }
         TargetingConditions entityPredicate = TargetingConditions.DEFAULT;
-        entityPredicate.allowUnseeable();
+        entityPredicate.ignoreLineOfSight();
         if (checkDistance > 0) {
             entityPredicate.range(checkDistance);
         }

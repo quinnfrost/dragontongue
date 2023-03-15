@@ -23,7 +23,7 @@ public class DragonAIOwnerTarget extends TargetGoal {
         this.dragon = dragonIn;
         this.setFlags(EnumSet.of(Goal.Flag.TARGET));
 
-        this.predicate = new TargetingConditions().range(1024).allowUnseeable();
+        this.predicate = TargetingConditions.DEFAULT.range(1024).ignoreLineOfSight();
     }
 
     /**

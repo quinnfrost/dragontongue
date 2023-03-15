@@ -8,7 +8,6 @@ import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.WalkTarget;
 import net.minecraft.world.entity.ai.behavior.Behavior;
-import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.server.level.ServerLevel;
 
 import javax.annotation.Nullable;

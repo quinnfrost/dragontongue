@@ -5,12 +5,14 @@ package com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms;
 
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
+import com.github.alexthe666.iceandfire.util.WorldUtil;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.NodeProcessorFly;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.NodeProcessorWalk;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjobs.AbstractPathJob;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjobs.PathJobMoveAwayFromLocation;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjobs.PathJobMoveToLocation;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjobs.PathJobRandomPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.block.LadderBlock;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
@@ -30,6 +32,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -139,6 +142,7 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
     }
 
 
+    @Override
     @Nullable
     public PathResult moveAwayFromXYZ(final BlockPos avoid, final double range, final double speedFactor, final boolean safeDestination) {
         final BlockPos start = AbstractPathJob.prepareStart(ourEntity);
@@ -151,6 +155,7 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
                 ourEntity), null, speedFactor, safeDestination);
     }
 
+    @Override
     @Nullable
     public PathResult moveToRandomPos(final double range, final double speedFactor) {
         if (pathResult != null && pathResult.getJob() instanceof PathJobRandomPos) {
@@ -350,6 +355,7 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
         return blockpos.getY() + voxelshape.max(Direction.Axis.Y);
     }
 
+    @Override
     @Nullable
     public PathResult moveToXYZ(final double x, final double y, final double z, final double speedFactor) {
         final int newX = Mth.floor(x);
@@ -387,7 +393,7 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
     //Return a new WalkNodeProcessor for safety reasons eg if the entity
     //has a passenger this method get's called and returning null is not a great idea
     @Override
-    protected PathFinder createPathFinder(final int p_179679_1_) {
+    protected @NotNull PathFinder createPathFinder(final int p_179679_1_) {
         return new PathFinder(new WalkNodeEvaluator(), p_179679_1_);
     }
 
@@ -399,7 +405,7 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
             if (pEx.isRailsExit()) {
                 final Entity entity = ourEntity.getVehicle();
                 ourEntity.stopRiding();
-                entity.remove();
+                entity.remove(Entity.RemovalReason.DISCARDED);
             } else if (!pEx.isOnRails()) {
                 if (destination == null || mob.distanceToSqr(destination.getX(), destination.getY(), destination.getZ()) > 2) {
                     ourEntity.stopRiding();
@@ -408,7 +414,7 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
             } else if ((Math.abs(pEx.x - mob.getX()) > 7 || Math.abs(pEx.z - mob.getZ()) > 7) && ourEntity.getVehicle() != null) {
                 final Entity entity = ourEntity.getVehicle();
                 ourEntity.stopRiding();
-                entity.remove();
+                entity.remove(Entity.RemovalReason.DISCARDED);
             }
         }
         return true;
@@ -416,19 +422,19 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
 
 
     @Override
-    protected Vec3 getTempMobPos() {
+    protected @NotNull Vec3 getTempMobPos() {
         return this.ourEntity.position();
     }
 
     @Override
-    public Path createPath(final BlockPos pos, final int accuracy) {
+    public Path createPath(final @NotNull BlockPos pos, final int accuracy) {
         return null;
     }
 
     @Override
-    protected boolean canMoveDirectly(final Vec3 start, final Vec3 end, final int sizeX, final int sizeY, final int sizeZ) {
+    protected boolean canMoveDirectly(final @NotNull Vec3 start, final @NotNull Vec3 end) {
         // TODO improve road walking. This is better in some situations, but still not great.
-        return super.canMoveDirectly(start, end, sizeX, sizeY, sizeZ);
+        return super.canMoveDirectly(start, end);
     }
 
     public double getSpeedFactor() {
@@ -518,6 +524,8 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
     private boolean processCompletedCalculationResult() throws InterruptedException, ExecutionException {
         pathResult.getJob().synchToClient(mob);
         moveTo(pathResult.getPath(), getSpeedFactor());
+
+        if (pathResult != null)
         pathResult.setStatus(PathFindingStatus.IN_PROGRESS_FOLLOWING);
         return false;
     }
@@ -705,13 +713,17 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
         boolean wentAhead = false;
         boolean isTracking = AbstractPathJob.trackingMap.containsValue(ourEntity.getUUID());
 
+        // TODO: Figure out a better way to derive this value ideally from the pathfinding code
+        int maxDropHeight = 3;
+
         final HashSet<BlockPos> reached = new HashSet<>();
         // Look at multiple points, incase we're too fast
         for (int i = this.path.getNextNodeIndex(); i < Math.min(this.path.getNodeCount(), this.path.getNextNodeIndex() + 4); i++) {
             Vec3 next = this.path.getEntityPosAtNode(this.mob, i);
             if (Math.abs(this.mob.getX() - next.x) < (double) this.maxDistanceToWaypoint - Math.abs(this.mob.getY() - (next.y)) * 0.1
                     && Math.abs(this.mob.getZ() - next.z) < (double) this.maxDistanceToWaypoint - Math.abs(this.mob.getY() - (next.y)) * 0.1 &&
-                    Math.abs(this.mob.getY() - next.y) <= Math.max(this.mob.maxUpStep, Math.ceil(this.mob.getBbHeight() / 2.0F))) {
+                    (Math.abs(this.mob.getY() - next.y) <= Math.min(1.0F, Math.ceil(this.mob.getBbHeight() / 2.0F)) ||
+                            Math.abs(this.mob.getY() - next.y) <= Math.ceil(this.mob.getBbWidth() /2 ) * maxDropHeight)) {
                 this.path.advance();
                 wentAhead = true;
 
@@ -744,11 +756,15 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
         final Vec3 curr = this.path.getEntityPosAtNode(this.mob, curNode - 1);
         final Vec3 next = this.path.getEntityPosAtNode(this.mob, curNode);
 
-        if (mob.blockPosition().closerThan(curr, 2.0) && mob.blockPosition().closerThan(next, 2.0)) {
+        final Vec3i currI = new Vec3i(curr.x, curr.y, curr.z);
+        final Vec3i nextI = new Vec3i(next.x, next.y, next.z);
+
+        if (mob.blockPosition().closerThan(currI, 2.0) && mob.blockPosition().closerThan(nextI, 2.0)) {
             int currentIndex = curNode - 1;
             while (currentIndex > 0) {
                 final Vec3 tempoPos = this.path.getEntityPosAtNode(this.mob, currentIndex);
-                if (mob.blockPosition().closerThan(tempoPos, 1.0)) {
+                final Vec3i tempoPosI = new Vec3i(tempoPos.x, tempoPos.y, tempoPos.z);
+                if (mob.blockPosition().closerThan(tempoPosI, 1.0)) {
                     this.path.setNextNodeIndex(currentIndex);
                 } else if (isTracking) {
                     reached.add(new BlockPos(tempoPos.x, tempoPos.y, tempoPos.z));
@@ -770,6 +786,7 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
         stop();
     }
 
+    @Override
     public void recomputePath() {
     }
 
@@ -777,7 +794,7 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
      * Don't let vanilla rapidly discard paths, set a timeout before its allowed to use stuck.
      */
     @Override
-    protected void doStuckDetection(final Vec3 positionVec3) {
+    protected void doStuckDetection(final @NotNull Vec3 positionVec3) {
         // Do nothing, unstuck is checked on tick, not just when we have a path
     }
 
@@ -843,6 +860,7 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
         getPathingOptions().setCanSwim(canSwim);
     }
 
+    @Override
     public BlockPos getDesiredPos() {
         return desiredPos;
     }
@@ -867,29 +885,8 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
     }
 
     public static boolean isEntityBlockLoaded(final LevelAccessor world, final BlockPos pos) {
-        return isEntityChunkLoaded(world, pos.getX() >> 4, pos.getZ() >> 4);
+        return WorldUtil.isEntityBlockLoaded(world, pos);
     }
 
-    /**
-     * Returns whether an entity ticking chunk is loaded at the position
-     *
-     * @param world world to check on
-     * @param x     chunk position
-     * @param z     chunk position
-     * @return true if loaded
-     */
-    public static boolean isEntityChunkLoaded(final LevelAccessor world, final int x, final int z) {
-        return isEntityChunkLoaded(world, new ChunkPos(x, z));
-    }
 
-    /**
-     * Returns whether an entity ticking chunk is loaded at the position
-     *
-     * @param world world to check on
-     * @param pos   chunk position
-     * @return true if loaded
-     */
-    public static boolean isEntityChunkLoaded(final LevelAccessor world, final ChunkPos pos) {
-        return world.getChunkSource().isEntityTickingChunk(pos);
-    }
 }

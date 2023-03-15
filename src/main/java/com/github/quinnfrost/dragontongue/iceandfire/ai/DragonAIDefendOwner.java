@@ -8,7 +8,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.target.TargetGoal;
-import net.minecraft.entity.passive.TameableEntity;
 
 import java.util.EnumSet;
 
@@ -25,7 +24,7 @@ public class DragonAIDefendOwner extends TargetGoal {
         this.dragon = dragonIn;
         this.setFlags(EnumSet.of(Goal.Flag.TARGET));
 
-        this.predicate = new TargetingConditions().range(1024).allowUnseeable();
+        this.predicate = TargetingConditions.DEFAULT.range(1024).ignoreLineOfSight();
     }
 
     /**

@@ -1,11 +1,9 @@
 {
   "required": false,
   "package": "com.github.quinnfrost.dragontongue.mixin",
-  "compatibilityLevel": "JAVA_8",
+  "compatibilityLevel": "JAVA_17",
   "refmap": "dragontongue.refmap.json",
   "mixins": [
-    "MixinIngameGui",
-    "MixinLivingEntity",
     "iceandfire.MixinDragonBow",
     "iceandfire.MixinFoodUtils",
     "iceandfire.accessor.IEntityDragonAccess",

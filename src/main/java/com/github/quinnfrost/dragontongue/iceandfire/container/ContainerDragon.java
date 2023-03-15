@@ -187,7 +187,7 @@ public class ContainerDragon extends AbstractContainerMenu {
                         return new ContainerDragon(
                                 p_createMenu_1_,
                                 p_createMenu_2_,
-                                dragon.inventory,
+                                dragon.dragonInventory,
                                 dragon
                         );
                     }

@@ -51,17 +51,17 @@ import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
 
 import java.util.*;
 
 public class ServerEvents {
     @SubscribeEvent
-    public static void onServerStarted(FMLServerStartedEvent event) {
+    public static void onServerStarted(ServerStartedEvent event) {
         // Resets the debug option, or the getChunk() might cause infinite wait
         EntityBehaviorDebugger.stopDebug();
     }
@@ -74,12 +74,12 @@ public class ServerEvents {
      * @param event
      */
     @SubscribeEvent
-    public static void onProjectileImpact(ProjectileImpactEvent.Arrow event) {
+    public static void onProjectileImpact(ProjectileImpactEvent event) {
         if (event.getEntity().level.isClientSide) {
             return;
         }
 
-        Projectile projectile = event.getArrow();
+        Projectile projectile = event.getProjectile();
         Entity shooter = projectile.getOwner();
 
         // Trident teleports
@@ -277,7 +277,7 @@ public class ServerEvents {
             InteractionHand hand = event.getHand();
             ItemStack itemStack = playerEntity.getItemInHand(hand);
 
-            if (itemStack.getItem() == RegistryItems.DRAGON_STAFF_ICE) {
+            if (itemStack.getItem() == RegistryItems.DRAGON_STAFF_ICE.get()) {
 //                EntityRayTraceResult entityRayTraceResult = util.getTargetEntity(playerEntity, Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f,
 //                        entity -> entity instanceof EntityDragonPart || entity instanceof LivingEntity);
 //                if (entityRayTraceResult == null || !IafHelperClass.isDragon(IafHelperClass.getDragon(entityRayTraceResult.getEntity()))) {

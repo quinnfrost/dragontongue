@@ -13,17 +13,14 @@ import com.github.quinnfrost.dragontongue.message.MessageDebugEntity;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.schedule.Activity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.server.ServerWorld;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -112,8 +109,8 @@ public class EntityBehaviorDebugger {
                     stringList.add("LookTarget: " + formatBlockPos(iPosWrapper.currentBlockPosition()));
                 });
             }
-            if (brain.hasMemoryValue(MemoryModuleType.VISIBLE_LIVING_ENTITIES)) {
-                brain.getMemory(MemoryModuleType.VISIBLE_LIVING_ENTITIES).ifPresent(entityList -> {
+            if (brain.hasMemoryValue(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES)) {
+                brain.getMemory(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES).ifPresent(entityList -> {
                     stringList.add("VisibleMobs: " + entityList);
                 });
             }

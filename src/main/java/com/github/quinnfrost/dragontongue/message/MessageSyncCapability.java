@@ -3,6 +3,7 @@ package com.github.quinnfrost.dragontongue.message;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
+import com.github.quinnfrost.dragontongue.capability.CapabilityProvider;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -11,9 +12,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fml.network.NetworkDirection;
-import net.minecraftforge.fml.network.NetworkEvent;
-import net.minecraftforge.fml.network.PacketDistributor;
+import net.minecraftforge.network.NetworkDirection;
+import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.PacketDistributor;
 
 import java.util.function.Supplier;
 
@@ -33,13 +34,13 @@ public class MessageSyncCapability {
         for (int i = 0; i < listSize; i++) {
             listNBT.add(buffer.readNbt());
         }
-        CapabilityInfoHolder.TARGET_HOLDER.readNBT(cap, null, listNBT);
+        CapabilityProvider.readNBT(CapabilityInfoHolder.TARGET_HOLDER, cap, null, listNBT);
     }
 
     public void encoder(FriendlyByteBuf buffer) {
         buffer.writeInt(entityID);
 
-        ListTag listNBT = (ListTag) CapabilityInfoHolder.TARGET_HOLDER.writeNBT(cap, null);
+        ListTag listNBT = (ListTag) CapabilityProvider.writeNBT(CapabilityInfoHolder.TARGET_HOLDER, cap, null);
         buffer.writeInt(listNBT.size());
         CompoundTag compoundNBT;
         for (int i = 0; i < listNBT.size(); i++) {

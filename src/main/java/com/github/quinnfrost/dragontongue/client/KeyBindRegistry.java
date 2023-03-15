@@ -17,14 +17,13 @@ import net.minecraft.client.Options;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.entity.MobEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
+import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 
 import java.lang.reflect.Field;
@@ -130,7 +129,7 @@ public class KeyBindRegistry {
                     Config.COMMAND_DISTANCE_MAX.get().floatValue(), null);
             if (debugRayTraceResult.getType() == HitResult.Type.ENTITY) {
                 RegistryMessages.sendToServer(new MessageDebugEntity(((EntityHitResult)debugRayTraceResult).getEntity().getId()));
-                ClientGlow.setGlowing(((EntityHitResult)debugRayTraceResult).getEntity(), 20);
+                ClientGlow.setGlowingTag(((EntityHitResult)debugRayTraceResult).getEntity(), 20);
             }
         }
 
@@ -162,14 +161,14 @@ public class KeyBindRegistry {
             if (rayTraceResult.getType() == HitResult.Type.ENTITY) {
                 // H + LB
                 if (gameSettings.keyAttack.isDown()) {
-                    ClientGlow.setGlowing(((EntityHitResult) rayTraceResult).getEntity(), 2 * 50);
+                    ClientGlow.setGlowingTag(((EntityHitResult) rayTraceResult).getEntity(), 2 * 50);
                     RegistryMessages.sendToServer(new MessageCommandEntity(
                             EnumCommandType.FOLLOW, clientPlayerEntity.getUUID(), (EntityHitResult) rayTraceResult
                     ));
                 }
                 // H + RB
                 if (gameSettings.keyUse.isDown()) {
-                    ClientGlow.setGlowing(((EntityHitResult) rayTraceResult).getEntity(), 2 * 50);
+                    ClientGlow.setGlowingTag(((EntityHitResult) rayTraceResult).getEntity(), 2 * 50);
                     RegistryMessages.sendToServer(new MessageCommandEntity(
                             EnumCommandType.SIT, clientPlayerEntity.getUUID(), (EntityHitResult) rayTraceResult
                     ));
@@ -178,11 +177,11 @@ public class KeyBindRegistry {
                 if (gameSettings.keyPickItem.isDown()) {
                     // For some reason isPress() doesn't work in server mode
                     gameSettings.keyPickItem.setDown(false);
-                    ClientGlow.setGlowing(((EntityHitResult) rayTraceResult).getEntity(), 2 * 50);
+                    ClientGlow.setGlowingTag(((EntityHitResult) rayTraceResult).getEntity(), 2 * 50);
                     RegistryMessages.sendToServer(new MessageCommandEntity(
                             EnumCommandType.GUARD, clientPlayerEntity.getUUID(), (EntityHitResult) rayTraceResult
                     ));
-//                    ClientGlow.setGlowing(((EntityRayTraceResult) rayTraceResult).getEntity(), 2 * 50);
+//                    ClientGlow.setGlowingTag(((EntityRayTraceResult) rayTraceResult).getEntity(), 2 * 50);
 //                    RegistryMessages.sendToServer(new MessageCommandEntity(
 //                            EnumCommandType.WONDER, clientPlayerEntity.getUniqueID(), (EntityRayTraceResult) rayTraceResult
 //                    ));
@@ -204,7 +203,7 @@ public class KeyBindRegistry {
             if (gameSettings.keyAttack.isDown()) {
                 // Entity selected
                 if (rayTraceResult.getType() == HitResult.Type.ENTITY) {
-                    ClientGlow.setGlowing(((EntityHitResult) rayTraceResult).getEntity(), 2 * 50);
+                    ClientGlow.setGlowingTag(((EntityHitResult) rayTraceResult).getEntity(), 2 * 50);
                     RegistryMessages.sendToServer(new MessageCommandEntity(
                             EnumCommandType.ATTACK, clientPlayerEntity.getUUID(), (EntityHitResult) rayTraceResult
                     ));
@@ -229,7 +228,7 @@ public class KeyBindRegistry {
             // G + MB
             if (gameSettings.keyPickItem.isDown()) {
                 if (rayTraceResult.getType() == HitResult.Type.ENTITY) {
-                    ClientGlow.setGlowing(((EntityHitResult) rayTraceResult).getEntity(), 2 * 50);
+                    ClientGlow.setGlowingTag(((EntityHitResult) rayTraceResult).getEntity(), 2 * 50);
                     RegistryMessages.sendToServer(new MessageCommandEntity(
                             EnumCommandType.HALT, clientPlayerEntity.getUUID(), (EntityHitResult) rayTraceResult
                     ));
@@ -255,7 +254,7 @@ public class KeyBindRegistry {
             // V + LB
             if (gameSettings.keyAttack.isDown()) {
                 if (rayTraceResult.getType() == HitResult.Type.ENTITY) {
-                    ClientGlow.setGlowing(((EntityHitResult) rayTraceResult).getEntity(), 2 * 50);
+                    ClientGlow.setGlowingTag(((EntityHitResult) rayTraceResult).getEntity(), 2 * 50);
                     RegistryMessages.sendToServer(new MessageCommandEntity(
                             EnumCommandType.ADD, clientPlayerEntity.getUUID(), entityRayTraceResult
                     ));
@@ -269,7 +268,7 @@ public class KeyBindRegistry {
             // V + RB
             if (gameSettings.keyUse.isDown()) {
                 if (rayTraceResult.getType() == HitResult.Type.ENTITY) {
-                    ClientGlow.setGlowing(((EntityHitResult) rayTraceResult).getEntity(), 2 * 50);
+                    ClientGlow.setGlowingTag(((EntityHitResult) rayTraceResult).getEntity(), 2 * 50);
                 }
                 RegistryMessages.sendToServer(new MessageCommandEntity(
                         EnumCommandType.REMOVE, clientPlayerEntity.getUUID(), entityRayTraceResult
@@ -281,7 +280,7 @@ public class KeyBindRegistry {
             // V + MB
             if (gameSettings.keyPickItem.isDown()) {
                 if (rayTraceResult.getType() == HitResult.Type.ENTITY) {
-                    ClientGlow.setGlowing(((EntityHitResult) rayTraceResult).getEntity(), 2 * 50);
+                    ClientGlow.setGlowingTag(((EntityHitResult) rayTraceResult).getEntity(), 2 * 50);
                     RegistryMessages.sendToServer(new MessageCommandEntity(
                             EnumCommandType.SET, clientPlayerEntity.getUUID(), entityRayTraceResult
                     ));

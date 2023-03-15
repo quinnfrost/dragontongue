@@ -23,11 +23,11 @@ public class ClientGlow {
         glowList = new HashMap<>();
     }
 
-    public static void setGlowing(Entity entity, int timeInTick) {
+    public static void setGlowingTag(Entity entity, int timeInTick) {
         if (entity != null) {
             world = entity.level;
             glowList.put(entity.getId(), timeInTick);
-            entity.setGlowing(true);
+            entity.setGlowingTag(true);
         }
     }
 
@@ -38,7 +38,7 @@ public class ClientGlow {
                 if (time > 0) {
                     return time - 1;
                 } else if (world.getEntity(entityID) != null) {
-                    world.getEntity(entityID).setGlowing(false);
+                    world.getEntity(entityID).setGlowingTag(false);
                 }
                 return 0;
             });
@@ -60,7 +60,7 @@ public class ClientGlow {
                         .and(excludeEntity));
         for (Entity entity :
                 entities) {
-            setGlowing(entity, timeInTicks);
+            setGlowingTag(entity, timeInTicks);
         }
     }
 }

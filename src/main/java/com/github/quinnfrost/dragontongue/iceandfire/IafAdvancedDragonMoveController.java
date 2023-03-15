@@ -19,12 +19,9 @@ import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.level.pathfinder.NodeEvaluator;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
-import net.minecraft.world.entity.ai.control.MoveControl.Operation;
 
 public class IafAdvancedDragonMoveController {
     public static class GroundMoveHelper extends MoveControl {

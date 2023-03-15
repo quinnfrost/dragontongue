@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableSet;
 import com.mojang.serialization.Dynamic;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.entity.*;
 import net.minecraft.world.entity.ai.sensing.Sensing;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -36,8 +35,6 @@ import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.entity.ai.sensing.Sensor;
 import net.minecraft.world.entity.ai.sensing.SensorType;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.entity.ai.goal.OwnerHurtByTargetGoal;
-import net.minecraft.entity.ai.goal.OwnerHurtTargetGoal;
 import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
@@ -51,7 +48,6 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
@@ -245,10 +241,10 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
             MemoryModuleType.WALK_TARGET,
             MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
 
-            MemoryModuleType.LIVING_ENTITIES,
-            MemoryModuleType.VISIBLE_LIVING_ENTITIES,
+            MemoryModuleType.NEAREST_LIVING_ENTITIES,
+            MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES,
             MemoryModuleType.NEAREST_VISIBLE_PLAYER,
-            MemoryModuleType.NEAREST_VISIBLE_TARGETABLE_PLAYER,
+            MemoryModuleType.NEAREST_VISIBLE_ATTACKABLE_PLAYER,
 
             MemoryModuleType.ATTACK_TARGET,
             MemoryModuleType.ATTACK_COOLING_DOWN
@@ -422,7 +418,7 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
         this.goalSelector.addGoal(3, new DragonAIReturnToRoost((EntityDragonBase) (Object) this, 1.0D));
         this.goalSelector.addGoal(4, new DragonAIEscort((EntityDragonBase) (Object) this, 1.0D));
         this.goalSelector.addGoal(5, new DragonAIAttackMelee((EntityDragonBase) (Object) this, 1.5D, false));
-        this.goalSelector.addGoal(6, new AquaticAITempt(this, 1.0D, IafItemRegistry.FIRE_STEW, false));
+        this.goalSelector.addGoal(6, new AquaticAITempt((EntityDragonBase) (Object) this, 1.0D, IafItemRegistry.FIRE_STEW.get(), false));
         this.goalSelector.addGoal(7, new DragonAIWander((EntityDragonBase) (Object) this, 1.0D));
         this.goalSelector.addGoal(8, new DragonAIWatchClosest(this, LivingEntity.class, 6.0F));
         this.goalSelector.addGoal(8, new DragonAILookIdle((EntityDragonBase) (Object) this));
@@ -449,7 +445,7 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
 
     @Inject(
             remap = false,
-            method = "createNavigator(Lnet/minecraft/world/World;Lcom/github/alexthe666/iceandfire/pathfinding/raycoms/AdvancedPathNavigate$MovementType;Lcom/github/alexthe666/iceandfire/pathfinding/raycoms/PathingStuckHandler;FF)Lnet/minecraft/pathfinding/PathNavigator;",
+            method = "createNavigator(Lnet/minecraft/world/level/Level;Lcom/github/alexthe666/iceandfire/pathfinding/raycoms/AdvancedPathNavigate$MovementType;Lcom/github/alexthe666/iceandfire/pathfinding/raycoms/PathingStuckHandler;FF)Lnet/minecraft/world/entity/ai/navigation/PathNavigation;",
             at = @At(value = "HEAD"),
             cancellable = true
     )
@@ -499,7 +495,7 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
     }
 
     @Inject(
-            method = "updateAITasks",
+            method = "customServerAiStep",
             at = @At(value = "HEAD"),
             cancellable = true
     )
@@ -762,7 +758,7 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
                         if (this.isOwnedBy(living) || this.isOwnersPet(living)) {
                             living.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 50 * size, 0, false, false));
                         } else {
-                            if (living.getItemBySlot(EquipmentSlot.HEAD).getItem() != IafItemRegistry.EARPLUGS) {
+                            if (living.getItemBySlot(EquipmentSlot.HEAD).getItem() != IafItemRegistry.EARPLUGS.get()) {
                                 living.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 50 * size, 0, false, false));
                             }
                         }

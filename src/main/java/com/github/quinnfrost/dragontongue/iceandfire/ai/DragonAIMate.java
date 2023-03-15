@@ -3,24 +3,22 @@ package com.github.quinnfrost.dragontongue.iceandfire.ai;
 import com.github.alexthe666.iceandfire.block.IafBlockRegistry;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.EntityDragonEgg;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.material.Material;
-import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ExperienceOrb;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
 
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Random;
 
-import net.minecraft.world.entity.ai.goal.Goal.Flag;
-
 public class DragonAIMate extends Goal {
-    private static final BlockState NEST = IafBlockRegistry.NEST.defaultBlockState();
+    private static final BlockState NEST = IafBlockRegistry.NEST.get().defaultBlockState();
     private final EntityDragonBase dragon;
     Level theWorld;
     int spawnBabyDelay;
@@ -52,7 +50,7 @@ public class DragonAIMate extends Goal {
     }
 
     /**
-     * Resets the brain
+     * Resets the task
      */
     @Override
     public void stop() {
@@ -61,7 +59,7 @@ public class DragonAIMate extends Goal {
     }
 
     /**
-     * Updates the brain
+     * Updates the task
      */
     @Override
     public void tick() {
@@ -80,7 +78,7 @@ public class DragonAIMate extends Goal {
      * valid mate found.
      */
     private EntityDragonBase getNearbyMate() {
-        List<EntityDragonBase> list = this.theWorld.getEntitiesOfClass(this.dragon.getClass(), this.dragon.getBoundingBox().inflate(180.0D, 180.0D, 180.0D));
+        List<? extends EntityDragonBase> list = this.theWorld.getEntitiesOfClass(this.dragon.getClass(), this.dragon.getBoundingBox().inflate(180.0D, 180.0D, 180.0D));
         double d0 = Double.MAX_VALUE;
         EntityDragonBase mate = null;
         for (EntityDragonBase partner : list) {
@@ -143,7 +141,7 @@ public class DragonAIMate extends Goal {
                 }
             }
             if (theWorld.getBlockState(dirtPos).getMaterial().isReplaceable() || theWorld.getBlockState(dirtPos) == NEST) {
-                theWorld.setBlockAndUpdate(dirtPos, Blocks.GRASS_PATH.defaultBlockState());
+                theWorld.setBlockAndUpdate(dirtPos, Blocks.DIRT_PATH.defaultBlockState());
             }
             if (this.theWorld.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
                 this.theWorld.addFreshEntity(new ExperienceOrb(this.theWorld, this.dragon.getX(), this.dragon.getY(), this.dragon.getZ(), random.nextInt(15) + 10));

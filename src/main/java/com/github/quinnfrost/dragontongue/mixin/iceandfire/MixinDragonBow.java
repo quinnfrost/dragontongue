@@ -39,7 +39,7 @@ public abstract class MixinDragonBow extends BowItem {
 
         if (entityLiving instanceof Player) {
             Player playerentity = (Player)entityLiving;
-            boolean flag = playerentity.abilities.instabuild || EnchantmentHelper.getItemEnchantmentLevel(Enchantments.INFINITY_ARROWS, stack) > 0;
+            boolean flag = playerentity.getAbilities().instabuild || EnchantmentHelper.getItemEnchantmentLevel(Enchantments.INFINITY_ARROWS, stack) > 0;
             ItemStack itemstack = playerentity.getProjectile(stack);
 
             int i = this.getUseDuration(stack) - timeLeft;
@@ -53,7 +53,7 @@ public abstract class MixinDragonBow extends BowItem {
 
                 float f = getPowerForTime(i);
                 if (!((double)f < 0.1D)) {
-                    boolean flag1 = playerentity.abilities.instabuild || (itemstack.getItem() instanceof ArrowItem && ((ArrowItem)itemstack.getItem()).isInfinite(itemstack, stack, playerentity));
+                    boolean flag1 = playerentity.getAbilities().instabuild || (itemstack.getItem() instanceof ArrowItem && ((ArrowItem)itemstack.getItem()).isInfinite(itemstack, stack, playerentity));
                     if (!worldIn.isClientSide) {
                         ArrowItem arrowitem = (ArrowItem)(itemstack.getItem() instanceof ArrowItem ? itemstack.getItem() : Items.ARROW);
                         AbstractArrow abstractarrowentity = arrowitem.createArrow(worldIn, itemstack, playerentity);
@@ -80,18 +80,18 @@ public abstract class MixinDragonBow extends BowItem {
                         stack.hurtAndBreak(1, playerentity, (player) -> {
                             player.broadcastBreakEvent(playerentity.getUsedItemHand());
                         });
-                        if (flag1 || playerentity.abilities.instabuild && (itemstack.getItem() == Items.SPECTRAL_ARROW || itemstack.getItem() == Items.TIPPED_ARROW)) {
+                        if (flag1 || playerentity.getAbilities().instabuild && (itemstack.getItem() == Items.SPECTRAL_ARROW || itemstack.getItem() == Items.TIPPED_ARROW)) {
                             abstractarrowentity.pickup = AbstractArrow.Pickup.CREATIVE_ONLY;
                         }
 
                         worldIn.addFreshEntity(abstractarrowentity);
                     }
 
-                    worldIn.playSound((Player)null, playerentity.getX(), playerentity.getY(), playerentity.getZ(), SoundEvents.ARROW_SHOOT, SoundSource.PLAYERS, 1.0F, 1.0F / (random.nextFloat() * 0.4F + 1.2F) + f * 0.5F);
-                    if (!flag1 && !playerentity.abilities.instabuild) {
+                    worldIn.playSound((Player)null, playerentity.getX(), playerentity.getY(), playerentity.getZ(), SoundEvents.ARROW_SHOOT, SoundSource.PLAYERS, 1.0F, 1.0F / (playerentity.level.getRandom().nextFloat() * 0.4F + 1.2F) + f * 0.5F);
+                    if (!flag1 && !playerentity.getAbilities().instabuild) {
                         itemstack.shrink(1);
                         if (itemstack.isEmpty()) {
-                            playerentity.inventory.removeItem(itemstack);
+                            playerentity.getInventory().removeItem(itemstack);
                         }
                     }
 

@@ -1,20 +1,17 @@
 package com.github.quinnfrost.dragontongue.client.overlay;
 
 import com.github.quinnfrost.dragontongue.utils.Vector2f;
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.*;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.Font;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.client.gui.GuiUtils;
+import net.minecraftforge.client.gui.GuiUtils;
 import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nullable;
@@ -163,7 +160,7 @@ public class OverlayCrossHair extends GuiComponent {
         int scaledWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
         int scaledHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
 
-        Minecraft.getInstance().getTextureManager().bind(scopeTexture);
+        Minecraft.getInstance().getTextureManager().bindForSetup(scopeTexture);
         GuiUtils.drawTexturedModalRect(ms, scaledWidth / 2 - scopeTextureLength / 2, scaledHeight / 2, 0, 0, scopeTextureLength, scopeTextureLength, 1);
     }
 
@@ -178,18 +175,16 @@ public class OverlayCrossHair extends GuiComponent {
 
         float suggestPos = (float) (0.4058604333 * Math.pow(scopeSuggestion, 1.395441973));
 
-        RenderSystem.pushTextureAttributes();
         ms.pushPose();
         RenderSystem.enableDepthTest();
         RenderSystem.disableTexture();
         RenderSystem.disableBlend();
-        RenderSystem.disableLighting();
 
         final Tesselator tessellator = Tesselator.getInstance();
         final BufferBuilder vertexBuffer = tessellator.getBuilder();
 
         GL11.glLineWidth(2.0F);
-        vertexBuffer.begin(GL11.GL_LINES, DefaultVertexFormat.POSITION_COLOR);
+        vertexBuffer.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
         vertexBuffer.vertex(0.5 + scaledWidth / 2f - suggestionWidth / 2, 0.5 + scaledHeight / 2f + suggestPos, 0).color(0, 0, 0, 255).endVertex();
         vertexBuffer.vertex(0.5 + scaledWidth / 2f + suggestionWidth / 2, 0.5 + scaledHeight / 2f + suggestPos, 0).color(0, 0, 0, 255).endVertex();
 
@@ -199,7 +194,6 @@ public class OverlayCrossHair extends GuiComponent {
 
         GL11.glLineWidth(1.0F);
         RenderSystem.disableDepthTest();
-        RenderSystem.popAttributes();
         ms.popPose();
     }
 
@@ -216,7 +210,7 @@ public class OverlayCrossHair extends GuiComponent {
 
                     int xPosition = (int) (scaledWidth / 2 - markTextureLength / 2 + vector2f.x);
                     int yPosition = (int) (scaledHeight / 2 - markTextureLength / 2 + vector2f.y);
-                    minecraft.getTextureManager().bind(markTexture);
+                    minecraft.getTextureManager().bindForSetup(markTexture);
                     switch (integerIconTypePair.getSecond()) {
 
                         case HIT:

@@ -3,20 +3,17 @@ package com.github.quinnfrost.dragontongue.item;
 import com.github.quinnfrost.dragontongue.Registration;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.RegistryObject;
+import net.minecraftforge.registries.RegistryObject;
 
 
 public class RegistryItems {
-    public static final Item DRAGON_STAFF_ICE = new ItemDragonStaff();
+    public static final RegistryObject<ItemDragonStaff> DRAGON_STAFF_ICE = Registration.ITEMS.register("dragonstaff_ice", ItemDragonStaff::new);
     // Items in mod
-    public static final Item CROW_WAND = new ItemCrowWand();
+    public static final RegistryObject<ItemCrowWand> CROW_WAND = Registration.ITEMS.register("crow_wand", ItemCrowWand::new);
 
 
     // Register item
     public static void registerItems(IEventBus eventBus) {
-        Registration.ITEMS.register("crow_wand", () -> CROW_WAND);
-        Registration.ITEMS.register("dragonstaff_ice", () -> DRAGON_STAFF_ICE);
-
         Registration.ITEMS.register(eventBus);
     }
 

@@ -15,7 +15,6 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.core.BlockPos;
@@ -23,7 +22,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
+
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

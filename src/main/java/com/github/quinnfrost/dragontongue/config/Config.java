@@ -64,10 +64,10 @@ public class Config {
         spec.setConfig(configData);
     }
 
-    @SubscribeEvent
-    public static void onLoad(final ModConfig.Loading configEvent){}
-
-    @SubscribeEvent
-    public static void onReload(final ModConfig.Reloading configEvent){}
+//    @SubscribeEvent
+//    public static void onLoad(final ModConfig.Loading configEvent){}
+//
+//    @SubscribeEvent
+//    public static void onReload(final ModConfig.Reloading configEvent){}
 
 }

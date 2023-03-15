@@ -22,6 +22,7 @@ import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
+import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -31,8 +32,7 @@ import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.fmlserverevents.FMLServerStartedEvent;
-import net.minecraftforge.fmlserverevents.FMLServerStartingEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -151,14 +151,14 @@ public class DragonTongue
     }
     // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent
-    public void onServerStarting(FMLServerStartingEvent event) {
+    public void onServerStarting(ServerStartingEvent event) {
         // do something when the server starts
 //        LOGGER.info("HELLO from server starting");
         RegistryCommands.registerCommands(event.getServer().getFunctions().getDispatcher());
     }
 
     @SubscribeEvent
-    public void onServerStarted(FMLServerStartedEvent event) {
+    public void onServerStarted(ServerStartedEvent event) {
 
     }
 

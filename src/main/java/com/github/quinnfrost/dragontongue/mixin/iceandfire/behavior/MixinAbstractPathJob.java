@@ -1,9 +1,9 @@
 package com.github.quinnfrost.dragontongue.mixin.iceandfire.behavior;
 
-import com.github.alexthe666.iceandfire.pathfinding.raycoms.Node;
+import com.github.alexthe666.iceandfire.pathfinding.raycoms.MNode;
 import com.github.alexthe666.iceandfire.pathfinding.raycoms.SurfaceType;
 import com.github.alexthe666.iceandfire.pathfinding.raycoms.pathjobs.AbstractPathJob;
-import net.minecraft.block.*;
+
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
@@ -38,7 +38,7 @@ public abstract class MixinAbstractPathJob {
 
     @Shadow private boolean allowJumpPointSearchTypeWalk;
 
-    @Shadow protected abstract boolean walk(Node parent, BlockPos dPos);
+    @Shadow protected abstract boolean walk(MNode parent, BlockPos dPos);
 
     @Shadow @Final protected LevelReader world;
 
@@ -46,15 +46,15 @@ public abstract class MixinAbstractPathJob {
 
     @Inject(
             remap = false,
-            method = "Lcom/github/alexthe666/iceandfire/pathfinding/raycoms/pathjobs/AbstractPathJob;performJumpPointSearch(Lcom/github/alexthe666/iceandfire/pathfinding/raycoms/Node;Lnet/minecraft/util/math/BlockPos;Lcom/github/alexthe666/iceandfire/pathfinding/raycoms/Node;)V",
+            method = "performJumpPointSearch",
             at = @At(value = "HEAD"),
             cancellable = true
     )
-    public void roadblock$performJumpPointSearch(Node parent, BlockPos dPos, Node node, CallbackInfo ci) {
+    public void roadblock$performJumpPointSearch(MNode parent, BlockPos dPos, MNode node, CallbackInfo ci) {
 //        head$performJumpPointSearch(parent, dPos, node);
 //        ci.cancel();
     }
-    private void head$performJumpPointSearch(final Node parent, final BlockPos dPos, final Node node) {
+    private void head$performJumpPointSearch(final MNode parent, final BlockPos dPos, final MNode node) {
         if (node.getHeuristic() <= parent.getHeuristic()) {
             walk(node, dPos);
         }
@@ -62,7 +62,7 @@ public abstract class MixinAbstractPathJob {
 
     @Inject(
             remap = false,
-            method = "Lcom/github/alexthe666/iceandfire/pathfinding/raycoms/pathjobs/AbstractPathJob;isWalkableSurface(Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;)Lcom/github/alexthe666/iceandfire/pathfinding/raycoms/SurfaceType;",
+            method = "isWalkableSurface",
             at = @At(value = "HEAD"),
             cancellable = true
     )

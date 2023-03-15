@@ -16,7 +16,6 @@ import com.github.quinnfrost.dragontongue.utils.util;
 import com.google.common.base.Predicate;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.entity.ai.goal.OwnerHurtTargetGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;

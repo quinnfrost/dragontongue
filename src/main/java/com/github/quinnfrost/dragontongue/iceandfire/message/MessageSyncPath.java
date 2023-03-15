@@ -1,12 +1,11 @@
 package com.github.quinnfrost.dragontongue.iceandfire.message;
 
-import com.github.quinnfrost.dragontongue.client.render.RenderNode;
-import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Node;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.MNode;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Pathfinding;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkDirection;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkDirection;
+import net.minecraftforge.network.NetworkEvent;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -19,17 +18,17 @@ public class MessageSyncPath {
     /**
      * Set of visited nodes.
      */
-    public Set<Node> lastDebugNodesVisited = new HashSet<>();
+    public Set<MNode> lastDebugNodesVisited = new HashSet<>();
 
     /**
      * Set of not visited nodes.
      */
-    public Set<Node> lastDebugNodesNotVisited = new HashSet<>();
+    public Set<MNode> lastDebugNodesNotVisited = new HashSet<>();
 
     /**
      * Set of chosen nodes for the path.
      */
-    public Set<Node> lastDebugNodesPath = new HashSet<>();
+    public Set<MNode> lastDebugNodesPath = new HashSet<>();
 
     /**
      * Default constructor.
@@ -41,7 +40,7 @@ public class MessageSyncPath {
     /**
      * Create a new path message with the filled pathpoints.
      */
-    public MessageSyncPath(final Set<Node> lastDebugNodesVisited, final Set<Node> lastDebugNodesNotVisited, final Set<Node> lastDebugNodesPath) {
+    public MessageSyncPath(final Set<MNode> lastDebugNodesVisited, final Set<MNode> lastDebugNodesNotVisited, final Set<MNode> lastDebugNodesPath) {
         super();
         this.lastDebugNodesVisited = lastDebugNodesVisited;
         this.lastDebugNodesNotVisited = lastDebugNodesNotVisited;
@@ -50,17 +49,17 @@ public class MessageSyncPath {
 
     public void write(final FriendlyByteBuf buf) {
         buf.writeInt(lastDebugNodesVisited.size());
-        for (final Node node : lastDebugNodesVisited) {
+        for (final MNode node : lastDebugNodesVisited) {
             node.serializeToBuf(buf);
         }
 
         buf.writeInt(lastDebugNodesNotVisited.size());
-        for (final Node node : lastDebugNodesNotVisited) {
+        for (final MNode node : lastDebugNodesNotVisited) {
             node.serializeToBuf(buf);
         }
 
         buf.writeInt(lastDebugNodesPath.size());
-        for (final Node node : lastDebugNodesPath) {
+        for (final MNode node : lastDebugNodesPath) {
             node.serializeToBuf(buf);
         }
     }
@@ -68,21 +67,21 @@ public class MessageSyncPath {
     public static MessageSyncPath read(final FriendlyByteBuf buf) {
         int size = buf.readInt();
 
-        Set<Node> lastDebugNodesVisited = new HashSet<>();
+        Set<MNode> lastDebugNodesVisited = new HashSet<>();
         for (int i = 0; i < size; i++) {
-            lastDebugNodesVisited.add(new Node(buf));
+            lastDebugNodesVisited.add(new MNode(buf));
         }
 
         size = buf.readInt();
-        Set<Node> lastDebugNodesNotVisited = new HashSet<>();
+        Set<MNode> lastDebugNodesNotVisited = new HashSet<>();
         for (int i = 0; i < size; i++) {
-            lastDebugNodesNotVisited.add(new Node(buf));
+            lastDebugNodesNotVisited.add(new MNode(buf));
         }
 
         size = buf.readInt();
-        Set<Node> lastDebugNodesPath = new HashSet<>();
+        Set<MNode> lastDebugNodesPath = new HashSet<>();
         for (int i = 0; i < size; i++) {
-            lastDebugNodesPath.add(new Node(buf));
+            lastDebugNodesPath.add(new MNode(buf));
         }
         return new MessageSyncPath(lastDebugNodesVisited, lastDebugNodesNotVisited, lastDebugNodesPath);
     }

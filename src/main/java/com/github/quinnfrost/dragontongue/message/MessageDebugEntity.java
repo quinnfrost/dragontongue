@@ -6,14 +6,11 @@ import com.github.quinnfrost.dragontongue.entity.ai.EntityBehaviorDebugger;
 import com.github.quinnfrost.dragontongue.iceandfire.message.MessageSyncPathReached;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Pathfinding;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.network.NetworkDirection;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkDirection;
+import net.minecraftforge.network.NetworkEvent;
 
 import java.util.ArrayList;
 import java.util.HashSet;

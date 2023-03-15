@@ -10,7 +10,6 @@ import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.WalkTarget;
 import net.minecraft.world.entity.ai.behavior.Behavior;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.server.level.ServerLevel;
 

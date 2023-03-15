@@ -1,12 +1,12 @@
 package com.github.quinnfrost.dragontongue.iceandfire.message;
 
-import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Node;
+import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.MNode;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Pathfinding;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkDirection;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkDirection;
+import net.minecraftforge.network.NetworkEvent;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -62,7 +62,7 @@ public class MessageSyncPathReached {
             contextSupplier.get().setPacketHandled(true);
 
             if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
-                for (final Node node : Pathfinding.lastDebugNodesPath) {
+                for (final MNode node : Pathfinding.lastDebugNodesPath) {
                     if (reached.contains(node.pos)) {
                         node.setReachedByWorker(true);
                     }

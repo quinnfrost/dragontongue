@@ -65,7 +65,7 @@ public class CapabilityProvider implements ICapabilitySerializable<ListTag> {
         }
     }
 
-    public Tag writeNBT(Capability<ICapabilityInfoHolder> capability, ICapabilityInfoHolder instance, Direction side) {
+    public static Tag writeNBT(Capability<ICapabilityInfoHolder> capability, ICapabilityInfoHolder instance, Direction side) {
         ListTag listNBT = new ListTag();
         try {
             CompoundTag dataNBT = new CompoundTag();
@@ -104,7 +104,7 @@ public class CapabilityProvider implements ICapabilitySerializable<ListTag> {
         return listNBT;
     }
 
-    public void readNBT(Capability<ICapabilityInfoHolder> capability, ICapabilityInfoHolder instance, Direction side, Tag nbt) {
+    public static void readNBT(Capability<ICapabilityInfoHolder> capability, ICapabilityInfoHolder instance, Direction side, Tag nbt) {
         ListTag listNBT = (ListTag) nbt;
         try {
             CompoundTag dataNBT = listNBT.getCompound(0);

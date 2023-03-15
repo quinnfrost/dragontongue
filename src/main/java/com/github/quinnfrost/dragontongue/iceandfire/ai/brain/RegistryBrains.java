@@ -3,22 +3,18 @@ package com.github.quinnfrost.dragontongue.iceandfire.ai.brain;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.Registration;
 import com.github.quinnfrost.dragontongue.iceandfire.ai.brain.sensors.DragonFlightSensor;
-import com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks.*;
-import com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks.vanilla.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
+import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.memory.WalkTarget;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.entity.schedule.Schedule;
 import net.minecraft.world.entity.schedule.ScheduleBuilder;
 import net.minecraft.world.entity.ai.sensing.SensorType;
-import net.minecraft.entity.ai.brain.task.*;
-import net.minecraft.util.IntRange;
 import net.minecraftforge.eventbus.api.IEventBus;
 
 import java.util.Optional;
@@ -97,15 +93,7 @@ public class RegistryBrains extends Schedule {
 
                 ), GateBehavior.OrderPolicy.ORDERED, GateBehavior.RunningPolicy.RUN_ONE,
                         ImmutableList.of(
-                                Pair.of(new DragonVanillaTaskRide<>(60, 60), 0),
-                                Pair.of(new DragonVanillaTaskSit(60, 60), 1),
-                                Pair.of(new DragonVanillaTaskMate(60, 60, 1.0f), 2),
-                                Pair.of(new DragonVanillaTaskReturnToRoost(60, 60), 3),
 
-                                Pair.of(new DragonVanillaTaskEscort(60, 60), 4),
-                                Pair.of(new DragonVanillaTaskAttackMelee(60, 60, 1.0f, true), 5),
-                                Pair.of(new DragonVanillaTaskWander(1.0f), 5),
-                                Pair.of(new DragonVanillaTaskLookIdle(), 6)
                         )
                 )),
                 Pair.of(10, new GateBehavior<>(ImmutableMap.of(
@@ -193,8 +181,8 @@ public class RegistryBrains extends Schedule {
                                 Pair.of(new RunOne<>(ImmutableMap.of(
                                         MemoryModuleType.WALK_TARGET, MemoryStatus.VALUE_ABSENT
                                 ), ImmutableList.of(
-                                        Pair.of(new RunSometimes<>(new DragonTaskGlide(1.0f), IntRange.of(30, 60)), 0),
-                                        Pair.of(new RunSometimes<>(new DragonTaskWander(1.0f), IntRange.of(30, 60)), 1)
+//                                        Pair.of(new RunSometimes<>(new DragonTaskGlide(1.0f), UniformInt.of(30, 60)), 0),
+//                                        Pair.of(new RunSometimes<>(new DragonTaskWander(1.0f), UniformInt.of(30, 60)), 1)
                                 )), 1)
                         ))),
 
@@ -229,8 +217,7 @@ public class RegistryBrains extends Schedule {
 
                 ), GateBehavior.OrderPolicy.ORDERED, GateBehavior.RunningPolicy.RUN_ONE,
                         ImmutableList.of(
-                                Pair.of(new DragonTaskReturnRoost(), 0),
-                                Pair.of(new DragonTaskSleep(), 1)
+
                         )
                 )),
 
@@ -251,7 +238,6 @@ public class RegistryBrains extends Schedule {
 
                 ), GateBehavior.OrderPolicy.ORDERED, GateBehavior.RunningPolicy.RUN_ONE,
                         ImmutableList.of(
-                                Pair.of(new DragonTaskReturnRoost(), 0)
                         )
                 )),
 

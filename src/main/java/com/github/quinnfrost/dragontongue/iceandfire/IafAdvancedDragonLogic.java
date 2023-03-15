@@ -52,7 +52,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
     @Override
     public void updateDragonAttack() {
         Player ridingPlayer = dragon.getRidingPlayer();
-        if (iEntityDragon.isPlayingAttackAnimation$invoke() && dragon.getTarget() != null && dragon.canSee(dragon.getTarget())) {
+        if (iEntityDragon.isPlayingAttackAnimation$invoke() && dragon.getTarget() != null && dragon.hasLineOfSight(dragon.getTarget())) {
             LivingEntity target = dragon.getTarget();
             final double dist = dragon.distanceTo(target);
             if (dist < dragon.getRenderSize() * 0.2574 * 2 + 2) {
@@ -210,7 +210,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
             );
             for (Entity charge :
                     entities) {
-                charge.remove();
+                charge.remove(Entity.RemovalReason.DISCARDED);
             }
         } else {
             // Vanilla behavior

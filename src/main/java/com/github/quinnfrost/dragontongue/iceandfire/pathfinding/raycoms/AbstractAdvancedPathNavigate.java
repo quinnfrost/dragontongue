@@ -32,7 +32,7 @@ public abstract class AbstractAdvancedPathNavigate extends GroundPathNavigation 
     /**
      * The navigators node costs
      */
-    private PathingOptions pathingOptions = new PathingOptions();
+    private final PathingOptions pathingOptions = new PathingOptions();
 
     public AbstractAdvancedPathNavigate(
             final Mob entityLiving,

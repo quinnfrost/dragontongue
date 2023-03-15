@@ -5,6 +5,7 @@ import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonFlightUtil;
 import com.mojang.datafixers.util.Pair;
+import net.minecraft.world.entity.ai.util.DefaultRandomPos;
 import net.minecraft.world.entity.ai.util.RandomPos;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.core.BlockPos;
@@ -53,7 +54,7 @@ public class DragonAIWander extends Goal {
                 return false;
             }
         }
-        Vec3 randomTarget = RandomPos.getPos(this.dragon, 10 + 5 * dragon.getDragonStage(), 7 + dragon.getDragonStage());
+        Vec3 randomTarget = DefaultRandomPos.getPos(this.dragon, 10 + 5 * dragon.getDragonStage(), 7 + dragon.getDragonStage());
         for (int i = 0; i < 5; i++) {
             if (randomTarget == null) {
                 continue;

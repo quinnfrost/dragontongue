@@ -93,7 +93,7 @@ public class DragonAIAttackMelee extends Goal {
             final double d0 = this.dragon.distanceToSqr(entity.getX(), entity.getBoundingBox().minY, entity.getZ());
             final double d1 = this.getAttackReachSqr(entity);
             --this.delayCounter;
-            if ((this.longMemory || this.dragon.getSensing().canSee(entity)) && this.delayCounter <= 0 && (this.targetX == 0.0D && this.targetY == 0.0D && this.targetZ == 0.0D || entity.distanceToSqr(this.targetX, this.targetY, this.targetZ) >= 1.0D || this.dragon.getRandom().nextFloat() < 0.05F)) {
+            if ((this.longMemory || this.dragon.getSensing().hasLineOfSight(entity)) && this.delayCounter <= 0 && (this.targetX == 0.0D && this.targetY == 0.0D && this.targetZ == 0.0D || entity.distanceToSqr(this.targetX, this.targetY, this.targetZ) >= 1.0D || this.dragon.getRandom().nextFloat() < 0.05F)) {
                 this.targetX = entity.getX();
                 this.targetY = entity.getBoundingBox().minY;
                 this.targetZ = entity.getZ();

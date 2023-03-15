@@ -156,7 +156,7 @@ public class PathJobRandomPos extends AbstractPathJob
     }
 
     @Override
-    protected boolean isAtDestination(final Node n)
+    protected boolean isAtDestination(final MNode n)
     {
         if (random.nextInt(10) == 0 && isInRestrictedArea(n.pos) && (start.distSqr(n.pos) > minDistFromStart * minDistFromStart)
             && SurfaceType.getSurfaceType(world, world.getBlockState(n.pos.below()), n.pos.below()) == SurfaceType.WALKABLE
@@ -168,7 +168,7 @@ public class PathJobRandomPos extends AbstractPathJob
     }
 
     @Override
-    protected double getNodeResultScore(final Node n)
+    protected double getNodeResultScore(final MNode n)
     {
         //  For Result Score lower is better
         return destination.distSqr(n.pos);
