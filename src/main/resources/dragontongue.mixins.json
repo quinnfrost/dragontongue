@@ -4,6 +4,8 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "dragontongue.refmap.json",
   "mixins": [
+    "MixinEntity",
+    "MixinLivingEntity",
     "iceandfire.MixinDragonBow",
     "iceandfire.MixinFoodUtils",
     "iceandfire.accessor.IEntityDragonAccess",
@@ -15,5 +17,9 @@
     "iceandfire.entity.MixinEntityHippogryph",
     "iceandfire.entity.MixinEntityIceDragon",
     "iceandfire.entity.MixinEntityLightningDragon"
+  ],
+  "client": [
+    "MixinFogRenderer",
+    "MixinGui"
   ]
 }

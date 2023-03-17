@@ -1,5 +1,6 @@
 package com.github.quinnfrost.dragontongue.client.overlay;
 
+import com.github.quinnfrost.dragontongue.client.preview.RenderTrajectory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraftforge.api.distmarker.Dist;
@@ -16,19 +17,18 @@ public class OverlayRenderEvent extends Gui {
 
     @SubscribeEvent(priority = EventPriority.NORMAL)
     public void renderOverlay(RenderGameOverlayEvent.Post event) {
-        // TODO:
-//        if (event.getType() == RenderGameOverlayEvent.ElementType.LAYER) {
-////            RenderTrajectory.renderTrajectory(event.getMatrixStack());
-//        }
-//        if (event.getType() == RenderGameOverlayEvent.ElementType.TEXT) {
-//            OverlayInfoPanel.renderPanel(event.getMatrixStack());
-//            OverlayCrossHair.renderStringCrossHair(event.getMatrixStack());
-//        }
-//        if (event.getType() == RenderGameOverlayEvent.ElementType.ALL) {
-//            OverlayCrossHair.renderScope(event.getMatrixStack());
-//            OverlayCrossHair.renderScopeSuggestion(event.getMatrixStack());
+        if (event.getType() == RenderGameOverlayEvent.ElementType.LAYER) {
+            RenderTrajectory.renderTrajectory(event.getMatrixStack());
+        }
+        if (event.getType() == RenderGameOverlayEvent.ElementType.TEXT) {
+            OverlayInfoPanel.renderPanel(event.getMatrixStack());
+            OverlayCrossHair.renderStringCrossHair(event.getMatrixStack());
+        }
+        if (event.getType() == RenderGameOverlayEvent.ElementType.ALL) {
+            OverlayCrossHair.renderScopeSuggestionQuad(event.getMatrixStack());
+            OverlayCrossHair.renderScope(event.getMatrixStack());
 //            OverlayCrossHair.renderIconCrossHair(event.getMatrixStack());
-//        }
+        }
     }
 
 }

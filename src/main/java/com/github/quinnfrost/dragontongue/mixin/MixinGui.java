@@ -2,17 +2,14 @@ package com.github.quinnfrost.dragontongue.mixin;
 
 import com.github.quinnfrost.dragontongue.client.overlay.OverlayCrossHair;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.Gui;
-import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Gui.class)
-public abstract class MixinIngameGui {
+public abstract class MixinGui {
 
     @Inject(
             method = "renderCrosshair",

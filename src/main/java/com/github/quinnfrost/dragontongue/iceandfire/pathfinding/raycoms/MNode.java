@@ -2,8 +2,9 @@ package com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms;
 /*
     All of this code is used with permission from Raycoms, one of the developers of the minecolonies project.
  */
-import net.minecraft.network.FriendlyByteBuf;
+
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
 
 import javax.annotation.Nullable;
 
@@ -31,7 +32,7 @@ public class MNode implements Comparable<MNode>
     private final int hash;
 
     /**
-     * The parent of the node (MNode preceding this node).
+     * The parent of the node (Node preceding this node).
      */
     @Nullable
     public MNode parent;
@@ -97,7 +98,7 @@ public class MNode implements Comparable<MNode>
     private boolean isReachedByWorker = false;
 
     /**
-     * Create initial MNode.
+     * Create initial Node.
      *
      * @param pos       coordinates of node.
      * @param heuristic heuristic estimate.
@@ -108,7 +109,7 @@ public class MNode implements Comparable<MNode>
     }
 
     /**
-     * Create a MNode that inherits from a parent, and has a Cost and Heuristic estimate.
+     * Create a Node that inherits from a parent, and has a Cost and Heuristic estimate.
      *
      * @param parent    parent node arrives from.
      * @param pos       coordinate of node.
@@ -129,6 +130,7 @@ public class MNode implements Comparable<MNode>
 
     /**
      * Create an MNode from a bytebuf.
+     *
      * @param byteBuf the buffer to load it from.
      */
     public MNode(final FriendlyByteBuf byteBuf)
@@ -146,7 +148,8 @@ public class MNode implements Comparable<MNode>
     }
 
     /**
-     * Serialize the MNode to buf.
+     * Serialize the Node to buf.
+     *
      * @param byteBuf
      */
     public void serializeToBuf(final FriendlyByteBuf byteBuf)

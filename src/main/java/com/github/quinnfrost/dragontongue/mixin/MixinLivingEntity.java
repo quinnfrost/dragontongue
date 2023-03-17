@@ -57,15 +57,20 @@ public abstract class MixinLivingEntity extends Entity {
     @Shadow
     public abstract void calculateEntityAnimation(LivingEntity p_233629_1_, boolean p_233629_2_);
 
-    @Shadow public abstract boolean hasEffect(MobEffect pEffect);
+    @Shadow
+    public abstract boolean hasEffect(MobEffect pEffect);
 
-    @Shadow public abstract boolean isEffectiveAi();
+    @Shadow
+    public abstract boolean isEffectiveAi();
 
-    @Shadow public abstract boolean canStandOnFluid(FluidState p_204042_);
+    @Shadow
+    public abstract boolean canStandOnFluid(FluidState p_204042_);
 
-    @Shadow public abstract float getSpeed();
+    @Shadow
+    public abstract float getSpeed();
 
-    @Shadow public abstract boolean onClimbable();
+    @Shadow
+    public abstract boolean onClimbable();
 
     public MixinLivingEntity(EntityType<?> entityTypeIn, Level worldIn) {
         super(entityTypeIn, worldIn);
@@ -77,8 +82,9 @@ public abstract class MixinLivingEntity extends Entity {
             cancellable = true
     )
     public void $travel(Vec3 travelVector, CallbackInfo ci) {
-        roadblock$travel(travelVector);
-        ci.cancel();
+        if (roadblock$travel(travelVector)) {
+            ci.cancel();
+        }
     }
 
     public boolean roadblock$travel(Vec3 pTravelVector) {
@@ -104,7 +110,7 @@ public abstract class MixinLivingEntity extends Entity {
                 double d9 = this.getY();
                 float f4 = this.isSprinting() ? 0.9F : this.getWaterSlowDown();
                 float f5 = 0.02F;
-                float f6 = (float)EnchantmentHelper.getDepthStrider((LivingEntity)(Object) this);
+                float f6 = (float) EnchantmentHelper.getDepthStrider((LivingEntity) (Object) this);
                 if (f6 > 3.0F) {
                     f6 = 3.0F;
                 }
@@ -122,7 +128,7 @@ public abstract class MixinLivingEntity extends Entity {
                     f4 = 0.96F;
                 }
 
-                f5 *= (float)this.getAttribute(net.minecraftforge.common.ForgeMod.SWIM_SPEED.get()).getValue();
+                f5 *= (float) this.getAttribute(net.minecraftforge.common.ForgeMod.SWIM_SPEED.get()).getValue();
                 this.moveRelative(f5, pTravelVector);
                 this.move(MoverType.SELF, this.getDeltaMovement());
                 Vec3 vec36 = this.getDeltaMovement();
@@ -130,11 +136,11 @@ public abstract class MixinLivingEntity extends Entity {
                     vec36 = new Vec3(vec36.x, 0.2D, vec36.z);
                 }
 
-                this.setDeltaMovement(vec36.multiply((double)f4, (double)0.8F, (double)f4));
+                this.setDeltaMovement(vec36.multiply((double) f4, (double) 0.8F, (double) f4));
                 Vec3 vec32 = this.getFluidFallingAdjustedMovement(d0, flag, this.getDeltaMovement());
                 this.setDeltaMovement(vec32);
-                if (this.horizontalCollision && this.isFree(vec32.x, vec32.y + (double)0.6F - this.getY() + d9, vec32.z)) {
-                    this.setDeltaMovement(vec32.x, (double)0.3F, vec32.z);
+                if (this.horizontalCollision && this.isFree(vec32.x, vec32.y + (double) 0.6F - this.getY() + d9, vec32.z)) {
+                    this.setDeltaMovement(vec32.x, (double) 0.3F, vec32.z);
                 }
 
 

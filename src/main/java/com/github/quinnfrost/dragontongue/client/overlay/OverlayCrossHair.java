@@ -1,14 +1,23 @@
 package com.github.quinnfrost.dragontongue.client.overlay;
 
+import com.github.quinnfrost.dragontongue.client.render.CustomRenderTypes;
+import com.github.quinnfrost.dragontongue.client.render.MRenderTypes;
 import com.github.quinnfrost.dragontongue.utils.Vector2f;
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.math.Matrix4f;
+import com.mojang.math.Vector3f;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.*;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.gui.GuiUtils;
@@ -160,8 +169,55 @@ public class OverlayCrossHair extends GuiComponent {
         int scaledWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
         int scaledHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
 
-        Minecraft.getInstance().getTextureManager().bindForSetup(scopeTexture);
-        GuiUtils.drawTexturedModalRect(ms, scaledWidth / 2 - scopeTextureLength / 2, scaledHeight / 2, 0, 0, scopeTextureLength, scopeTextureLength, 1);
+        RenderSystem.setShaderTexture(0, scopeTexture);
+
+        GuiComponent.blit(ms, scaledWidth / 2 - scopeTextureLength / 2, scaledHeight / 2, 0, 0, 0, scopeTextureLength, scopeTextureLength, 256, 256);
+//        GuiUtils.drawTexturedModalRect(ms, scaledWidth / 2 - scopeTextureLength / 2, scaledHeight / 2, 0, 0, scopeTextureLength, scopeTextureLength, 1);
+    }
+
+    public static void renderScopeSuggestionQuad(PoseStack poseStack) {
+        if (!renderScope) {
+            return;
+        }
+
+        final int lineWidth = 1;
+        final float suggestionWidth = 40;
+        float suggestPos = (float) (0.4058604333 * Math.pow(scopeSuggestion, 1.395441973));
+
+
+        int scaledWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
+        int scaledHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
+
+
+//        MultiBufferSource.BufferSource buffer = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+//        VertexConsumer bufferbuilder = buffer.getBuffer(MRenderTypes.customLineRenderer());
+//        poseStack.pushPose();
+//        RenderSystem.disableDepthTest();
+        RenderSystem.disableCull();
+
+        Matrix4f pMatrix = poseStack.last().pose();
+
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
+
+        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        bufferbuilder.vertex(pMatrix, 0.5f + scaledWidth / 2f + suggestionWidth / 2, 0.5f + scaledHeight / 2f + suggestPos, 0).color(0, 0, 0, 255).endVertex();
+        bufferbuilder.vertex(pMatrix, 0.5f + scaledWidth / 2f - suggestionWidth / 2, 0.5f + scaledHeight / 2f + suggestPos, 0).color(0, 0, 0, 255).endVertex();
+
+        bufferbuilder.vertex(pMatrix, 0.5f + scaledWidth / 2f - suggestionWidth / 2, 0.5f + scaledHeight / 2f + suggestPos + lineWidth, 0).color(0, 0, 0, 255).endVertex();
+        bufferbuilder.vertex(pMatrix, 0.5f + scaledWidth / 2f + suggestionWidth / 2, 0.5f + scaledHeight / 2f + suggestPos + lineWidth, 0).color(0, 0, 0, 255).endVertex();
+
+        bufferbuilder.vertex(pMatrix, scaledWidth / 2f + suggestionWidth / 2, scaledHeight / 2f + suggestPos, 0).color(255, 255, 255, 255).endVertex();
+        bufferbuilder.vertex(pMatrix, scaledWidth / 2f - suggestionWidth / 2, scaledHeight / 2f + suggestPos, 0).color(255, 255, 255, 255).endVertex();
+
+        bufferbuilder.vertex(pMatrix, scaledWidth / 2f - suggestionWidth / 2, scaledHeight / 2f + suggestPos + lineWidth, 0).color(255, 255, 255, 255).endVertex();
+        bufferbuilder.vertex(pMatrix, scaledWidth / 2f + suggestionWidth / 2, scaledHeight / 2f + suggestPos + lineWidth, 0).color(255, 255, 255, 255).endVertex();
+
+        bufferbuilder.end();
+        BufferUploader.end(bufferbuilder);
+
+        RenderSystem.enableCull();
+
     }
 
     public static void renderScopeSuggestion(PoseStack ms) {
@@ -174,26 +230,48 @@ public class OverlayCrossHair extends GuiComponent {
         int scaledHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
 
         float suggestPos = (float) (0.4058604333 * Math.pow(scopeSuggestion, 1.395441973));
+        Color color = Color.WHITE;
 
         ms.pushPose();
-        RenderSystem.enableDepthTest();
-        RenderSystem.disableTexture();
-        RenderSystem.disableBlend();
 
-        final Tesselator tessellator = Tesselator.getInstance();
-        final BufferBuilder vertexBuffer = tessellator.getBuilder();
+        RenderBuffers renderBuffers = new RenderBuffers();
+        MultiBufferSource.BufferSource pBufferSource = renderBuffers.bufferSource();
+        VertexConsumer vertexconsumer = pBufferSource.getBuffer(RenderType.lines());
 
-        GL11.glLineWidth(2.0F);
-        vertexBuffer.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
-        vertexBuffer.vertex(0.5 + scaledWidth / 2f - suggestionWidth / 2, 0.5 + scaledHeight / 2f + suggestPos, 0).color(0, 0, 0, 255).endVertex();
-        vertexBuffer.vertex(0.5 + scaledWidth / 2f + suggestionWidth / 2, 0.5 + scaledHeight / 2f + suggestPos, 0).color(0, 0, 0, 255).endVertex();
+        PoseStack.Pose pose = ms.last();
+        vertexconsumer.vertex(scaledWidth / 2f - suggestionWidth / 2, scaledHeight / 2f + suggestPos, 0)
+                .color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha())
+                .normal(1.0f,0.0f,0.0f)
+                .endVertex();
 
-        vertexBuffer.vertex(scaledWidth / 2f - suggestionWidth / 2, scaledHeight / 2f + suggestPos, 0).color(255, 255, 255, 255).endVertex();
-        vertexBuffer.vertex(scaledWidth / 2f + suggestionWidth / 2, scaledHeight / 2f + suggestPos, 0).color(255, 255, 255, 255).endVertex();
-        tessellator.end();
+        vertexconsumer.vertex(scaledWidth / 2f + suggestionWidth / 2, scaledHeight / 2f + suggestPos, 0)
+                .color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha())
+                .normal(1.0f,0.0f,0.0f)
+                .endVertex();
 
-        GL11.glLineWidth(1.0F);
-        RenderSystem.disableDepthTest();
+        pBufferSource.endBatch(RenderType.lines());
+
+//        RenderSystem.enableDepthTest();
+//        RenderSystem.disableTexture();
+//        RenderSystem.disableBlend();
+//
+//        final Tesselator tessellator = Tesselator.getInstance();
+//        final BufferBuilder vertexBuffer = tessellator.getBuilder();
+//
+//        RenderSystem.lineWidth(2.0F);
+////        RenderSystem.setShaderColor(1.0f,1.0f,1.0f,1.0f);
+//        vertexBuffer.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
+////        vertexBuffer.vertex(0.5 + scaledWidth / 2f - suggestionWidth / 2, 0.5 + scaledHeight / 2f + suggestPos, 0).color(0f, 0f, 0f, 1.0f).endVertex();
+////        vertexBuffer.vertex(0.5 + scaledWidth / 2f + suggestionWidth / 2, 0.5 + scaledHeight / 2f + suggestPos, 0).color(0f, 0f, 0f, 1.0f).endVertex();
+////        tessellator.end();
+//
+////        vertexBuffer.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
+//        vertexBuffer.vertex(scaledWidth / 2f - suggestionWidth / 2, scaledHeight / 2f + suggestPos, 0).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+//        vertexBuffer.vertex(scaledWidth / 2f + suggestionWidth / 2, scaledHeight / 2f + suggestPos, 0).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+//        tessellator.end();
+//
+//        RenderSystem.lineWidth(1.0F);
+//        RenderSystem.disableDepthTest();
         ms.popPose();
     }
 

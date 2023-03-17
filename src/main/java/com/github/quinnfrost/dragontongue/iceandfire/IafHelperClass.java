@@ -29,6 +29,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.RenderLevelLastEvent;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
 
 import java.util.*;
 

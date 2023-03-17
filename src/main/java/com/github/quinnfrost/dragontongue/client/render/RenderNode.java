@@ -4,10 +4,12 @@ import com.mojang.blaze3d.vertex.*;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.math.Vector3d;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
 import com.mojang.math.Matrix4f;
 import net.minecraft.world.phys.Vec3;
@@ -29,6 +31,7 @@ public class RenderNode {
 
     public static final Object lock = new Object();
     public static Random random = new Random();
+    public static RenderBuffers renderbuffers = new RenderBuffers();
 
     public static class delayedTimer extends Thread {
         public void run() {
@@ -119,6 +122,7 @@ public class RenderNode {
             timer.start();
         }
     }
+
     public static void drawBoundingBox(Integer time, AABB axisAlignedBB, @Nullable Integer index) {
         Shapes.create(axisAlignedBB).forAllEdges((x0, y0, z0, x1, y1, z1) -> {
             drawLine(time, new Vec3(x0, y0, z0), new Vec3(x1, y1, z1), null);
@@ -142,7 +146,7 @@ public class RenderNode {
                 drawCube(time, node, false, i);
                 drawLine(time, lineStart, node, i);
 //                drawString(time, node, node.toString(), i);
-//                drawBoundingBox(2, new AxisAlignedBB(new BlockPos(lineStart)), i);
+//                drawBoundingBox(2, new AABB(new BlockPos(lineStart)), i);
             }
         }
 
@@ -167,6 +171,7 @@ public class RenderNode {
             matrixStack.pushPose();
             matrixStack.translate(-dx, -dy, -dz);
 
+            RenderSystem.lineWidth(2f);
             RenderSystem.enableDepthTest();
             RenderSystem.disableTexture();
             RenderSystem.disableBlend();
@@ -190,8 +195,9 @@ public class RenderNode {
                 renderString(matrixStack, renderInfo.getFirst(), renderInfo.getSecond());
             });
 
-            RenderSystem.disableDepthTest();
             matrixStack.popPose();
+            RenderSystem.disableDepthTest();
+            RenderSystem.lineWidth(1f);
         }
     }
 
@@ -278,27 +284,71 @@ public class RenderNode {
         }
         Color color = Color.WHITE;
 
-        matrixStack.pushPose();
-        matrixStack.translate(lineEndPos.x(), lineEndPos.y(), lineEndPos.z());
-
-//        matrixStack.scale(0.25F, 0.25F, 0.25F);
-
-        final Tesselator tessellator = Tesselator.getInstance();
-        final BufferBuilder vertexBuffer = tessellator.getBuilder();
-
-        final Matrix4f matrix4f = matrixStack.last().pose();
+        final float pdx = (float) (lineEndPos.x() - lineStartPos.x());
+        final float pdy = (float) (lineEndPos.y() - lineStartPos.y());
+        final float pdz = (float) (lineEndPos.z() - lineStartPos.z());
+        Vec3 direction = lineEndPos.subtract(lineStartPos).normalize();
 
         if (lineStartPos != null) {
-            final float pdx = (float) (lineStartPos.x() - lineEndPos.x());
-            final float pdy = (float) (lineStartPos.y() - lineEndPos.y());
-            final float pdz = (float) (lineStartPos.z() - lineEndPos.z());
-            vertexBuffer.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
-            vertexBuffer.vertex(matrix4f, 0, 0, 0).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
-            vertexBuffer.vertex(matrix4f, pdx, pdy, pdz).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
-            tessellator.end();
+            // From CollisionBoxRenderer
+            MultiBufferSource.BufferSource pBufferSource = renderbuffers.bufferSource();
+            VertexConsumer vertexconsumer = pBufferSource.getBuffer(RenderType.lines());
+
+            PoseStack.Pose pose = matrixStack.last();
+            vertexconsumer.vertex(pose.pose(), (float) lineStartPos.x, (float) lineStartPos.y, (float) lineStartPos.z)
+                    .color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha())
+                    .normal((float) direction.x, (float) direction.y, (float) direction.z)
+                    .endVertex();
+
+            vertexconsumer.vertex(pose.pose(), (float) lineEndPos.x, (float) lineEndPos.y, (float) lineEndPos.z)
+                    .color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha())
+                    .normal((float) direction.x, (float) direction.y, (float) direction.z)
+                    .endVertex();
+
+            pBufferSource.endBatch(RenderType.lines());
+
+            // From LevelRenderer#renderDebug
+//            Tesselator tesselator = Tesselator.getInstance();
+//            BufferBuilder bufferbuilder = tesselator.getBuilder();
+//            RenderSystem.setShader(GameRenderer::getPositionColorShader);
+//
+//            RenderSystem.depthMask(true);
+//            RenderSystem.disableCull();
+//            RenderSystem.enableBlend();
+//            RenderSystem.defaultBlendFunc();
+//            RenderSystem.disableTexture();
+//
+//            matrixStack.pushPose();
+//            matrixStack.translate(lineStartPos.x(), lineStartPos.y(), lineStartPos.z());
+//
+//            RenderSystem.applyModelViewMatrix();
+//            RenderSystem.setShader(GameRenderer::getRendertypeLinesShader);
+//
+//            bufferbuilder.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR_NORMAL);
+//            RenderSystem.lineWidth(5.0F);
+//
+
+//            bufferbuilder.vertex(0, 0, 0).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).normal((float) direction.x, (float) direction.y, (float) direction.z).endVertex();
+//            bufferbuilder.vertex(pdx, pdy, pdz).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).normal((float) direction.x, (float) direction.y, (float) direction.z).endVertex();
+//
+//
+////            bufferbuilder.vertex(8.0D, 8.0D, 8.0D).color(j, k, l, 255).normal((float)direction.getStepX(), (float)direction.getStepY(), (float)direction.getStepZ()).endVertex();
+////            bufferbuilder.vertex((double)(8 - 16 * direction.getStepX()), (double)(8 - 16 * direction.getStepY()), (double)(8 - 16 * direction.getStepZ())).color(j, k, l, 255).normal((float)direction.getStepX(), (float)direction.getStepY(), (float)direction.getStepZ()).endVertex();
+//
+//            tesselator.end();
+//            RenderSystem.lineWidth(1.0F);
+//
+//            matrixStack.popPose();
+//            RenderSystem.applyModelViewMatrix();
+//
+//            RenderSystem.depthMask(true);
+//            RenderSystem.disableBlend();
+//            RenderSystem.enableCull();
+//            RenderSystem.enableTexture();
+
         }
 
-        matrixStack.popPose();
+
     }
 
     // From RenderPath#debugDrawNode
@@ -308,7 +358,7 @@ public class RenderNode {
             return;
         }
         Color colorText = Color.WHITE;
-        Color colorBackground = new Color(0,0,0,0.7f);
+        Color colorBackground = new Color(0, 0, 0, 0.7f);
 
         final String s1 = content;
         final Font fontrenderer = Minecraft.getInstance().font;

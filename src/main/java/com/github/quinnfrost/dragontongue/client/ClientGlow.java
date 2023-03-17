@@ -1,7 +1,5 @@
 package com.github.quinnfrost.dragontongue.client;
 
-import com.github.quinnfrost.dragontongue.DragonTongue;
-import com.github.quinnfrost.dragontongue.client.render.RenderNode;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -23,11 +21,11 @@ public class ClientGlow {
         glowList = new HashMap<>();
     }
 
-    public static void setGlowingTag(Entity entity, int timeInTick) {
+    public static void setGlowing(Entity entity, int timeInTick) {
         if (entity != null) {
             world = entity.level;
             glowList.put(entity.getId(), timeInTick);
-            entity.setGlowingTag(true);
+            entity.setSharedFlag(6, true);
         }
     }
 
@@ -38,7 +36,7 @@ public class ClientGlow {
                 if (time > 0) {
                     return time - 1;
                 } else if (world.getEntity(entityID) != null) {
-                    world.getEntity(entityID).setGlowingTag(false);
+                    world.getEntity(entityID).setSharedFlag(6, false);
                 }
                 return 0;
             });
@@ -60,7 +58,7 @@ public class ClientGlow {
                         .and(excludeEntity));
         for (Entity entity :
                 entities) {
-            setGlowingTag(entity, timeInTicks);
+            setGlowing(entity, timeInTicks);
         }
     }
 }

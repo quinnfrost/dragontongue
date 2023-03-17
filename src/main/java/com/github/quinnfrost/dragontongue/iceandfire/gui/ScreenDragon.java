@@ -292,7 +292,7 @@ public class ScreenDragon extends AbstractContainerScreen<ContainerDragon> {
 
         for (Button button :
                 buttons) {
-            addWidget(button);
+            addRenderableWidget(button);
         }
 
     }
