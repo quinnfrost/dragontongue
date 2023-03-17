@@ -6,6 +6,8 @@
   "mixins": [
     "MixinEntity",
     "MixinLivingEntity",
+    "MixinMerchantOffer",
+    "MixinVillager",
     "iceandfire.MixinDragonBow",
     "iceandfire.MixinFoodUtils",
     "iceandfire.accessor.IEntityDragonAccess",

@@ -46,7 +46,7 @@ repositories {
 def build_snapshot = System.getenv("BUILD_SNAPSHOT") == "true"
 def build_id = System.getenv("BUILD_ID")
 
-version = '0.7.1'
+version = '0.8.0'
 
 if (build_snapshot) {
     version += '-SNAPSHOT'
@@ -164,6 +164,8 @@ dependencies {
 //    compileOnly project(":Ice_and_Fire")
     implementation fg.deobf("file:Ice_and_Fire:2.1.12-1.18.2")
 
+    runtimeOnly fg.deobf("curse.maven:customvillagertrades-463402:3722281")
+
 //    compileOnly fg.deobf("curse.maven:iceandfire-264231:3948661")
 
 //    compileOnly project(":Ice_and_Fire-1.16.3")
@@ -178,7 +180,7 @@ dependencies {
 //    implementation fg.deobf("curse.maven:guifollowers_1.16.5-1.9-410911:3693575")
 //    implementation fg.deobf("curse.maven:collective-1.16.5-5.49-342584:4312565")
 
-    implementation fg.deobf("curse.maven:TrajectoryPreview-289141:3635426")
+//    implementation fg.deobf("curse.maven:TrajectoryPreview-289141:3635426")
 
 //    compileOnly fg.deobf("curse.maven:Ping-1.16.4-1.6.9-222967:3172028")
 //    implementation fg.deobf("curse.maven:Ping-1.16.4-1.6.9-222967:3172028")

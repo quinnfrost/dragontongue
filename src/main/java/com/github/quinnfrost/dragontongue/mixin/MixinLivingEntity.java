@@ -10,16 +10,9 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.animal.FlyingAnimal;
-import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.tags.FluidTags;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Final;
@@ -81,13 +74,13 @@ public abstract class MixinLivingEntity extends Entity {
             at = @At(value = "HEAD"),
             cancellable = true
     )
-    public void $travel(Vec3 travelVector, CallbackInfo ci) {
-        if (roadblock$travel(travelVector)) {
+    public void inject$travel(Vec3 travelVector, CallbackInfo ci) {
+        if (head$travel(travelVector)) {
             ci.cancel();
         }
     }
 
-    public boolean roadblock$travel(Vec3 pTravelVector) {
+    public boolean head$travel(Vec3 pTravelVector) {
         boolean shouldCancel = false;
         if (this.isEffectiveAi() || this.isControlledByLocalInstance()) {
             double d0 = 0.08D;
