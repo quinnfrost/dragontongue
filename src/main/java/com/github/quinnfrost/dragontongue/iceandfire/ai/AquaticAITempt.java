@@ -9,14 +9,15 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.EnumSet;
 import java.util.Set;
-
-import net.minecraft.world.entity.ai.goal.Goal.Flag;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class AquaticAITempt extends Goal {
     private final Mob temptedEntity;
     private final double speed;
-    private final Set<Item> temptItem;
+    private Set<Item> temptItems = null;
     private final boolean scaredByPlayerMovement;
+    private final Set<Supplier<Item>> temptItemSuppliers;
     private double targetX;
     private double targetY;
     private double targetZ;
@@ -26,14 +27,14 @@ public class AquaticAITempt extends Goal {
     private int delayTemptCounter;
     private boolean isRunning;
 
-    public AquaticAITempt(Mob temptedEntityIn, double speedIn, Item temptItemIn, boolean scaredByPlayerMovementIn) {
-        this(temptedEntityIn, speedIn, scaredByPlayerMovementIn, Sets.newHashSet(temptItemIn));
+    public AquaticAITempt(Mob temptedEntityIn, double speedIn, Supplier<Item> temptItemSupplier, boolean scaredByPlayerMovementIn) {
+        this(temptedEntityIn, speedIn, scaredByPlayerMovementIn, Sets.newHashSet(temptItemSupplier));
     }
 
-    public AquaticAITempt(Mob temptedEntityIn, double speedIn, boolean scaredByPlayerMovementIn, Set<Item> temptItemIn) {
+    public AquaticAITempt(Mob temptedEntityIn, double speedIn, boolean scaredByPlayerMovementIn, Set<Supplier<Item>> temptItemSuppliers) {
         this.temptedEntity = temptedEntityIn;
         this.speed = speedIn;
-        this.temptItem = temptItemIn;
+        this.temptItemSuppliers = temptItemSuppliers;
         this.scaredByPlayerMovement = scaredByPlayerMovementIn;
         this.setFlags(EnumSet.of(Flag.MOVE));
     }
@@ -58,7 +59,9 @@ public class AquaticAITempt extends Goal {
     }
 
     protected boolean isTempting(ItemStack stack) {
-        return this.temptItem.contains(stack.getItem());
+        if (this.temptItems == null)
+            this.temptItems = temptItemSuppliers.stream().map(Supplier::get).collect(Collectors.toSet());
+        return this.temptItems.contains(stack.getItem());
     }
 
     /**
@@ -72,8 +75,8 @@ public class AquaticAITempt extends Goal {
                     return false;
                 }
 
-                if (Math.abs(this.temptingPlayer.xRot - this.pitch) > 5.0D
-                    || Math.abs(this.temptingPlayer.yRot - this.yaw) > 5.0D) {
+                if (Math.abs(this.temptingPlayer.getXRot() - this.pitch) > 5.0D
+                    || Math.abs(this.temptingPlayer.getYRot() - this.yaw) > 5.0D) {
                     return false;
                 }
             } else {
@@ -82,15 +85,15 @@ public class AquaticAITempt extends Goal {
                 this.targetZ = this.temptingPlayer.getZ();
             }
 
-            this.pitch = this.temptingPlayer.xRot;
-            this.yaw = this.temptingPlayer.yRot;
+            this.pitch = this.temptingPlayer.getXRot();
+            this.yaw = this.temptingPlayer.getYRot();
         }
 
         return this.canUse();
     }
 
     /**
-     * Execute a one shot brain or start executing a continuous brain
+     * Execute a one shot task or start executing a continuous task
      */
     @Override
     public void start() {
@@ -101,7 +104,7 @@ public class AquaticAITempt extends Goal {
     }
 
     /**
-     * Reset the brain's internal state. Called when this brain is interrupted by another one
+     * Reset the task's internal state. Called when this task is interrupted by another one
      */
     @Override
     public void stop() {
@@ -112,7 +115,7 @@ public class AquaticAITempt extends Goal {
     }
 
     /**
-     * Keep ticking a continuous brain that has already been started
+     * Keep ticking a continuous task that has already been started
      */
     @Override
     public void tick() {

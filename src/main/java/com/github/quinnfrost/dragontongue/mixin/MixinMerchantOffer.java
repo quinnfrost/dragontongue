@@ -19,6 +19,6 @@ public abstract class MixinMerchantOffer {
             at = @At(value = "RETURN")
     )
     private void $MerchantOffer(ItemStack pBaseCostA, ItemStack pCostB, ItemStack pResult, int pUses, int pMaxUses, int pXp, float pPriceMultiplier, int pDemand, CallbackInfo ci) {
-        this.maxUses = 3 * pMaxUses;
+        this.maxUses = 4 * pMaxUses;
     }
 }
