@@ -9,11 +9,9 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
-import net.minecraft.world.entity.ai.goal.Goal.Flag;
-
 public class DragonAIRide<T extends Mob & IFlyingMount> extends Goal {
 
-    private T dragon;
+    private final T dragon;
     private Player player;
 
     public DragonAIRide(T dragon) {
@@ -71,6 +69,11 @@ public class DragonAIRide<T extends Mob & IFlyingMount> extends Goal {
             y -= 1;
         }
         dragon.getMoveControl().setWantedPosition(x, y, z, speed);
+    }
+
+    @Override
+    public boolean requiresUpdateEveryTick() {
+        return true;
     }
 
     private boolean hovering() {
