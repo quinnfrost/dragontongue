@@ -54,6 +54,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.common.MinecraftForge;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -233,6 +234,8 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
 
     @Shadow public abstract boolean isHovering();
 
+    @Shadow public abstract boolean useFlyingPathFinder();
+
     public ICapabilityInfoHolder cap = this.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(this));
 
     private static final ImmutableList<MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(
@@ -268,7 +271,7 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
         this.minimumArmor = 1D;
         this.maximumArmor = 20D;
 
-        this.sensing = new Sensing(this);
+//        this.sensing = new Sensing(this);
 
         NbtOps nbtdynamicops = NbtOps.INSTANCE;
         this.brain = this.makeBrain(new Dynamic<>(nbtdynamicops, nbtdynamicops.createMap(ImmutableMap.of(nbtdynamicops.createString("memories"), nbtdynamicops.emptyMap()))));
@@ -278,6 +281,15 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
 
         this.setPathfindingMalus(BlockPathTypes.FENCE, 0.0F);
 
+    }
+
+    @Override
+    public void setDeltaMovement(Vec3 pMotion) {
+        double deltaX = pMotion.x - this.getDeltaMovement().x;
+        double deltaY = pMotion.y - this.getDeltaMovement().y;
+        double deltaZ = pMotion.z - this.getDeltaMovement().z;
+        util.mixinDebugger(deltaX , deltaY, deltaZ, pMotion);
+        super.setDeltaMovement(pMotion);
     }
 
     @Override
@@ -349,45 +361,16 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
 //        return super.isInWater();
     }
 
-    @Override
-    public void travel(Vec3 Vector3d) {
-        if (this.getAnimation() == ANIMATION_SHAKEPREY || !this.canMove() && !this.isVehicle() || this.isOrderedToSit()) {
-            if (this.getNavigation().getPath() != null) {
-                this.getNavigation().stop();
-            }
-            Vector3d = new Vec3(0, 0, 0);
-        }
-        super.travel(Vector3d);
-    }
-
-    public boolean useFlyingPathFinder() {
-        return this.isFlying() || this.isHovering();
-    }
-
-    @Inject(
-            remap = false,
-            method = "bakeAttributes",
-            at = @At(value = "HEAD"),
-            cancellable = true
-    )
-    private static void roadblock$bakeAttributes(CallbackInfoReturnable<AttributeSupplier.Builder> cir) {
-        cir.setReturnValue(head$bakeAttributes());
-        cir.cancel();
-    }
-
-    private static AttributeSupplier.Builder head$bakeAttributes() {
-        return Mob.createMobAttributes()
-                //HEALTH
-                .add(Attributes.MAX_HEALTH, 20.0D)
-                //SPEED
-                .add(Attributes.MOVEMENT_SPEED, 0.3D)
-                //ATTACK
-                .add(Attributes.ATTACK_DAMAGE, 1)
-                //FOLLOW RANGE
-                .add(Attributes.FOLLOW_RANGE, Math.min(2048, IafConfig.dragonTargetSearchLength))
-                //ARMOR
-                .add(Attributes.ARMOR, 4);
-    }
+//    /**
+//     * @author
+//     * @reason Temp use for hovering dragons to update flying navigator, in order to remove the gap between the command and action
+//     *          Ice dragons override this method, so it should not be working for ice dragons according to mixin docs.
+//     *          Todo: remove this
+//     */
+//    @Overwrite(remap = false)
+//    public boolean useFlyingPathFinder() {
+//        return this.isFlying() || this.isHovering();
+//    }
 
     @Inject(
             method = "registerGoals()V",
@@ -417,8 +400,8 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
         this.goalSelector.addGoal(2, new DragonAIMate((EntityDragonBase) (Object) this, 1.0D));
         this.goalSelector.addGoal(3, new DragonAIReturnToRoost((EntityDragonBase) (Object) this, 1.0D));
         this.goalSelector.addGoal(4, new DragonAIEscort((EntityDragonBase) (Object) this, 1.0D));
-        this.goalSelector.addGoal(5, new DragonAIAttackMelee((EntityDragonBase) (Object) this, 1.5D, false));
-        this.goalSelector.addGoal(6, new AquaticAITempt((EntityDragonBase) (Object) this, 1.0D, IafItemRegistry.FIRE_STEW.get(), false));
+        this.goalSelector.addGoal(5, new DragonAIAttackMelee((EntityDragonBase) (Object) this, 1.25D, false));
+        this.goalSelector.addGoal(6, new AquaticAITempt((EntityDragonBase) (Object) this, 1.0D, IafItemRegistry.FIRE_STEW, false));
         this.goalSelector.addGoal(7, new DragonAIWander((EntityDragonBase) (Object) this, 1.0D));
         this.goalSelector.addGoal(8, new DragonAIWatchClosest(this, LivingEntity.class, 6.0F));
         this.goalSelector.addGoal(8, new DragonAILookIdle((EntityDragonBase) (Object) this));
@@ -492,25 +475,6 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
             this.navigation = createNavigator(level, AdvancedPathNavigate.MovementType.FLYING);
             this.navigatorType = 2;
         }
-    }
-
-    @Inject(
-            method = "customServerAiStep",
-            at = @At(value = "HEAD"),
-            cancellable = true
-    )
-    public void roadblock$updateAITasks(CallbackInfo ci) {
-//        head$updateAITasks();
-//        ci.cancel();
-    }
-
-    protected void head$updateAITasks() {
-        super.customServerAiStep();
-        breakBlock();
-
-        this.level.getProfiler().push("dragonBrain");
-        this.getBrain().tick((ServerLevel) this.level, (EntityDragonBase) (Object) this);
-        this.level.getProfiler().pop();
     }
 
     @Inject(

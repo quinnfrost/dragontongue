@@ -46,22 +46,6 @@ public abstract class MixinAbstractPathJob {
 
     @Inject(
             remap = false,
-            method = "performJumpPointSearch",
-            at = @At(value = "HEAD"),
-            cancellable = true
-    )
-    public void roadblock$performJumpPointSearch(MNode parent, BlockPos dPos, MNode node, CallbackInfo ci) {
-//        head$performJumpPointSearch(parent, dPos, node);
-//        ci.cancel();
-    }
-    private void head$performJumpPointSearch(final MNode parent, final BlockPos dPos, final MNode node) {
-        if (node.getHeuristic() <= parent.getHeuristic()) {
-            walk(node, dPos);
-        }
-    }
-
-    @Inject(
-            remap = false,
             method = "isWalkableSurface",
             at = @At(value = "HEAD"),
             cancellable = true
