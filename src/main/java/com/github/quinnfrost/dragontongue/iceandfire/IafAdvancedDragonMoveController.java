@@ -16,6 +16,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.MoveControl;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.pathfinder.NodeEvaluator;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
@@ -181,6 +182,11 @@ public class IafAdvancedDragonMoveController {
                 dragon.xRot = finPitch;
                 float yawTurnHead = dragon.yRot + 90.0F;
                 speedModifier *= dragon.getFlightSpeedModifier();
+
+                if (dragon.getCommand() == 2) {
+                    speedModifier *= 1.5;
+                }
+
                 speedModifier *= dragonFlightManager.getFlightPhase() == IafAdvancedDragonFlightManager.FlightPhase.DIRECT
                         ? Math.min(1, distToTarget / 50 + 0.3)  //Make the dragon fly slower when close to target
                         : 1;    // Do not limit speed when detouring
@@ -205,7 +211,7 @@ public class IafAdvancedDragonMoveController {
 
         @Override
         public void tick() {
-            double flySpeed = speedModifier * speedMod();
+            double flySpeed = speedModifier * speedMod() * 2;
             Vec3 dragonVec = dragon.position();
             Vec3 moveVec = new Vec3(wantedX, wantedY, wantedZ);
             Vec3 normalized = moveVec.subtract(dragonVec).normalize();
@@ -213,7 +219,7 @@ public class IafAdvancedDragonMoveController {
             dragon.setDeltaMovement(normalized.x * flySpeed, normalized.y * flySpeed, normalized.z * flySpeed);
             if (dist > 2.5E-7) {
                 float yaw = (float) Math.toDegrees(Math.PI * 2 - Math.atan2(normalized.x, normalized.y));
-                dragon.yRot = rotlerp(dragon.yRot, yaw, 5);
+                dragon.setYRot(rotlerp(dragon.getYRot(), yaw, 5));
                 dragon.setSpeed((float) (speedModifier));
             }
             dragon.move(MoverType.SELF, dragon.getDeltaMovement());
