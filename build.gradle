@@ -73,6 +73,13 @@ minecraft {
         client {
             workingDirectory project.file('run')
 
+            // https://forums.minecraftforge.net/topic/82228-1152-3110-intellij-and-gradlew-forge-hotswap-and-dcevm-tutorial/
+            if (project.hasProperty('hotswapAgent') && project.findProperty('enableHotswap').toBoolean()) {
+                jvmArgs '-ea', '-Xms1G', '-Xmx4G', '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5010', '-XXaltjvm=dcevm', '-XX:+UnlockExperimentalVMOptions', "-javaagent:${hotswapAgent}"
+            } else {
+                jvmArgs '-ea', '-Xms1G', '-Xmx4G'
+            }
+
             properties 'mixin.env.remapRefMap': 'true'
             property 'mixin.env.refMapRemappingFile', "${project.projectDir}/build/createSrgToMcp/output.srg"
 
@@ -161,8 +168,8 @@ dependencies {
 //    implementation fg.deobf("curse.maven:iceandfire-264231:3948661")
 //    compileOnly "curse.maven:citadel-331936:3441030"
 //    runtimeOnly files("..\\Ice_and_Fire\\build\\libs\\iceandfire-2.1.12-1.16.5.jar")
-//    compileOnly project(":Ice_and_Fire")
-    implementation fg.deobf("file:Ice_and_Fire:2.1.12-1.18.2")
+    compileOnly project(":Ice_and_Fire")
+    runtimeOnly fg.deobf("file:Ice_and_Fire:2.1.12-1.18.2")
 
     runtimeOnly fg.deobf("curse.maven:customvillagertrades-463402:3722281")
 

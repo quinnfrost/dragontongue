@@ -347,8 +347,10 @@ public class util {
         return true;
     }
 
+    public static double oldValue = 0;
     public static void mixinDebugger(Object... param) {
         String str = "A breakpoint over here will do the trick";
+
 //        DragonTongue.LOGGER.debug(str);
     }
 

@@ -12,6 +12,7 @@ import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.utils.util;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -211,22 +212,43 @@ public class IafAdvancedDragonMoveController {
 
         @Override
         public void tick() {
-            double flySpeed = speedModifier * speedMod() * 2;
-            Vec3 dragonVec = dragon.position();
-            Vec3 moveVec = new Vec3(wantedX, wantedY, wantedZ);
-            Vec3 normalized = moveVec.subtract(dragonVec).normalize();
-            double dist = dragonVec.distanceTo(moveVec);
-            dragon.setDeltaMovement(normalized.x * flySpeed, normalized.y * flySpeed, normalized.z * flySpeed);
-            if (dist > 2.5E-7) {
-                float yaw = (float) Math.toDegrees(Math.PI * 2 - Math.atan2(normalized.x, normalized.y));
-                dragon.setYRot(rotlerp(dragon.getYRot(), yaw, 5));
-                dragon.setSpeed((float) (speedModifier));
-            }
-            dragon.move(MoverType.SELF, dragon.getDeltaMovement());
+
+//            double flySpeed = speedModifier * speedMod() * 2;
+//            Vec3 dragonVec = dragon.position();
+//            Vec3 moveVec = new Vec3(wantedX, wantedY, wantedZ);
+//            Vec3 normalized = moveVec.subtract(dragonVec).normalize();
+//            double dist = dragonVec.distanceTo(moveVec);
+//            dragon.setDeltaMovement(normalized.x * flySpeed, normalized.y * flySpeed, normalized.z * flySpeed);
+//            if (dist > 2.5E-7) {
+//                float yaw = (float) Math.toDegrees(Math.PI * 2 - Math.atan2(normalized.x, normalized.y));
+//                dragon.setYRot(rotlerp(dragon.getYRot(), yaw, 5));
+//                dragon.setSpeed((float) (speedModifier));
+//            }
+//            dragon.move(MoverType.SELF, dragon.getDeltaMovement());
         }
 
         public double speedMod() {
             return (dragon instanceof EntityAmphithere ? 0.75D : 0.5D) * IafConfig.dragonFlightSpeedMod;
         }
+    }
+
+    public static float rotlerp(float pSourceAngle, float pTargetAngle, float pMaximumChange) {
+        float f = Mth.wrapDegrees(pTargetAngle - pSourceAngle);
+        if (f > pMaximumChange) {
+            f = pMaximumChange;
+        }
+
+        if (f < -pMaximumChange) {
+            f = -pMaximumChange;
+        }
+
+        float f1 = pSourceAngle + f;
+        if (f1 < 0.0F) {
+            f1 += 360.0F;
+        } else if (f1 > 360.0F) {
+            f1 -= 360.0F;
+        }
+
+        return f1;
     }
 }

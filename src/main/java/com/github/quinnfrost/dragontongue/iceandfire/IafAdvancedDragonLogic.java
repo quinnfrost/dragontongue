@@ -135,6 +135,10 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
                 break;
         }
 
+        if (dragon.isDismounting()) {
+            dragon.setNoGravity(false);
+        }
+
 //        $updateDragonServer();
         super.updateDragonServer();
 
@@ -278,12 +282,12 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
         }
 
         // Bug: In some circumstances elder dragons (125+) fail to sleep even navigator believes it has reached home.
-        PathResult<AbstractPathJob> pathResult = ((IafAdvancedDragonPathNavigator) dragon.getNavigation()).pathResult;
-        IafAdvancedDragonPathNavigator navigator = (IafAdvancedDragonPathNavigator) dragon.getNavigation();
+//        PathResult<AbstractPathJob> pathResult = ((IafAdvancedDragonPathNavigator) dragon.getNavigation()).pathResult;
+//        IafAdvancedDragonPathNavigator navigator = (IafAdvancedDragonPathNavigator) dragon.getNavigation();
         if (dragon.lookingForRoostAIFlag
 //                && dragon.getDistanceSquared(Vector3d.copyCentered(dragon.getHomePosition())) < dragon.getWidth() * 12
         ) {
-            if (navigator.isDone()) {
+            if (dragon.getNavigation().isDone()) {
                 if (IafHelperClass.getXZDistanceSq(dragon.position(), Vec3.atBottomCenterOf(dragon.getRestrictCenter())) < 100) {
                     if (!dragon.isInWater() && dragon.isOnGround() && !dragon.isFlying() && !dragon.isHovering() && dragon.getTarget() == null) {
                         dragon.lookingForRoostAIFlag = false;
@@ -565,13 +569,13 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
                 dragon.setHovering(false);
             }
             // That wants to land
-            if (dragon.doesWantToLand() && !dragon.isOnGround() && !dragon.isInWater()) {
+            if (dragon.doesWantToLand() && !dragon.isOnGround() && !dragon.isInWater() && dragon.isControlledByLocalInstance()) {
                 dragon.setDeltaMovement(dragon.getDeltaMovement().add(0, -0.25, 0));
             } else {
                 // If rider onboard, try to neutralize the gravity
                 if ((dragon.getControllingPassenger() == null || dragon.getControllingPassenger() instanceof EntityDreadQueen) && !dragon.isBeyondHeight()) {
-                    double up = dragon.isInWater() ? 0.12D : 0.08D;
-                    dragon.setDeltaMovement(dragon.getDeltaMovement().add(0, up, 0));
+//                    double up = dragon.isInWater() ? 0.12D : 0.08D;
+//                    dragon.setDeltaMovement(dragon.getDeltaMovement().add(0, up, 0));
                 }
                 // Start flying after they have hovered for 2 secs
                 if (dragon.hoverTicks > 40) {
@@ -779,7 +783,7 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
 
     private void updateDragonPitch() {
         // For dragons airborne
-        if (iEntityDragon.isOverAir$invoke() && !dragon.isPassenger()) {
+        if (iEntityDragon.isOverAir$invoke() && !dragon.isPassenger() && !dragon.isControlledByLocalInstance()) {
             final double ydist = dragon.yo - dragon.getY();//down 0.4 up -0.38
             // For flying dragons
             if (!dragon.isHovering()) {

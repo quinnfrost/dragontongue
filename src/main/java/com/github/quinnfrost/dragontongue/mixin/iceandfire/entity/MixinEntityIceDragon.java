@@ -7,9 +7,11 @@ import com.github.alexthe666.iceandfire.enums.EnumParticles;
 import com.github.alexthe666.iceandfire.message.MessageDragonSyncFire;
 import com.github.alexthe666.iceandfire.misc.IafSoundRegistry;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -35,7 +37,24 @@ public abstract class MixinEntityIceDragon extends EntityDragonBase {
     }
 
     @Override
+    protected float getWaterSlowDown() {
+        return 0.98f;
+    }
+
+    @Override
     public void travel(Vec3 travelVector) {
+//        if (this.isVehicle() && this.canBeControlledByRider()) {
+//            Vec3 pTravelVector = this.getDeltaMovement();
+//            LivingEntity livingentity = (LivingEntity) this.getControllingPassenger();
+//            float f = livingentity.xxa * 0.5F;
+//            float f1 = livingentity.zza;
+//            if (this.isControlledByLocalInstance()) {
+//                this.setSpeed(1);
+//                super.travel(new Vec3((double) f, pTravelVector.y, (double) f1));
+//            } else if (livingentity instanceof Player) {
+//                this.setDeltaMovement(Vec3.ZERO);
+//            }
+//        }
         if (this.isEffectiveAi() && this.isInWater()) {
             this.moveRelative(this.getSpeed(), travelVector);
             this.move(MoverType.SELF, this.getDeltaMovement());
