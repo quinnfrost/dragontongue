@@ -233,6 +233,8 @@ public class CrossbowArrowPreview extends Entity implements PreviewEntity<Abstra
 
     protected void addAdditionalSaveData(CompoundTag p_20139_) {
     }
+    protected void doWaterSplashEffect() {
+    }
 
     public Packet<?> getAddEntityPacket() {
         return new ClientboundAddEntityPacket(this);

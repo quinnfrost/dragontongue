@@ -103,6 +103,8 @@ public class ThrowablePreview extends Entity implements PreviewEntity<ThrowableI
 
     protected void addAdditionalSaveData(CompoundTag p_20139_) {
     }
+    protected void doWaterSplashEffect() {
+    }
 
     public Packet<?> getAddEntityPacket() {
         return new ClientboundAddEntityPacket(this);

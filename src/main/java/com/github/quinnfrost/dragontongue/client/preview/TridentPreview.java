@@ -33,5 +33,7 @@ public class TridentPreview extends BowArrowPreview {
         return null;
     }
 
+    protected void doWaterSplashEffect() {
+    }
 
 }

@@ -162,6 +162,8 @@ public class BowArrowPreview extends Entity implements PreviewEntity<AbstractArr
 
     protected void addAdditionalSaveData(CompoundTag p_20139_) {
     }
+    protected void doWaterSplashEffect() {
+    }
 
     public Packet<?> getAddEntityPacket() {
         return new ClientboundAddEntityPacket(this);
