@@ -13,40 +13,38 @@ import com.github.quinnfrost.dragontongue.message.MessageCommandEntity;
 import com.github.quinnfrost.dragontongue.message.MessageSyncCapability;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Options;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.inventory.EffectRenderingInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.resources.language.I18n;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffectUtil;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
-import com.mojang.math.Quaternion;
-import com.mojang.math.Vector3f;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
-public class ScreenDragon extends AbstractContainerScreen<ContainerDragon> {
+public class ScreenDragon extends EffectRenderingInventoryScreen<ContainerDragon> {
     private static final ResourceLocation textureGuiDragon = new ResourceLocation(IceAndFire.MODID, "textures/gui/dragon.png");
     public static EntityDragonBase referencedDragon;
     private static final Options gameSettings = Minecraft.getInstance().options;
     private final List<Button> buttons = new ArrayList<>();
-    private final float relCentralXOffset = imageWidth / 2;
-    private final float relCentralYOffset = 75;
-    private final int relRightPanelXOffset = this.imageWidth + 10;
-    private final int relRightPanelYOffset = 5;
     private final int buttonHeight = 20;
     private final int buttonWidth = 40;
+    private final float relCentralXOffset = imageWidth / 2;
+    private final float relCentralYOffset = 75;
+    private final int relLeftPanelXOffset = - 10 - buttonWidth;
+    private final int relLeftPanelYOffset = 5;
     private final int stringLineSpacing = 9;
     private float mousePosX;
     private float mousePosY;
@@ -77,8 +75,8 @@ public class ScreenDragon extends AbstractContainerScreen<ContainerDragon> {
         cap = referencedDragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(referencedDragon));
 
         Button buttonReset = new Button(
-                relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset - 5,
+                relX + relLeftPanelXOffset,
+                relY + relLeftPanelYOffset - 5,
                 buttonWidth,
                 buttonHeight,
                 new TextComponent(translateToLocal("dragontongue.gui.reset")),
@@ -101,8 +99,8 @@ public class ScreenDragon extends AbstractContainerScreen<ContainerDragon> {
         buttons.add(buttonReset);
 
         Button buttonStatus = new Button(
-                relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight,
+                relX + relLeftPanelXOffset,
+                relY + relLeftPanelYOffset + buttonHeight,
                 buttonWidth,
                 buttonHeight,
                 new TextComponent(translateToLocal("")),
@@ -130,8 +128,8 @@ public class ScreenDragon extends AbstractContainerScreen<ContainerDragon> {
         buttons.add(buttonStatus);
 
         Button buttonSleep = new Button(
-                relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight * 2,
+                relX + relLeftPanelXOffset,
+                relY + relLeftPanelYOffset + buttonHeight * 2,
                 buttonWidth,
                 buttonHeight,
                 new TextComponent(""),
@@ -148,8 +146,8 @@ public class ScreenDragon extends AbstractContainerScreen<ContainerDragon> {
 
 
         Button buttonRoost = new Button(
-                relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight * 3,
+                relX + relLeftPanelXOffset,
+                relY + relLeftPanelYOffset + buttonHeight * 3,
                 buttonWidth,
                 buttonHeight,
                 new TextComponent(""),
@@ -165,8 +163,8 @@ public class ScreenDragon extends AbstractContainerScreen<ContainerDragon> {
         buttons.add(buttonRoost);
 
         Button buttonBreath = new Button(
-                relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight * 4,
+                relX + relLeftPanelXOffset,
+                relY + relLeftPanelYOffset + buttonHeight * 4,
                 buttonWidth,
                 buttonHeight,
                 new TextComponent(""),
@@ -186,8 +184,8 @@ public class ScreenDragon extends AbstractContainerScreen<ContainerDragon> {
         buttons.add(buttonBreath);
 
         Button buttonDestroy = new Button(
-                relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight * 5,
+                relX + relLeftPanelXOffset,
+                relY + relLeftPanelYOffset + buttonHeight * 5,
                 buttonWidth,
                 buttonHeight,
                 new TextComponent(""),
@@ -207,8 +205,8 @@ public class ScreenDragon extends AbstractContainerScreen<ContainerDragon> {
         buttons.add(buttonDestroy);
 
         Button buttonMovement = new Button(
-                relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight * 6,
+                relX + relLeftPanelXOffset,
+                relY + relLeftPanelYOffset + buttonHeight * 6,
                 buttonWidth,
                 buttonHeight,
                 new TextComponent(""),
@@ -228,8 +226,8 @@ public class ScreenDragon extends AbstractContainerScreen<ContainerDragon> {
         buttons.add(buttonMovement);
 
         Button buttonAttackDecision = new Button(
-                relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight * 7,
+                relX + relLeftPanelXOffset,
+                relY + relLeftPanelYOffset + buttonHeight * 7,
                 buttonWidth,
                 buttonHeight,
                 new TextComponent(""),
@@ -249,8 +247,8 @@ public class ScreenDragon extends AbstractContainerScreen<ContainerDragon> {
         buttons.add(buttonAttackDecision);
 
         Button buttonGroundAttack = new Button(
-        relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight * 8,
+        relX + relLeftPanelXOffset,
+                relY + relLeftPanelYOffset + buttonHeight * 8,
                 buttonWidth,
                 buttonHeight,
                 new TextComponent(""),
@@ -270,8 +268,8 @@ public class ScreenDragon extends AbstractContainerScreen<ContainerDragon> {
         buttons.add(buttonGroundAttack);
 
         Button buttonAirAttack = new Button(
-        relX + relRightPanelXOffset,
-                relY + relRightPanelYOffset + buttonHeight * 9,
+        relX + relLeftPanelXOffset,
+                relY + relLeftPanelYOffset + buttonHeight * 9,
                 buttonWidth,
                 buttonHeight,
                 new TextComponent(""),
@@ -371,7 +369,7 @@ public class ScreenDragon extends AbstractContainerScreen<ContainerDragon> {
         offset = 0;
         for (String displayString :
                 stringList) {
-            font.draw(matrixStack, displayString, relX + relRightPanelXOffset + 40, relY + relRightPanelYOffset + offset, 0XFFFFFF);
+            font.draw(matrixStack, displayString, relX + relLeftPanelXOffset - buttonWidth + 40 - font.width(displayString), relY + relLeftPanelYOffset + offset, 0XFFFFFF);
             offset += buttonHeight;
         }
 
@@ -413,10 +411,52 @@ public class ScreenDragon extends AbstractContainerScreen<ContainerDragon> {
                 translateToLocal("dragontongue.gui.air_attack." + airAttackType)
         ));
 
-
     }
 
-//    // from GuiDragon#33
+    @Override
+    protected void renderEffects(PoseStack pPoseStack, int pMouseX, int pMouseY) {
+
+        int i = this.leftPos + this.imageWidth + 2;
+        int j = this.width - i;
+        Collection<MobEffectInstance> collection = referencedDragon.getActiveEffects();
+        if (!collection.isEmpty() && j >= 32) {
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+            boolean flag = j >= 120;
+            var event = net.minecraftforge.client.ForgeHooksClient.onScreenPotionSize(this);
+            if (event != net.minecraftforge.eventbus.api.Event.Result.DEFAULT) flag = event == net.minecraftforge.eventbus.api.Event.Result.DENY; // true means classic mode
+            int k = 33;
+            if (collection.size() > 5) {
+                k = 132 / (collection.size() - 1);
+            }
+
+
+            Iterable<MobEffectInstance> iterable = collection.stream().filter(net.minecraftforge.client.ForgeHooksClient::shouldRenderEffect).sorted().collect(java.util.stream.Collectors.toList());
+            this.renderBackgrounds(pPoseStack, i, k, iterable, flag);
+            this.renderIcons(pPoseStack, i, k, iterable, flag);
+            if (flag) {
+                this.renderLabels(pPoseStack, i, k, iterable);
+            } else if (pMouseX >= i && pMouseX <= i + 33) {
+                int l = this.topPos;
+                MobEffectInstance mobeffectinstance = null;
+
+                for(MobEffectInstance mobeffectinstance1 : iterable) {
+                    if (pMouseY >= l && pMouseY <= l + k) {
+                        mobeffectinstance = mobeffectinstance1;
+                    }
+
+                    l += k;
+                }
+
+                if (mobeffectinstance != null) {
+                    List<Component> list = List.of(this.getEffectName(mobeffectinstance), new TextComponent(MobEffectUtil.formatDuration(mobeffectinstance, 1.0F)));
+                    this.renderTooltip(pPoseStack, list, Optional.empty(), pMouseX, pMouseY);
+                }
+            }
+
+        }
+    }
+
+    //    // from GuiDragon#33
 //    public static void drawEntityOnScreen(int posX, int posY, float scale, float mouseX, float mouseY, LivingEntity livingEntity) {
 //        float f = (float) Math.atan(mouseX / 40.0F);
 //        float f1 = (float) Math.atan(mouseY / 40.0F);

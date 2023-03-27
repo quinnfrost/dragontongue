@@ -12,6 +12,7 @@ import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.alexthe666.iceandfire.entity.util.HomePosition;
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import com.github.alexthe666.iceandfire.misc.IafDamageRegistry;
+import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
@@ -23,24 +24,35 @@ import com.github.quinnfrost.dragontongue.iceandfire.message.MessageClientSetRef
 import com.github.quinnfrost.dragontongue.message.MessageSyncCapability;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
+import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.ThrownPotion;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+
+import java.util.List;
 
 public class IafServerEvent {
 
@@ -218,7 +230,7 @@ public class IafServerEvent {
                 if (!playerEntity.isShiftKeyDown()) {
                     if (util.isOwner(dragon, playerEntity)) {
                         RegistryMessages.sendToClient(new MessageClientSetReferenceDragon(
-                                dragon.getId()
+                                dragon
                         ), (ServerPlayer) playerEntity);
                         ContainerDragon.openGui(playerEntity, dragon);
                         event.setCancellationResult(InteractionResult.SUCCESS);
@@ -285,6 +297,82 @@ public class IafServerEvent {
         return true;
     }
 
+    public static void onProjectileImpact(ProjectileImpactEvent event) {
+        Projectile projectile = event.getProjectile();
+        Entity shooter = projectile.getOwner();
+        Entity directHit = event.getRayTraceResult().getType() == HitResult.Type.ENTITY ? ((EntityHitResult)event.getRayTraceResult()).getEntity() : null;
+        if (projectile instanceof ThrownPotion potion) {
+            // Reference ThrownPotion#applySplash
+            List<MobEffectInstance> effectInstanceList = PotionUtils.getMobEffects(potion.getItem());
+
+            AABB aabb = potion.getBoundingBox().inflate(4.0d,2.0d,4.0d);
+            Vec3 potionPos = potion.getPosition(1.0f);
+            List<Entity> entityList = potion.level.getEntitiesOfClass(Entity.class, aabb, entity -> (
+                    (entity instanceof EntityDragonPart dragonPart
+                            && dragonPart.getParent() != null)
+                    || entity instanceof LivingEntity
+            ));
+            if (!entityList.isEmpty()) {
+                Entity thrower = potion.getEffectSource();
+
+                for (Entity effectedEntity : entityList) {
+                    if (effectedEntity instanceof EntityDragonPart dragonPart) {
+                        LivingEntity parent = (LivingEntity) dragonPart.getParent();
+                        if (parent.isAffectedByPotions()) {
+                            double d0 = dragonPart.getBoundingBox().clip(potionPos, dragonPart.getPosition(1.0f)).orElse(potionPos).subtract(potionPos).length();
+                            if (d0 < 16.0D) {
+                                double d1 = 1.0D - Math.sqrt(d0) / 4.0D;
+                                if (dragonPart == directHit) {
+                                    d1 = 1.0D;
+                                }
+
+                                for (MobEffectInstance mobeffectinstance : effectInstanceList) {
+                                    MobEffect mobeffect = mobeffectinstance.getEffect();
+                                    if (mobeffect.isInstantenous()) {
+                                        mobeffect.applyInstantenousEffect(potion, potion.getOwner(), parent, mobeffectinstance.getAmplifier(), d1);
+                                    } else {
+                                        int i = (int)(d1 * (double)mobeffectinstance.getDuration() + 0.5D);
+                                        if (i > 20) {
+                                            parent.addEffect(new MobEffectInstance(mobeffect, i, mobeffectinstance.getAmplifier(), mobeffectinstance.isAmbient(), mobeffectinstance.isVisible()), thrower);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (effectedEntity instanceof LivingEntity) {
+                        LivingEntity livingEntity = (LivingEntity) effectedEntity;
+                        if (livingEntity.isAffectedByPotions()) {
+                            double d0 = livingEntity.getBoundingBox().clip(potionPos, livingEntity.getPosition(1.0f)).orElse(potionPos).subtract(potionPos).length();
+                            if (d0 < 16.0D) {
+                                double d1 = 1.0D - Math.sqrt(d0) / 4.0D;
+                                if (livingEntity == directHit) {
+                                    d1 = 1.0D;
+                                }
+
+                                for(MobEffectInstance mobeffectinstance : effectInstanceList) {
+                                    MobEffect mobeffect = mobeffectinstance.getEffect();
+                                    if (mobeffect.isInstantenous()) {
+                                        mobeffect.applyInstantenousEffect(potion, potion.getOwner(), livingEntity, mobeffectinstance.getAmplifier(), d1);
+                                    } else {
+                                        int i = (int)(d1 * (double)mobeffectinstance.getDuration() + 0.5D);
+                                        if (i > 20) {
+                                            livingEntity.addEffect(new MobEffectInstance(mobeffect, i, mobeffectinstance.getAmplifier(), mobeffectinstance.isAmbient(), mobeffectinstance.isVisible()), thrower);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public static void onEntityDamage(LivingDamageEvent event) {
+
+    }
+
     public static boolean onLivingKnockBack(LivingKnockBackEvent event) {
         Entity entity = event.getEntity();
         if (entity instanceof EntityDragonBase) {
@@ -321,10 +409,6 @@ public class IafServerEvent {
         }
 
         return true;
-    }
-
-    public static void onEntityDamage(LivingDamageEvent event) {
-
     }
 
     public static boolean onEntityAttacked(LivingAttackEvent event) {

@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "dragontongue.refmap.json",
   "mixins": [
+    "MixinAreaEffectCloud",
     "MixinEntity",
     "MixinLivingEntity",
     "MixinMerchantOffer",

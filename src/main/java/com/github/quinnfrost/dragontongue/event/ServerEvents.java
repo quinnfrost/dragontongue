@@ -20,10 +20,12 @@ import com.github.quinnfrost.dragontongue.iceandfire.message.MessageClientSetRef
 import com.github.quinnfrost.dragontongue.item.RegistryItems;
 import com.github.quinnfrost.dragontongue.message.*;
 import com.github.quinnfrost.dragontongue.utils.util;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.PrimedTnt;
+import net.minecraft.world.entity.projectile.ThrownPotion;
 import net.minecraft.world.entity.vehicle.MinecartTNT;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.player.Player;
@@ -38,6 +40,8 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.alchemy.PotionUtils;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -78,6 +82,9 @@ public class ServerEvents {
         if (event.getEntity().level.isClientSide) {
             return;
         }
+        if (DragonTongue.isIafPresent) {
+            IafServerEvent.onProjectileImpact(event);
+        }
 
         Projectile projectile = event.getProjectile();
         Entity shooter = projectile.getOwner();
@@ -102,6 +109,7 @@ public class ServerEvents {
                 }
             }
         }
+        
     }
 
     /**
@@ -357,4 +365,5 @@ public class ServerEvents {
             IafServerEvent.onLivingKnockBack(event);
         }
     }
+
 }
