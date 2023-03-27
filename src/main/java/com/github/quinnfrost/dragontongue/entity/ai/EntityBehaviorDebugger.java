@@ -7,12 +7,12 @@ import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.iceandfire.IafAdvancedDragonFlightManager;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
-import com.github.quinnfrost.dragontongue.message.MessageClientDisplay;
-import com.github.quinnfrost.dragontongue.message.MessageClientDraw;
 import com.github.quinnfrost.dragontongue.message.MessageDebugEntity;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.Brain;
@@ -74,6 +74,7 @@ public class EntityBehaviorDebugger {
         }
         return associatedTarget;
     }
+
     public static String formatBlockPos(BlockPos pos) {
         if (pos != null) {
             return String.format("%d, %d, %d", pos.getX(), pos.getY(), pos.getZ());
@@ -120,6 +121,66 @@ public class EntityBehaviorDebugger {
         }
     }
 
+    public static List<String> getTargetAIString(Mob mob) {
+        String scheduleString = (mob.getBrain().getSchedule() == null ? "" : mob.getBrain().getSchedule().getRegistryName().getPath()) + String.format(" [%s]", (mob.getBrain().getSchedule() == null ? "-" : mob.getBrain().getSchedule().getActivityAt((int) mob.level.getDayTime())));
+        List<String> aiString = new ArrayList<>(List.of(
+                "Goals:",
+                mob.goalSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString(),
+                mob.targetSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString(),
+                "Tasks:",
+                " Schedule: " + scheduleString,
+                " Activity: " + String.format("%s + ", mob.getBrain().coreActivities.toString()) + String.format("(%s)", mob.getBrain().getActiveNonCoreActivity().orElse(new Activity(""))),
+                " Running",
+                mob.getBrain().getRunningBehaviors().toString(),
+                " Memory"
+        ));
+        aiString.addAll(getMemoryInfoString(mob));
+
+        return aiString;
+    }
+
+    public static List<String> getTargetRiderString(LivingEntity livingEntity) {
+        LivingEntity rider = (LivingEntity) livingEntity.getControllingPassenger();
+        String riderTravel = (rider == null ? "" :
+                String.format("Forward:%f - Strafing:%f - Vertical:%f", rider.zza, rider.xxa, rider.yya));
+        List<String> riderString = new ArrayList<>(List.of(
+                "Rider:"
+        ));
+        riderString.addAll(getTargetTravelString(rider));
+
+        return riderString;
+    }
+
+    public static List<String> getTargetTravelString(LivingEntity livingEntity) {
+        if (livingEntity == null) {
+            return new ArrayList<>();
+        }
+        List<String> travelString = new ArrayList<>(List.of(
+                String.format("Speed:%.2f", livingEntity.getSpeed()),
+                String.format("Forward:%f - Strafing:%f - Vertical:%f", livingEntity.zza, livingEntity.xxa, livingEntity.yya),
+                String.format("XRot:%.2f, YRot:%.2f", livingEntity.getXRot(), livingEntity.getYRot()),
+                String.format("Vertical:%.2f, Forward:%.2f",
+                        Mth.abs(Mth.sin(livingEntity.getXRot() * ((float) Math.PI / 180F))),
+                        Mth.abs(Mth.cos(livingEntity.getXRot() * ((float) Math.PI / 180F)))
+                ),
+                String.format("FallDistance:%.2f", livingEntity.fallDistance),
+                String.format("MyValue: %.2f, %.2f, %.2f",
+                        Mth.abs(Mth.cos(livingEntity.getXRot() * ((float) Math.PI / 180F))),
+                        livingEntity.xxa,
+                        Mth.abs(Mth.sin(Mth.map(livingEntity.getXRot() * livingEntity.getXRot(), 0, 8100, 0, 90) * ((float) Math.PI / 180F)))
+                        )
+        ));
+
+        return travelString;
+    }
+
+    public static double getSpeed(Mob mob) {
+//        double dX = mob.getX() - mob.xOld;
+//        double dY = mob.getY() - mob.yOld;
+//        double dZ = mob.getZ() - mob.zOld;
+        return mob.getPosition(1.0f).distanceTo(new Vec3(mob.xOld, mob.yOld, mob.zOld)) / 0.05;
+    }
+
     public static List<String> getTargetInfoString(Mob mobEntity) {
         if (mobEntity == null) {
             return new ArrayList<>();
@@ -128,7 +189,6 @@ public class EntityBehaviorDebugger {
 
         ICapabilityInfoHolder capabilityInfoHolder = mobEntity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(mobEntity));
 
-        String scheduleString = (mobEntity.getBrain().getSchedule() == null ? "" : mobEntity.getBrain().getSchedule().getRegistryName().getPath()) + String.format(" [%s]", (mobEntity.getBrain().getSchedule() == null ? "-" : mobEntity.getBrain().getSchedule().getActivityAt((int) mobEntity.level.getDayTime())));
         BlockPos targetPos = DragonTongue.isIafPresent ? IafHelperClass.getReachTarget(mobEntity) : mobEntity.getNavigation().getTargetPos();
         String targetPosString = (targetPos == null ? "-" :
                 String.format(" %d, %d, %d (%.2f)",
@@ -155,33 +215,31 @@ public class EntityBehaviorDebugger {
             reachesTarget = "false";
         }
 
+
         List<String> debugMsg = new ArrayList<>();
 
         debugMsg.addAll(Arrays.asList(
                 String.format("%s \"%s\" [%s] (%.1f/%s)", mobEntity.getName().getString(), mobEntity.getCustomName() == null ? "-" : mobEntity.getCustomName(), mobEntity.getEncodeId(), mobEntity.getHealth(), Objects.toString((mobEntity.getAttribute(Attributes.MAX_HEALTH).getValue()), "-")),
                 "Pos: " + String.format("%.5f, %.5f, %.5f ", mobEntity.position().x, mobEntity.position().y, mobEntity.position().z) + String.format("[%d, %d, %d]", mobEntity.blockPosition().getX(), mobEntity.blockPosition().getY(), mobEntity.blockPosition().getZ()),
-                "Motion: " + String.format("%.5f, %.5f, %.5f ", mobEntity.getDeltaMovement().x, mobEntity.getDeltaMovement().y, mobEntity.getDeltaMovement().z),
+//                " OldPos: " + String.format("%.2f, %.2f, %.2f ", mobEntity.xo, mobEntity.yo, mobEntity.zo) + String.format("%.2f, %.2f, %.2f ", mobEntity.xOld, mobEntity.yOld, mobEntity.zOld),
+                "Rot: " + String.format("%.2f, %.2f ", mobEntity.xRot, mobEntity.yRot),
+                "Motion: " + String.format("%.5f, %.5f, %.5f (%.2f)", mobEntity.getDeltaMovement().x, mobEntity.getDeltaMovement().y, mobEntity.getDeltaMovement().z, getSpeed(mobEntity)),
                 "Facing: " + String.format(" %s", formatVector(mobEntity.getLookAngle())),
-                "Goals:",
-                mobEntity.goalSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString(),
-                mobEntity.targetSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList()).toString(),
-                "Tasks:",
-                " Schedule: " + scheduleString,
-                " Activity: " + String.format("%s + ", mobEntity.getBrain().coreActivities.toString()) + String.format("(%s)", mobEntity.getBrain().getActiveNonCoreActivity().orElse(new Activity(""))),
-                " Running",
-                mobEntity.getBrain().getRunningBehaviors().toString(),
-                " Memory"
-        ));
-        debugMsg.addAll(getMemoryInfoString(mobEntity));
-        debugMsg.addAll(Arrays.asList(
-                "Targets: " + targetString,
-                "StepHeight:" + mobEntity.maxUpStep,
-                "isInWater:" + mobEntity.isInWater(),
-                "Move:" + String.format("%f - %f - %f", mobEntity.zza, mobEntity.xxa, mobEntity.yya),
                 "Current dest: " + targetPosString,
+                "Targets: " + targetString
+                ));
+
+        debugMsg.addAll(getTargetTravelString(mobEntity));
+        debugMsg.addAll(getTargetRiderString(mobEntity));
+        debugMsg.addAll(getTargetAIString(mobEntity));
+
+        debugMsg.addAll(Arrays.asList(
+                "StepHeight:" + mobEntity.maxUpStep,
+                "OnGround: " + mobEntity.isOnGround(),
                 "Command status:" + capabilityInfoHolder.getCommandStatus().toString(),
                 "Command dest:" + destinationString,
-                "AttackDecision:" + capabilityInfoHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE)
+                "AttackDecision:" + capabilityInfoHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE),
+                "isInWater:" + mobEntity.isInWater()
         ));
         if (DragonTongue.isIafPresent) {
             List<String> additional = IafHelperClass.getAdditionalDragonDebugStrings(mobEntity);

@@ -92,7 +92,9 @@ public class MessageDebugEntity {
             if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
                 if (isActive) {
                     Mob targetEntity = (Mob) Minecraft.getInstance().level.getEntity(entityId);
-
+                    if (targetEntity == null) {
+                        return;
+                    }
                     for (Vec3 target:
                          associatedTarget) {
                         RenderNode.drawCube(2, target, false, null);

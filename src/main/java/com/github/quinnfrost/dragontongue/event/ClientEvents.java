@@ -4,11 +4,16 @@ import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import com.github.quinnfrost.dragontongue.client.ClientGlow;
 import com.github.quinnfrost.dragontongue.client.KeyBindRegistry;
 import com.github.quinnfrost.dragontongue.client.overlay.OverlayCrossHair;
+import com.github.quinnfrost.dragontongue.client.overlay.OverlayInfoPanel;
+import com.github.quinnfrost.dragontongue.client.render.RenderNode;
+import com.github.quinnfrost.dragontongue.entity.ai.EntityBehaviorDebugger;
+import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import com.github.quinnfrost.dragontongue.utils.Vector2f;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.client.Options;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.HitResult;
@@ -59,6 +64,18 @@ public class ClientEvents {
         int maxDistance = Minecraft.getInstance().options.renderDistance * 16;
         LocalPlayer clientPlayerEntity = Minecraft.getInstance().player;
 
+        if (!OverlayInfoPanel.bufferInfoLeft.isEmpty() && clientPlayerEntity != null && clientPlayerEntity.isPassenger()) {
+            LivingEntity riding = (LivingEntity) clientPlayerEntity.getVehicle();
+            if (riding != null) {
+                RenderNode.setRenderPos(
+                        2,
+                        clientPlayerEntity.getPosition(1.0f).add(0, clientPlayerEntity.getEyeHeight(), 0).add(riding.getDeltaMovement().scale(2f)),
+                        clientPlayerEntity.getPosition(1.0f),
+                        null
+                );
+            }
+        }
+
         if (clientPlayerEntity != null && clientPlayerEntity.isShiftKeyDown() && (clientPlayerEntity.getItemInHand(InteractionHand.MAIN_HAND).getItem() == IafItemRegistry.DRAGON_BOW.get()
         || clientPlayerEntity.getItemInHand(InteractionHand.MAIN_HAND).getItem() == Items.BOW)) {
             OverlayCrossHair.renderScope = true;
@@ -102,10 +119,6 @@ public class ClientEvents {
 //        event.getItemColors().register((stack, i) -> 0xff0000, ItemRegistry.FIRSTENTITYSPAWNEGG.get());
     }
 
-    @SubscribeEvent
-    public static void onPlayerTick(TickEvent.ClientTickEvent event) {
-
-    }
     @SubscribeEvent
     public static void onGuiInit(ScreenEvent.InitScreenEvent.Post event) {
         keySneakPressed = false;

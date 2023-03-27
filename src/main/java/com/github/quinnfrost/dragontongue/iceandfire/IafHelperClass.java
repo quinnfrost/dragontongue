@@ -1,9 +1,6 @@
 package com.github.quinnfrost.dragontongue.iceandfire;
 
-import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
-import com.github.alexthe666.iceandfire.entity.EntityDragonPart;
-import com.github.alexthe666.iceandfire.entity.EntityFireDragon;
-import com.github.alexthe666.iceandfire.entity.EntityHippogryph;
+import com.github.alexthe666.iceandfire.entity.*;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.alexthe666.iceandfire.entity.util.IDeadMob;
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
@@ -32,6 +29,7 @@ import net.minecraftforge.client.event.RenderLevelLastEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class IafHelperClass {
     public static void startIafPathDebug(Player playerEntity, LivingEntity livingEntity) {
@@ -104,6 +102,16 @@ public class IafHelperClass {
         return null;
     }
 
+    public static List<String> getDragonAnimationDebugString(EntityDragonBase dragon) {
+        List<String> stringList = new ArrayList<>();
+        stringList.addAll(List.of(
+                String.format("Fly(%d) Hover:(%d) Dive(%.1f) Tackle(%d) Riding(%.1f)",
+                        dragon.flyTicks, dragon.hoverTicks, dragon.diveProgress, dragon.tacklingTicks, dragon.ridingProgress
+                )
+        ));
+        return stringList;
+    }
+
     public static List<String> getAdditionalDragonDebugStrings(LivingEntity dragonIn) {
         if (!isDragon(dragonIn)) {
             return new ArrayList<>();
@@ -117,7 +125,7 @@ public class IafHelperClass {
         ICapabilityInfoHolder capabilityInfoHolder = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
         BlockPos targetPos = getReachTarget(dragon);
 
-        IafAdvancedDragonFlightManager flightManager = (IafAdvancedDragonFlightManager) dragon.flightManager;
+        IafDragonFlightManager flightManager = dragon.flightManager;
         Vec3 currentFlightTarget = dragon.flightManager.getFlightTarget();
 //        float distX = (float) (currentFlightTarget.x - dragon.getPosX());
 //        float distY = (float) (currentFlightTarget.y - dragon.getPosY());
@@ -142,14 +150,17 @@ public class IafHelperClass {
             ownerTickExisted = String.valueOf(dragon.getOwner().tickCount);
         }
 
-        return Arrays.asList(
+        List<String> stringList = new ArrayList<>();
+        stringList.addAll(getDragonAnimationDebugString(dragon));
+        stringList.addAll(List.of(
 //                String.format("%.4f - %.4f - %.4f - %.4f - %.4f", dragon.renderYawOffset, dragon.rotationYaw, dragon.rotationPitch, dragon.rotationYawHead, dragon.prevRotationYawHead),
 //                "HeadPos: " + EntityBehaviorDebugger.formatVector(dragon.getHeadPosition()),
 //                "AnimationTicks: " + dragon.getAnimationTick(),
                 "Pitch: " + String.format("%.4f", dragon.getDragonPitch()),
                 "Yaw: " + String.format("%.4f", dragon.yRot),
                 "HorizontalCollide? " + dragon.horizontalCollision,
-                "VerticalCollide? " + dragon.verticalCollision,
+                "VerticalCollide? " + (dragon.verticalCollision ? (dragon.verticalCollisionBelow ? "↓" : "↑") : ""),
+                "Animation: " + Arrays.stream(dragon.getAnimations()).map(animation -> animation.getID()).toList() + String.format("(%d)", dragon.getAnimationTick()),
                 "Flying | Hovering? " + dragon.isFlying() + "|" + dragon.isHovering(),
 //                "PlaneDist: " + String.format("%.4f", (float) ((Math.abs(dragon.getMotion().x) + Math.abs(dragon.getMotion().z)) * 6F)),
 //                "NoPath? " + dragon.getNavigator().noPath(),
@@ -157,19 +168,19 @@ public class IafHelperClass {
 //                "Flying:" + dragon.isFlying(),
 //                "Hovering:" + dragon.isHovering(),
 //                "Render size:" + dragon.getRenderSize() + String.format("(%.2f)", dragon.getRenderScale()),
-                "Terrain height:" +  String.format("%d (%d)", IafDragonFlightUtil.getTerrainHeight(dragon), IafDragonFlightUtil.getGround(dragon).getY()),
+                "Terrain height:" + String.format("%d (%d)", IafDragonFlightUtil.getTerrainHeight(dragon), IafDragonFlightUtil.getGround(dragon).getY()),
                 "Flight height:" + String.format("%.4f", IafDragonFlightUtil.getFlightHeight(dragon)),
                 "CanSeeSky? " + dragon.level.canSeeSkyFromBelowWater(dragon.blockPosition()),
                 "Navigator target:" + (targetPos != null ? targetPos : ""),
-                "TimeSince:" + timeSinceLastPath,
+//                "TimeSince:" + timeSinceLastPath,
                 "Speed:" + ((IafAdvancedDragonPathNavigator) dragon.getNavigation()).getSpeedFactor(),
                 "AIMoveSpeed:" + dragon.getSpeed(),
-                "FlightCurrent:" + (flightManager.currentFlightTarget == null ? "" : flightManager.currentFlightTarget + "(" + util.getDistance(flightManager.currentFlightTarget, dragon.position()) + ")"),
-                "FlightFinal:" + (flightManager.finalFlightTarget == null ? "" : flightManager.finalFlightTarget + "(" + util.getDistance(flightManager.finalFlightTarget, dragon.position()) + ")"),
-                "FlightXZDistance:" + util.getDistanceXZ(dragon.position(), flightManager.finalFlightTarget),
-                "FlightLevel:" + flightManager.flightLevel,
-                "FlightPhase:" + flightManager.flightPhase,
-                "TargetBlocked? " + dragon.isTargetBlocked(flightManager.finalFlightTarget),
+//                "FlightCurrent:" + (flightManager.currentFlightTarget == null ? "" : flightManager.currentFlightTarget + "(" + util.getDistance(flightManager.currentFlightTarget, dragon.position()) + ")"),
+//                "FlightFinal:" + (flightManager.finalFlightTarget == null ? "" : flightManager.finalFlightTarget + "(" + util.getDistance(flightManager.finalFlightTarget, dragon.position()) + ")"),
+//                "FlightXZDistance:" + util.getDistanceXZ(dragon.position(), flightManager.finalFlightTarget),
+//                "FlightLevel:" + flightManager.flightLevel,
+//                "FlightPhase:" + flightManager.flightPhase,
+//                "TargetBlocked? " + dragon.isTargetBlocked(flightManager.finalFlightTarget),
                 "NavType:" + dragon.navigatorType,
                 "Command:" + dragon.getCommand()
 //                "AirAttack:" + dragon.airAttack,
@@ -178,7 +189,8 @@ public class IafHelperClass {
 //                "LookingForRoost? " + dragon.lookingForRoostAIFlag,
 //                "OwnerAttackTime:" + ownerAttackTime,
 //                "OwnerTickExisted:" + ownerTickExisted
-        );
+        ));
+        return stringList;
 
 
     }
