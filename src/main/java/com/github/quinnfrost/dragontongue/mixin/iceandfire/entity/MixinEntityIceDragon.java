@@ -36,36 +36,36 @@ public abstract class MixinEntityIceDragon extends EntityDragonBase {
         super(t, world, type, minimumDamage, maximumDamage, minimumHealth, maximumHealth, minimumSpeed, maximumSpeed);
     }
 
-    @Override
-    protected float getWaterSlowDown() {
-        return 0.98f;
-    }
+//    @Override
+//    protected float getWaterSlowDown() {
+//        return 0.98f;
+//    }
 
-    @Override
-    public void travel(Vec3 travelVector) {
-//        if (this.isVehicle() && this.canBeControlledByRider()) {
-//            Vec3 pTravelVector = this.getDeltaMovement();
-//            LivingEntity livingentity = (LivingEntity) this.getControllingPassenger();
-//            float f = livingentity.xxa * 0.5F;
-//            float f1 = livingentity.zza;
-//            if (this.isControlledByLocalInstance()) {
-//                this.setSpeed(1);
-//                super.travel(new Vec3((double) f, pTravelVector.y, (double) f1));
-//            } else if (livingentity instanceof Player) {
-//                this.setDeltaMovement(Vec3.ZERO);
+//    @Override
+//    public void travel(Vec3 travelVector) {
+////        if (this.isVehicle() && this.canBeControlledByRider()) {
+////            Vec3 pTravelVector = this.getDeltaMovement();
+////            LivingEntity livingentity = (LivingEntity) this.getControllingPassenger();
+////            float f = livingentity.xxa * 0.5F;
+////            float f1 = livingentity.zza;
+////            if (this.isControlledByLocalInstance()) {
+////                this.setSpeed(1);
+////                super.travel(new Vec3((double) f, pTravelVector.y, (double) f1));
+////            } else if (livingentity instanceof Player) {
+////                this.setDeltaMovement(Vec3.ZERO);
+////            }
+////        }
+//        if (this.isEffectiveAi() && this.isInWater()) {
+//            this.moveRelative(this.getSpeed(), travelVector);
+//            this.move(MoverType.SELF, this.getDeltaMovement());
+//            this.setDeltaMovement(this.getDeltaMovement().scale(0.9D));
+//            if (this.getTarget() == null) {
+//                this.setDeltaMovement(this.getDeltaMovement().add(0.0D, -0.005D, 0.0D));
 //            }
+//        } else {
+//            super.travel(travelVector);
 //        }
-        if (this.isEffectiveAi() && this.isInWater()) {
-            this.moveRelative(this.getSpeed(), travelVector);
-            this.move(MoverType.SELF, this.getDeltaMovement());
-            this.setDeltaMovement(this.getDeltaMovement().scale(0.9D));
-            if (this.getTarget() == null) {
-                this.setDeltaMovement(this.getDeltaMovement().add(0.0D, -0.005D, 0.0D));
-            }
-        } else {
-            super.travel(travelVector);
-        }
-    }
+//    }
 
     @Inject(
             remap = false,

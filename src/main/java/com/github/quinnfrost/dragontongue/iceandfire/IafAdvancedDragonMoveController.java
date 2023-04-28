@@ -212,19 +212,20 @@ public class IafAdvancedDragonMoveController {
 
         @Override
         public void tick() {
-
-//            double flySpeed = speedModifier * speedMod() * 2;
-//            Vec3 dragonVec = dragon.position();
-//            Vec3 moveVec = new Vec3(wantedX, wantedY, wantedZ);
-//            Vec3 normalized = moveVec.subtract(dragonVec).normalize();
-//            double dist = dragonVec.distanceTo(moveVec);
-//            dragon.setDeltaMovement(normalized.x * flySpeed, normalized.y * flySpeed, normalized.z * flySpeed);
-//            if (dist > 2.5E-7) {
-//                float yaw = (float) Math.toDegrees(Math.PI * 2 - Math.atan2(normalized.x, normalized.y));
-//                dragon.setYRot(rotlerp(dragon.getYRot(), yaw, 5));
-//                dragon.setSpeed((float) (speedModifier));
-//            }
-//            dragon.move(MoverType.SELF, dragon.getDeltaMovement());
+            if (!dragon.isControlledByLocalInstance()) {
+                double flySpeed = speedModifier * speedMod() * 3;
+                Vec3 dragonVec = dragon.position();
+                Vec3 moveVec = new Vec3(wantedX, wantedY, wantedZ);
+                Vec3 normalized = moveVec.subtract(dragonVec).normalize();
+                double dist = dragonVec.distanceTo(moveVec);
+                dragon.setDeltaMovement(normalized.x * flySpeed, normalized.y * flySpeed, normalized.z * flySpeed);
+                if (dist > 2.5E-7) {
+                    float yaw = (float) Math.toDegrees(Math.PI * 2 - Math.atan2(normalized.x, normalized.y));
+                    dragon.setYRot(rotlerp(dragon.getYRot(), yaw, 5));
+                    dragon.setSpeed((float) (speedModifier));
+                }
+                dragon.move(MoverType.SELF, dragon.getDeltaMovement());
+            }
         }
 
         public double speedMod() {

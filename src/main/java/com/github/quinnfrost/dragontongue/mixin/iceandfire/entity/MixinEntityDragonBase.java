@@ -60,7 +60,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -242,8 +244,8 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
     @Shadow
     public abstract boolean isHovering();
 
-    @Shadow
-    public abstract boolean useFlyingPathFinder();
+//    @Shadow
+//    public abstract boolean useFlyingPathFinder();
 
     @Shadow
     public abstract boolean isGoingUp();
@@ -423,22 +425,22 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
         }
     }
 
-    @Override
-    public boolean isInWater() {
-        return super.isInWater() && this.wasEyeInWater;
-//        return super.isInWater();
-    }
-
-//    /**
-//     * @author
-//     * @reason Temp use for hovering dragons to update flying navigator, in order to remove the gap between the command and action
-//     *          Ice dragons override this method, so it should not be working for ice dragons according to mixin docs.
-//     *          Todo: remove this
-//     */
-//    @Overwrite(remap = false)
-//    public boolean useFlyingPathFinder() {
-//        return this.isFlying() || this.isHovering();
+//    @Override
+//    public boolean isInWater() {
+//        return super.isInWater() && this.wasEyeInWater;
+////        return super.isInWater();
 //    }
+
+    /**
+     * @author
+     * @reason Temp use for hovering dragons to update flying navigator, in order to remove the gap between the command and action
+     *          Ice dragons override this method, so it should not be working for ice dragons according to mixin docs.
+     *          Todo: remove this
+     */
+    @Overwrite(remap = false)
+    public boolean useFlyingPathFinder() {
+        return (this.isFlying() || this.isHovering()) && this.getControllingPassenger() == null;
+    }
 
     @Inject(
             method = "registerGoals()V",
@@ -706,14 +708,27 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
         return this.flyTicks > 6000 && cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.NONE && this.getCommand() == 0 || isGoingDown() || flyTicks > 40 && this.flyProgress == 0 || this.isChained() && flyTicks > 100;
     }
 
+
+    @ModifyConstant(
+            method = "tick",
+            constant = @Constant(floatValue = 1.2f, ordinal = 0)
+    )
+    public float injectedStepHeight(float constant) {
+        if (cap.getObjectSetting(EnumCommandSettingType.DESTROY_TYPE) == EnumCommandSettingType.DestroyType.DELIBERATE) {
+            return 0.5F;
+        } else {
+            return Math.max(1.2F, 1.2F + (Math.min(this.getAgeInDays(), 125) - 25) * 1.8F / 100F);
+        }
+    }
+
     @Inject(
             method = "tick()V",
             at = @At(value = "HEAD"),
             cancellable = true
     )
     public void $tick(CallbackInfo ci) {
-        roadblock$tick();
-        ci.cancel();
+//        roadblock$tick();
+//        ci.cancel();
     }
 
     public void roadblock$tick() {
@@ -755,7 +770,7 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
         }
         level.getProfiler().pop();
         level.getProfiler().push("dragonFlight");
-        if (useFlyingPathFinder() && !level.isClientSide) {
+        if (isControlledByLocalInstance() && useFlyingPathFinder() && !level.isClientSide) {
             this.flightManager.update();
         }
         level.getProfiler().pop();
@@ -828,8 +843,8 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
             cancellable = true
     )
     public void $isAllowedToTriggerFlight(CallbackInfoReturnable<Boolean> cir) {
-        cir.setReturnValue(roadblock$isAllowedToTriggerFlight());
-        cir.cancel();
+//        cir.setReturnValue(roadblock$isAllowedToTriggerFlight());
+//        cir.cancel();
     }
 
     public boolean roadblock$isAllowedToTriggerFlight() {
@@ -842,8 +857,8 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
             cancellable = true
     )
     public void head$isControlledByLocalInstance(CallbackInfoReturnable<Boolean> cir) {
-        cir.setReturnValue(super.isControlledByLocalInstance());
-        cir.cancel();
+//        cir.setReturnValue(super.isControlledByLocalInstance());
+//        cir.cancel();
     }
 
     @Inject(
@@ -852,9 +867,9 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
             cancellable = true
     )
     public void head$travel(Vec3 Vector3d, CallbackInfo ci) {
-        if (roadblock$travel(Vector3d)) {
-            ci.cancel();
-        }
+//        if (roadblock$travel(Vector3d)) {
+//            ci.cancel();
+//        }
     }
 
     private float glidingSpeedBonus = 0;
@@ -1001,6 +1016,7 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
                         this.move(MoverType.SELF, this.getDeltaMovement());
                     }
 
+
                 }
             } else {
                 // Walking control
@@ -1114,12 +1130,12 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
      * @author
      * @reason
      */
-    @Overwrite
-    public @NotNull Vec3 handleRelativeFrictionAndCalculateMovement(@NotNull Vec3 pDeltaMovement, float pFriction) {
-//        if (this.getControllingPassenger() != null)
-//            return super.handleRelativeFrictionAndCalculateMovement(pDeltaMovement, 0.4f);
-        return super.handleRelativeFrictionAndCalculateMovement(pDeltaMovement, pFriction);
-    }
+//    @Overwrite
+//    public @NotNull Vec3 handleRelativeFrictionAndCalculateMovement(@NotNull Vec3 pDeltaMovement, float pFriction) {
+////        if (this.getControllingPassenger() != null)
+////            return super.handleRelativeFrictionAndCalculateMovement(pDeltaMovement, 0.4f);
+//        return super.handleRelativeFrictionAndCalculateMovement(pDeltaMovement, pFriction);
+//    }
 
     /**
      * @author
@@ -1188,9 +1204,9 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
      * @author
      * @reason
      */
-    @Overwrite(remap = false)
-    public boolean isDiving() {
-        return isFlying() && this.getXRot() > 10 && this.getControllingPassenger() != null;
-    }
+//    @Overwrite(remap = false)
+//    public boolean isDiving() {
+//        return isFlying() && this.getXRot() > 10 && this.getControllingPassenger() != null;
+//    }
 
 }

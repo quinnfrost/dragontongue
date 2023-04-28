@@ -302,6 +302,7 @@ public class ServerEvents {
                     double yTarget = target.y;
                     double zTarget = target.z;
                     targetEntity.getNavigation().moveTo(xTarget,yTarget,zTarget,1.0f);
+                    IafDragonBehaviorHelper.setDragonFlightTarget(targetEntity, target);
                 }
 
             }

@@ -9,6 +9,7 @@
     "MixinLivingEntity",
     "MixinMerchantOffer",
     "MixinVillager",
+    "MixinWanderingTrader",
     "iceandfire.MixinDragonBow",
     "iceandfire.MixinFoodUtils",
     "iceandfire.accessor.IEntityDragonAccess",

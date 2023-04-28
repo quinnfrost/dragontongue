@@ -22,7 +22,7 @@ public abstract class MixinVillager extends AbstractVillager {
 
     @ModifyConstant(
             method = "Lnet/minecraft/world/entity/npc/Villager;updateTrades()V",
-            constant = @Constant(intValue = 2)
+            constant = @Constant(intValue = 2, ordinal = 0)
     )
     private int injectedMaxNumber(int value) {
         return 4;

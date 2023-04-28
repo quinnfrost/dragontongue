@@ -21,7 +21,9 @@ public class OverlayRenderEvent extends Gui {
             RenderTrajectory.renderTrajectory(event.getMatrixStack());
         }
         if (event.getType() == RenderGameOverlayEvent.ElementType.TEXT) {
-            OverlayInfoPanel.renderPanel(event.getMatrixStack());
+            if (!minecraft.options.renderDebug) {
+                OverlayInfoPanel.renderPanel(event.getMatrixStack());
+            }
             OverlayCrossHair.renderStringCrossHair(event.getMatrixStack());
         }
         if (event.getType() == RenderGameOverlayEvent.ElementType.ALL) {
