@@ -205,20 +205,20 @@ public class ServerEvents {
             return;
         }
 
-        if (DragonTongue.isIafPresent) {
-            Player playerEntity = event.getPlayer();
-            InteractionHand hand = event.getHand();
-            ItemStack itemStack = playerEntity.getItemInHand(hand);
-            Entity target = event.getTarget();
-            if (itemStack.getItem() == Items.TOTEM_OF_UNDYING && IafHelperClass.isDragon(target)) {
-                LivingEntity dragon = (LivingEntity) target;
-                if (IafDragonBehaviorHelper.resurrectDragon(dragon)) {
-                    itemStack.shrink(1);
-                }
-                event.setCancellationResult(InteractionResult.SUCCESS);
-                event.setCanceled(true);
-            }
-        }
+//        if (DragonTongue.isIafPresent) {
+//            Player playerEntity = event.getPlayer();
+//            InteractionHand hand = event.getHand();
+//            ItemStack itemStack = playerEntity.getItemInHand(hand);
+//            Entity target = event.getTarget();
+//            if (itemStack.getItem() == Items.TOTEM_OF_UNDYING && IafHelperClass.isDragon(target)) {
+//                LivingEntity dragon = (LivingEntity) target;
+//                if (IafDragonBehaviorHelper.resurrectDragon(dragon)) {
+//                    itemStack.shrink(1);
+//                }
+//                event.setCancellationResult(InteractionResult.SUCCESS);
+//                event.setCanceled(true);
+//            }
+//        }
     }
 
     @SubscribeEvent

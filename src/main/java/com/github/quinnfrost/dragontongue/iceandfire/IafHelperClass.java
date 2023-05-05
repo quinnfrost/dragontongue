@@ -195,8 +195,6 @@ public class IafHelperClass {
 //                "HeadPos: " + EntityBehaviorDebugger.formatVector(dragon.getHeadPosition()),
 //                "AnimationTicks: " + dragon.getAnimationTick(),
 
-                "HorizontalCollide? " + dragon.horizontalCollision,
-                "VerticalCollide? " + (dragon.verticalCollision ? (dragon.verticalCollisionBelow ? "↓" : "↑") : ""),
                 "Animation: " + Arrays.stream(dragon.getAnimations()).map(animation -> animation.getID()).toList() + String.format("(%d)", dragon.getAnimationTick()),
                 "Attacking? " + dragon.isAttacking(),
 

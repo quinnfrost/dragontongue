@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.serialization.Dynamic;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.level.block.state.BlockState;
@@ -425,11 +426,12 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
         }
     }
 
-//    @Override
-//    public boolean isInWater() {
+    @Override
+    public boolean isInWater() {
 //        return super.isInWater() && this.wasEyeInWater;
-////        return super.isInWater();
-//    }
+        return super.isInWater() && this.getFluidHeight(FluidTags.WATER) > Mth.floor(this.getDragonStage() / 2.0f);
+//        return super.isInWater();
+    }
 
     /**
      * @author
@@ -708,18 +710,26 @@ public abstract class MixinEntityDragonBase extends TamableAnimal {
         return this.flyTicks > 6000 && cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.NONE && this.getCommand() == 0 || isGoingDown() || flyTicks > 40 && this.flyProgress == 0 || this.isChained() && flyTicks > 100;
     }
 
-
-    @ModifyConstant(
-            method = "tick",
-            constant = @Constant(floatValue = 1.2f, ordinal = 0)
-    )
-    public float injectedStepHeight(float constant) {
+    @Override
+    public float getStepHeight() {
         if (cap.getObjectSetting(EnumCommandSettingType.DESTROY_TYPE) == EnumCommandSettingType.DestroyType.DELIBERATE) {
             return 0.5F;
         } else {
             return Math.max(1.2F, 1.2F + (Math.min(this.getAgeInDays(), 125) - 25) * 1.8F / 100F);
         }
     }
+
+//    @ModifyConstant(
+//            method = "tick",
+//            constant = @Constant(floatValue = 1.2f, ordinal = 0)
+//    )
+//    public float injectedStepHeight(float constant) {
+//        if (cap.getObjectSetting(EnumCommandSettingType.DESTROY_TYPE) == EnumCommandSettingType.DestroyType.DELIBERATE) {
+//            return 0.5F;
+//        } else {
+//            return Math.max(1.2F, 1.2F + (Math.min(this.getAgeInDays(), 125) - 25) * 1.8F / 100F);
+//        }
+//    }
 
     @Inject(
             method = "tick()V",

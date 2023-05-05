@@ -67,34 +67,34 @@ public abstract class MixinEntityIceDragon extends EntityDragonBase {
 //        }
 //    }
 
-    @Inject(
-            remap = false,
-            method = "isInMaterialWater",
-            at = @At(value = "HEAD"),
-            cancellable = true
-    )
-    public void roadblock$isInMaterialWater(CallbackInfoReturnable<Boolean> cir) {
-        cir.setReturnValue(head$isInMaterialWater());
-        cir.cancel();
-    }
-
-    public boolean head$isInMaterialWater() {
-        return isInWater();
-    }
-
-    @Inject(
-            remap = false,
-            method = "Lcom/github/alexthe666/iceandfire/entity/EntityIceDragon;useFlyingPathFinder()Z",
-            at = @At(value = "HEAD"),
-            cancellable = true
-    )
-    public void roadblock$useFlyingPathFinder(CallbackInfoReturnable<Boolean> cir) {
-        cir.setReturnValue(head$useFlyingPathFinder());
-        cir.cancel();
-    }
-    public boolean head$useFlyingPathFinder() {
-        return super.useFlyingPathFinder() || this.isInMaterialWater();
-    }
+//    @Inject(
+//            remap = false,
+//            method = "isInMaterialWater",
+//            at = @At(value = "HEAD"),
+//            cancellable = true
+//    )
+//    public void roadblock$isInMaterialWater(CallbackInfoReturnable<Boolean> cir) {
+//        cir.setReturnValue(head$isInMaterialWater());
+//        cir.cancel();
+//    }
+//
+//    public boolean head$isInMaterialWater() {
+//        return isInWater();
+//    }
+//
+//    @Inject(
+//            remap = false,
+//            method = "Lcom/github/alexthe666/iceandfire/entity/EntityIceDragon;useFlyingPathFinder()Z",
+//            at = @At(value = "HEAD"),
+//            cancellable = true
+//    )
+//    public void roadblock$useFlyingPathFinder(CallbackInfoReturnable<Boolean> cir) {
+//        cir.setReturnValue(head$useFlyingPathFinder());
+//        cir.cancel();
+//    }
+//    public boolean head$useFlyingPathFinder() {
+//        return super.useFlyingPathFinder() || this.isInMaterialWater();
+//    }
 
     @Inject(
             remap = false,

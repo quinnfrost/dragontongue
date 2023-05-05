@@ -297,79 +297,11 @@ public class IafServerEvent {
         return true;
     }
 
-    public static void onProjectileImpact(ProjectileImpactEvent event) {
-        Projectile projectile = event.getProjectile();
-        Entity shooter = projectile.getOwner();
-        Entity directHit = event.getRayTraceResult().getType() == HitResult.Type.ENTITY ? ((EntityHitResult)event.getRayTraceResult()).getEntity() : null;
-        if (projectile instanceof ThrownPotion potion) {
-            // Reference ThrownPotion#applySplash
-            List<MobEffectInstance> effectInstanceList = PotionUtils.getMobEffects(potion.getItem());
+    public static void onEntityDamage(LivingDamageEvent event) {
 
-            AABB aabb = potion.getBoundingBox().inflate(4.0d,2.0d,4.0d);
-            Vec3 potionPos = potion.getPosition(1.0f);
-            List<Entity> entityList = potion.level.getEntitiesOfClass(Entity.class, aabb, entity -> (
-                    (entity instanceof EntityDragonPart dragonPart
-                            && dragonPart.getParent() != null)
-                    || entity instanceof LivingEntity
-            ));
-            if (!entityList.isEmpty()) {
-                Entity thrower = potion.getEffectSource();
-
-                for (Entity effectedEntity : entityList) {
-                    if (effectedEntity instanceof EntityDragonPart dragonPart) {
-                        LivingEntity parent = (LivingEntity) dragonPart.getParent();
-                        if (parent.isAffectedByPotions()) {
-                            double d0 = dragonPart.getBoundingBox().clip(potionPos, dragonPart.getPosition(1.0f)).orElse(potionPos).subtract(potionPos).length();
-                            if (d0 < 16.0D) {
-                                double d1 = 1.0D - Math.sqrt(d0) / 4.0D;
-                                if (dragonPart == directHit) {
-                                    d1 = 1.0D;
-                                }
-
-                                for (MobEffectInstance mobeffectinstance : effectInstanceList) {
-                                    MobEffect mobeffect = mobeffectinstance.getEffect();
-                                    if (mobeffect.isInstantenous()) {
-                                        mobeffect.applyInstantenousEffect(potion, potion.getOwner(), parent, mobeffectinstance.getAmplifier(), d1);
-                                    } else {
-                                        int i = (int)(d1 * (double)mobeffectinstance.getDuration() + 0.5D);
-                                        if (i > 20) {
-                                            parent.addEffect(new MobEffectInstance(mobeffect, i, mobeffectinstance.getAmplifier(), mobeffectinstance.isAmbient(), mobeffectinstance.isVisible()), thrower);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (effectedEntity instanceof LivingEntity) {
-                        LivingEntity livingEntity = (LivingEntity) effectedEntity;
-                        if (livingEntity.isAffectedByPotions()) {
-                            double d0 = livingEntity.getBoundingBox().clip(potionPos, livingEntity.getPosition(1.0f)).orElse(potionPos).subtract(potionPos).length();
-                            if (d0 < 16.0D) {
-                                double d1 = 1.0D - Math.sqrt(d0) / 4.0D;
-                                if (livingEntity == directHit) {
-                                    d1 = 1.0D;
-                                }
-
-                                for(MobEffectInstance mobeffectinstance : effectInstanceList) {
-                                    MobEffect mobeffect = mobeffectinstance.getEffect();
-                                    if (mobeffect.isInstantenous()) {
-                                        mobeffect.applyInstantenousEffect(potion, potion.getOwner(), livingEntity, mobeffectinstance.getAmplifier(), d1);
-                                    } else {
-                                        int i = (int)(d1 * (double)mobeffectinstance.getDuration() + 0.5D);
-                                        if (i > 20) {
-                                            livingEntity.addEffect(new MobEffectInstance(mobeffect, i, mobeffectinstance.getAmplifier(), mobeffectinstance.isAmbient(), mobeffectinstance.isVisible()), thrower);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 
-    public static void onEntityDamage(LivingDamageEvent event) {
+    public static void onProjectileImpact(ProjectileImpactEvent event) {
 
     }
 
@@ -433,6 +365,7 @@ public class IafServerEvent {
 
             if (entity instanceof EntityIceDragon) {
                 EntityIceDragon iceDragon = (EntityIceDragon) entity;
+                // Immune to minor damage
                 if (iceDragon.getDragonStage() >= 4 && event.getAmount() < 2f) {
                     event.setCanceled(true);
                 }

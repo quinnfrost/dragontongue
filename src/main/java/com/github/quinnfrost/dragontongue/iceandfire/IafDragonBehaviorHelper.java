@@ -433,6 +433,7 @@ public class IafDragonBehaviorHelper {
     }
 
 
+    @Deprecated
     public static boolean resurrectDragon(LivingEntity dragonIn) {
         if (!IafHelperClass.isDragon(dragonIn)) {
             return false;

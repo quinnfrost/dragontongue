@@ -10,6 +10,7 @@ import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import com.github.quinnfrost.dragontongue.message.MessageDebugEntity;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.github.quinnfrost.dragontongue.utils.util;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -239,8 +240,12 @@ public class EntityBehaviorDebugger {
                 "Command status:" + capabilityInfoHolder.getCommandStatus().toString(),
                 "Command dest:" + destinationString,
                 "AttackDecision:" + capabilityInfoHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE),
-                "isInWater:" + mobEntity.isInWater()
-        ));
+                "isInWater? " + mobEntity.isInWater(),
+                "FluidHeight: " + mobEntity.getFluidHeight(FluidTags.WATER),
+                "HorizontalCollide? " + mobEntity.horizontalCollision,
+                "VerticalCollide? " + (mobEntity.verticalCollision ? (mobEntity.verticalCollisionBelow ? "↓" : "↑") : "")
+
+                ));
         if (DragonTongue.isIafPresent) {
             List<String> additional = IafHelperClass.getAdditionalDragonDebugStrings(mobEntity);
             debugMsg = Stream.concat(debugMsg.stream(), additional.stream())

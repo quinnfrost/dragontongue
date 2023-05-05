@@ -69,16 +69,16 @@ public abstract class MixinLivingEntity extends Entity {
         super(entityTypeIn, worldIn);
     }
 
-//    @Inject(
-//            method = "travel",
-//            at = @At(value = "HEAD"),
-//            cancellable = true
-//    )
-//    public void inject$travel(Vec3 travelVector, CallbackInfo ci) {
-//        if (head$travel(travelVector)) {
-//            ci.cancel();
-//        }
-//    }
+    @Inject(
+            method = "travel",
+            at = @At(value = "HEAD"),
+            cancellable = true
+    )
+    public void inject$travel(Vec3 travelVector, CallbackInfo ci) {
+        if (head$travel(travelVector)) {
+            ci.cancel();
+        }
+    }
 
     public boolean head$travel(Vec3 pTravelVector) {
         boolean shouldCancel = false;
