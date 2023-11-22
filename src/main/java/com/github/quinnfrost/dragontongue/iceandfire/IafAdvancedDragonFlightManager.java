@@ -2,8 +2,7 @@ package com.github.quinnfrost.dragontongue.iceandfire;
 
 import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.entity.*;
-import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
-import com.github.quinnfrost.dragontongue.DragonTongue;
+import com.github.alexthe666.iceandfire.entity.behavior.utils.DragonFlightUtils;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
@@ -59,7 +58,11 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
         if (!IafHelperClass.isDragon(dragonIn)) {
             return null;
         }
-        return ((IafAdvancedDragonFlightManager)((EntityDragonBase)dragonIn).flightManager).getFlightTarget();
+        if (((EntityDragonBase) dragonIn).flightManager instanceof IafAdvancedDragonFlightManager myFlightMgr) {
+            return ((IafAdvancedDragonFlightManager) ((EntityDragonBase) dragonIn).flightManager).getFlightTarget();
+        } else {
+            return ((EntityDragonBase) dragonIn).flightManager.getFlightTarget();
+        }
     }
 
     public void updateFlightSensors() {
@@ -74,7 +77,7 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
                 flightPhase = FlightPhase.DIRECT;
             } else {
                 flightLevel = Vec3.atBottomCenterOf(
-                        IafDragonFlightUtil.getHighestPosOnPath(dragon, finalFlightTarget).offset(0, 0, 0)
+                        DragonFlightUtils.getHighestPosOnPath(dragon, finalFlightTarget).offset(0, 0, 0)
                 );
                 if (!dragon.isTargetBlocked(finalFlightTarget)) {
                     if (util.getDistanceXZ(finalFlightTarget, dragon.position()) < 30 || flightLevel.y <= finalFlightTarget.y) {
@@ -83,7 +86,7 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
                         flightPhase = FlightPhase.CRUISE;
                     }
                 } else {
-                    if (IafDragonFlightUtil.canAreaSeeSky(dragon.level, dragon.blockPosition(), dragon.getYNavSize())) {
+                    if (DragonFlightUtils.canAreaSeeSky(dragon.level, dragon.blockPosition(), dragon.getYNavSize())) {
                         flightPhase = FlightPhase.CLIMB;
                     } else {
                         flightPhase = FlightPhase.DETOUR;
@@ -113,11 +116,11 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
                     currentFlightTarget = new Vec3(finalFlightTarget.x, flightLevel.y + 2 * dragon.getYNavSize(), finalFlightTarget.z);
                     break;
                 case DETOUR:
-                    BlockPos skyPos = IafDragonFlightUtil.getSkyPosOnPath(dragon.level, dragon.position(), dragon.position().subtract(finalFlightTarget), 128f, dragon.getYNavSize());
+                    BlockPos skyPos = DragonFlightUtils.getSkyPosOnPath(dragon.level, dragon.position(), dragon.position().subtract(finalFlightTarget), 128f, dragon.getYNavSize());
                     if (skyPos != null) {
                         currentFlightTarget = Vec3.atBottomCenterOf(skyPos);
                         flightPhase = FlightPhase.DETOUR;
-                        if (dragon.getY() > currentFlightTarget.y() || IafDragonFlightUtil.canAreaSeeSky(dragon.level, dragon.blockPosition(), dragon.getYNavSize())) {
+                        if (dragon.getY() > currentFlightTarget.y() || DragonFlightUtils.canAreaSeeSky(dragon.level, dragon.blockPosition(), dragon.getYNavSize())) {
                             flightPhase = FlightPhase.CLIMB;
                         }
                     } else {
@@ -187,13 +190,13 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
         BlockPos viewBlock = null;
 
         if (dragon instanceof EntityIceDragon && dragon.isInWater()) {
-            viewBlock = IafDragonFlightUtil.getWaterBlockInView(dragon);
+            viewBlock = DragonFlightUtils.getWaterBlockInView(dragon);
         }
         if (dragon.getCommand() == 2 && dragon.useFlyingPathFinder()) {
             if (dragon instanceof EntityIceDragon && dragon.isInWater()) {
-                viewBlock = IafDragonFlightUtil.getWaterBlockInViewEscort(dragon);
+                viewBlock = DragonFlightUtils.getWaterBlockInViewEscort(dragon);
             } else {
-                viewBlock = IafDragonFlightUtil.getBlockInViewEscort(dragon);
+                viewBlock = DragonFlightUtils.getBlockInViewEscort(dragon);
             }
         } else if (dragon.lookingForRoostAIFlag) {
             double xDist = Math.abs(dragon.getX() - dragon.getRestrictCenter().getX() - 0.5F);
@@ -206,7 +209,7 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
             viewBlock = upPos;
 
         } else if (viewBlock == null && dragon.getCommand() == 0 && cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.NONE) {
-            viewBlock = IafDragonFlightUtil.getBlockInView(dragon);
+            viewBlock = DragonFlightUtils.getBlockInView(dragon);
         }
         if (viewBlock != null) {
             setFlightTarget(new Vec3(viewBlock.getX() + 0.5, viewBlock.getY() + 0.5, viewBlock.getZ() + 0.5));

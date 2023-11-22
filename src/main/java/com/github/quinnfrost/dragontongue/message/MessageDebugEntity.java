@@ -2,9 +2,7 @@ package com.github.quinnfrost.dragontongue.message;
 
 import com.github.quinnfrost.dragontongue.client.overlay.OverlayInfoPanel;
 import com.github.quinnfrost.dragontongue.client.render.RenderNode;
-import com.github.quinnfrost.dragontongue.entity.ai.EntityBehaviorDebugger;
-import com.github.quinnfrost.dragontongue.iceandfire.message.MessageSyncPathReached;
-import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Pathfinding;
+import com.github.quinnfrost.dragontongue.entity.EntityBehaviorDebugger;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.network.FriendlyByteBuf;
@@ -13,9 +11,7 @@ import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Supplier;
 
 public class MessageDebugEntity {

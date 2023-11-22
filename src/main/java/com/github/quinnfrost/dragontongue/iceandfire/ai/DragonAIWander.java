@@ -2,18 +2,15 @@ package com.github.quinnfrost.dragontongue.iceandfire.ai;
 
 import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
+import com.github.alexthe666.iceandfire.entity.behavior.utils.DragonFlightUtils;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
-import com.github.quinnfrost.dragontongue.iceandfire.IafDragonFlightUtil;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.world.entity.ai.util.DefaultRandomPos;
-import net.minecraft.world.entity.ai.util.RandomPos;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
-
-import net.minecraft.world.entity.ai.goal.Goal.Flag;
 
 public class DragonAIWander extends Goal {
     private EntityDragonBase dragon;
@@ -63,7 +60,7 @@ public class DragonAIWander extends Goal {
                 randomTarget = null;
                 continue;
             }
-            Pair<BlockPos, BlockPos> feature = IafDragonFlightUtil.getTerrainFeatureInRadius(dragon.level, new BlockPos(randomTarget), dragon.getDragonStage());
+            Pair<BlockPos, BlockPos> feature = DragonFlightUtils.getTerrainFeatureInRadius(dragon.level, new BlockPos(randomTarget), dragon.getDragonStage());
             if (Math.abs(feature.getFirst().getY() - feature.getSecond().getY()) >= 2) {
                 randomTarget = null;
                 continue;

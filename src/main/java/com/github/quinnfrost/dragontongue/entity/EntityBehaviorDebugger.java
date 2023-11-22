@@ -1,4 +1,4 @@
-package com.github.quinnfrost.dragontongue.entity.ai;
+package com.github.quinnfrost.dragontongue.entity;
 
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
@@ -17,6 +17,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.server.level.ServerPlayer;
@@ -175,6 +176,16 @@ public class EntityBehaviorDebugger {
         return travelString;
     }
 
+    public static List<String> getMoveControlString(Mob mob) {
+        MoveControl moveControl = mob.getMoveControl();
+        List<String> moveControlString = new ArrayList<>(List.of(
+                String.format("Wanted pos: (%.2f, %.2f, %.2f)", moveControl.getWantedX(), moveControl.getWantedY(), moveControl.getWantedZ()),
+                String.format("Pending offset: %.2f", (double)((int)(mob.getBbWidth() + 1.0F)) * 0.5D)
+        ));
+
+        return moveControlString;
+    }
+
     public static double getSpeed(Mob mob) {
 //        double dX = mob.getX() - mob.xOld;
 //        double dY = mob.getY() - mob.yOld;
@@ -233,8 +244,10 @@ public class EntityBehaviorDebugger {
         debugMsg.addAll(getTargetTravelString(mobEntity));
         debugMsg.addAll(getTargetRiderString(mobEntity));
         debugMsg.addAll(getTargetAIString(mobEntity));
+        debugMsg.addAll(getMoveControlString(mobEntity));
 
         debugMsg.addAll(Arrays.asList(
+                "NoGravity? " + mobEntity.isNoGravity(),
                 "StepHeight:" + mobEntity.maxUpStep,
                 "OnGround: " + mobEntity.isOnGround(),
                 "Command status:" + capabilityInfoHolder.getCommandStatus().toString(),

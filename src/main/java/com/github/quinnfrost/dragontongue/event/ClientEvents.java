@@ -6,8 +6,6 @@ import com.github.quinnfrost.dragontongue.client.KeyBindRegistry;
 import com.github.quinnfrost.dragontongue.client.overlay.OverlayCrossHair;
 import com.github.quinnfrost.dragontongue.client.overlay.OverlayInfoPanel;
 import com.github.quinnfrost.dragontongue.client.render.RenderNode;
-import com.github.quinnfrost.dragontongue.entity.ai.EntityBehaviorDebugger;
-import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import com.github.quinnfrost.dragontongue.utils.Vector2f;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.client.Options;

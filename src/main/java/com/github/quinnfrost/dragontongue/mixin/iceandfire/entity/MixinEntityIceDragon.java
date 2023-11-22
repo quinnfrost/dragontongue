@@ -82,19 +82,19 @@ public abstract class MixinEntityIceDragon extends EntityDragonBase {
 //        return isInWater();
 //    }
 //
-//    @Inject(
-//            remap = false,
-//            method = "Lcom/github/alexthe666/iceandfire/entity/EntityIceDragon;useFlyingPathFinder()Z",
-//            at = @At(value = "HEAD"),
-//            cancellable = true
-//    )
-//    public void roadblock$useFlyingPathFinder(CallbackInfoReturnable<Boolean> cir) {
-//        cir.setReturnValue(head$useFlyingPathFinder());
-//        cir.cancel();
-//    }
-//    public boolean head$useFlyingPathFinder() {
-//        return super.useFlyingPathFinder() || this.isInMaterialWater();
-//    }
+    @Inject(
+            remap = false,
+            method = "Lcom/github/alexthe666/iceandfire/entity/EntityIceDragon;useFlyingPathFinder()Z",
+            at = @At(value = "HEAD"),
+            cancellable = true
+    )
+    public void roadblock$useFlyingPathFinder(CallbackInfoReturnable<Boolean> cir) {
+        cir.setReturnValue(head$useFlyingPathFinder());
+        cir.cancel();
+    }
+    public boolean head$useFlyingPathFinder() {
+        return (this.isFlying() || this.isHovering() || this.isInMaterialWater()) && this.getControllingPassenger() == null;
+    }
 
     @Inject(
             remap = false,

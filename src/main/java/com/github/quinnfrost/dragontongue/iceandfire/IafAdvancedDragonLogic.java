@@ -298,10 +298,10 @@ public class IafAdvancedDragonLogic extends IafDragonLogic {
                 }
             }
         }
-        // Bug: lightning dragon won't wake up when command is set to escort
-        if (dragon.getCommand() == 2 && !dragon.canMove()) {
-            dragon.setInSittingPose(false);
-        }
+//        // Bug: lightning dragon won't wake up when command is set to escort
+//        if (dragon.getCommand() == 2 && !dragon.canMove()) {
+//            dragon.setInSittingPose(false);
+//        }
 
         // Release control if the owner climbs up
         if (dragon.getControllingPassenger() != null) {

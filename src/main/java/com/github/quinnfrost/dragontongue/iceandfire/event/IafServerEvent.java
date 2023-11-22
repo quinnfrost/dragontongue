@@ -211,30 +211,34 @@ public class IafServerEvent {
     }
 
     public static boolean onEntityUseItem(PlayerInteractEvent.RightClickItem event) {
-        if (event.getEntityLiving() instanceof Player) {
-            Player playerEntity = (Player) event.getEntityLiving();
-            InteractionHand hand = event.getHand();
-            ItemStack itemStack = playerEntity.getItemInHand(hand);
+        if (event.getWorld().isClientSide) {
+            return true;
+        } else {
+            if (event.getEntityLiving() instanceof Player) {
+                Player playerEntity = (Player) event.getEntityLiving();
+                InteractionHand hand = event.getHand();
+                ItemStack itemStack = playerEntity.getItemInHand(hand);
 
-            // Hijack the original dragon staff function in EntityDragonBase#1269
-            if (itemStack.getItem() == IafItemRegistry.DRAGON_STAFF.get()) {
-                EntityHitResult entityRayTraceResult = util.getTargetEntity(playerEntity, Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f,
-                        entity -> entity instanceof EntityDragonPart || entity instanceof LivingEntity);
-                if (entityRayTraceResult == null || !IafHelperClass.isDragon(IafHelperClass.getDragon(entityRayTraceResult.getEntity()))) {
-                    return false;
-                }
-                EntityDragonBase dragon = IafHelperClass.getDragon(entityRayTraceResult.getEntity());
+                // Hijack the original dragon staff function in EntityDragonBase#1269
+                if (itemStack.getItem() == IafItemRegistry.DRAGON_STAFF.get()) {
+                    EntityHitResult entityRayTraceResult = util.getTargetEntity(playerEntity, Config.COMMAND_DISTANCE_MAX.get().floatValue(), 1.0f,
+                            entity -> entity instanceof EntityDragonPart || entity instanceof LivingEntity);
+                    if (entityRayTraceResult == null || !IafHelperClass.isDragon(IafHelperClass.getDragon(entityRayTraceResult.getEntity()))) {
+                        return false;
+                    }
+                    EntityDragonBase dragon = IafHelperClass.getDragon(entityRayTraceResult.getEntity());
 
 //                playerEntity.sendMessage(ITextComponent.getTextComponentOrEmpty("Dragon staff used"), Util.DUMMY_UUID);
 
-                if (!playerEntity.isShiftKeyDown()) {
-                    if (util.isOwner(dragon, playerEntity)) {
-                        RegistryMessages.sendToClient(new MessageClientSetReferenceDragon(
-                                dragon
-                        ), (ServerPlayer) playerEntity);
-                        ContainerDragon.openGui(playerEntity, dragon);
-                        event.setCancellationResult(InteractionResult.SUCCESS);
-                        event.setCanceled(true);
+                    if (!playerEntity.isShiftKeyDown()) {
+                        if (util.isOwner(dragon, playerEntity)) {
+                            RegistryMessages.sendToClient(new MessageClientSetReferenceDragon(
+                                    dragon
+                            ), (ServerPlayer) playerEntity);
+                            ContainerDragon.openGui(playerEntity, dragon);
+                            event.setCancellationResult(InteractionResult.SUCCESS);
+                            event.setCanceled(true);
+                        }
                     }
                 }
             }

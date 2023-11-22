@@ -1,31 +1,25 @@
 package com.github.quinnfrost.dragontongue.event;
 
-import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
-import com.github.alexthe666.iceandfire.entity.EntityDragonPart;
-import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.config.Config;
-import com.github.quinnfrost.dragontongue.entity.ai.EntityBehaviorDebugger;
+import com.github.quinnfrost.dragontongue.entity.EntityBehaviorDebugger;
 import com.github.quinnfrost.dragontongue.entity.ai.RegistryAI;
 import com.github.quinnfrost.dragontongue.enums.EnumCrowWand;
 import com.github.quinnfrost.dragontongue.iceandfire.IafAdvancedDragonFlightManager;
 import com.github.quinnfrost.dragontongue.iceandfire.IafAdvancedDragonLogic;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
-import com.github.quinnfrost.dragontongue.iceandfire.container.ContainerDragon;
 import com.github.quinnfrost.dragontongue.iceandfire.event.IafServerEvent;
-import com.github.quinnfrost.dragontongue.iceandfire.message.MessageClientSetReferenceDragon;
 import com.github.quinnfrost.dragontongue.item.RegistryItems;
 import com.github.quinnfrost.dragontongue.message.*;
 import com.github.quinnfrost.dragontongue.utils.util;
-import net.minecraft.world.effect.MobEffect;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.PrimedTnt;
-import net.minecraft.world.entity.projectile.ThrownPotion;
 import net.minecraft.world.entity.vehicle.MinecartTNT;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.player.Player;
@@ -34,14 +28,10 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ThrownTrident;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.alchemy.PotionUtils;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -139,8 +129,8 @@ public class ServerEvents {
             if (iCapTargetHolder.getFallbackTimer() != 0 && player.isShiftKeyDown()) {
                 MessageCrowWand.crowWandAction(EnumCrowWand.FALLBACK, player, serverWorld);
             } else if (iCapTargetHolder.getFallbackTimer() != 0 && !(
-                    mainhandItem.equals(RegistryItems.CROW_WAND)
-                            || offhandItem.equals(RegistryItems.CROW_WAND)
+                    mainhandItem.equals(RegistryItems.CROW_WAND.get())
+                            || offhandItem.equals(RegistryItems.CROW_WAND.get())
             )) {
                 iCapTargetHolder.setFallbackTimer(0);
             }
@@ -155,6 +145,15 @@ public class ServerEvents {
     public static void onLivingUpdate(LivingEvent.LivingUpdateEvent event) {
         if (event.getEntity().level.isClientSide) {
             return;
+        }
+        if (EntityBehaviorDebugger.requestedPlayer != null && EntityBehaviorDebugger.targetEntity == event.getEntity()) {
+            RegistryMessages.sendToClient(new MessageClientDraw(10086, new Vec3(
+                    EntityBehaviorDebugger.targetEntity.getMoveControl().getWantedX(),
+                    EntityBehaviorDebugger.targetEntity.getMoveControl().getWantedY(),
+                    EntityBehaviorDebugger.targetEntity.getMoveControl().getWantedZ()
+            ),
+                    EntityBehaviorDebugger.targetEntity.getPosition(1.0f)
+            ), EntityBehaviorDebugger.requestedPlayer);
         }
 
         if (DragonTongue.isIafPresent) {

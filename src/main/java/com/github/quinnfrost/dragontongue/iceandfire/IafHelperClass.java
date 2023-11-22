@@ -1,6 +1,7 @@
 package com.github.quinnfrost.dragontongue.iceandfire;
 
 import com.github.alexthe666.iceandfire.entity.*;
+import com.github.alexthe666.iceandfire.entity.behavior.utils.DragonFlightUtils;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.alexthe666.iceandfire.entity.util.IDeadMob;
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
@@ -16,6 +17,7 @@ import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.message.RegistryMessages;
+import com.github.quinnfrost.dragontongue.mixin.iceandfire.accessor.IEntityDragonAccess;
 import com.github.quinnfrost.dragontongue.utils.util;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -26,10 +28,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.RenderLevelLastEvent;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class IafHelperClass {
     public static void startIafPathDebug(Player playerEntity, LivingEntity livingEntity) {
@@ -105,8 +105,8 @@ public class IafHelperClass {
     public static List<String> getDragonAnimationDebugString(EntityDragonBase dragon) {
         List<String> stringList = new ArrayList<>();
         stringList.addAll(List.of(
-                String.format("Fly(%d) Hover:(%d) Dive(%.1f) Tackle(%d) Riding(%.1f)",
-                        dragon.flyTicks, dragon.hoverTicks, dragon.diveProgress, dragon.isTackling() ? dragon.tacklingTicks : -1, dragon.ridingProgress
+                String.format("Walk(%.2f) Fly(%d) Hover:(%d) Dive(%.1f) Tackle(%d) Riding(%.1f)",
+                        dragon.walkDist, dragon.flyTicks, dragon.hoverTicks, dragon.diveProgress, dragon.isTackling() ? dragon.tacklingTicks : -1, dragon.ridingProgress
                 )
         ));
         return stringList;
@@ -142,8 +142,8 @@ public class IafHelperClass {
                 "Pitch: " + String.format("%.4f", dragonIn.getDragonPitch()),
                 "Yaw: " + String.format("%.4f", dragonIn.yRot),
                 "Flying | Hovering? " + dragonIn.isFlying() + "|" + dragonIn.isHovering(),
-                "Terrain height:" + String.format("%d (%d)", IafDragonFlightUtil.getTerrainHeight(dragonIn), IafDragonFlightUtil.getGround(dragonIn).getY()),
-                "Flight height:" + String.format("%.4f", IafDragonFlightUtil.getFlightHeight(dragonIn)),
+                "Terrain height:" + String.format("%d (%d)", DragonFlightUtils.getTerrainHeight(dragonIn), DragonFlightUtils.getGround(dragonIn).getY()),
+                "Flight height:" + String.format("%.4f", DragonFlightUtils.getFlightHeight(dragonIn)),
                 "Still | Fly | Hover: " + String.format("%d | %d | %d", dragonIn.ticksStill, dragonIn.flyTicks, dragonIn.hoverTicks)
         ));
         return stringList;
@@ -157,7 +157,24 @@ public class IafHelperClass {
             return new ArrayList<>();
         }
         EntityDragonBase dragon = (EntityDragonBase) dragonIn;
-        IafAdvancedDragonPathNavigator navigator = (IafAdvancedDragonPathNavigator) dragon.getNavigation();
+//        IafAdvancedDragonPathNavigator navigator = (IafAdvancedDragonPathNavigator) dragon.getNavigation();
+
+        final float sitProg = dragon.sitProgress * 0.015F;
+        final float deadProg = dragon.modelDeadProgress * -0.02F;
+        final float hoverProg = dragon.hoverProgress * 0.03F;
+        final float flyProg = dragon.flyProgress * 0.01F;
+        final float sleepProg = dragon.sleepProgress * -0.025F;
+        final float extraAgeScale = dragon.getScale() * 0.2F;
+        float pitchX = 0F;
+        float pitchY = 0F;
+        final float dragonPitch = dragon.getDragonPitch();
+        if (dragonPitch > 0) {
+            pitchX = Math.min(dragonPitch / 90, 0.3F);
+            pitchY = -(dragonPitch / 90) * 2F;
+        } else if (dragonPitch < 0) {//going up
+            pitchY = (dragonPitch / 90) * 0.1F;
+            pitchX = Math.max(dragonPitch / 90, -0.7F);
+        }
 
         ICapabilityInfoHolder capabilityInfoHolder = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(dragon));
 
@@ -167,18 +184,18 @@ public class IafHelperClass {
 //        float distY = (float) (currentFlightTarget.y - dragon.getPosY());
 //        float distZ = (float) (currentFlightTarget.z - dragon.getPosZ());
 
-        String reachDestString = "";
-        if (navigator.pathResult == null) {
-            reachDestString = "null";
-        } else if (navigator.pathResult.isPathReachingDestination()) {
-            reachDestString = "true";
-        } else {
-            reachDestString = "false";
-        }
+//        String reachDestString = "";
+//        if (navigator.pathResult == null) {
+//            reachDestString = "null";
+//        } else if (navigator.pathResult.isPathReachingDestination()) {
+//            reachDestString = "true";
+//        } else {
+//            reachDestString = "false";
+//        }
         String timeSinceLastPath = "";
-        if (navigator.isDone()) {
-            timeSinceLastPath = String.valueOf(dragon.level.getGameTime() - navigator.pathStartTime);
-        }
+//        if (navigator.isDone()) {
+//            timeSinceLastPath = String.valueOf(dragon.level.getGameTime() - navigator.pathStartTime);
+//        }
         String ownerAttackTime = "";
         String ownerTickExisted = "";
         if (dragon.getOwner() != null) {
@@ -196,19 +213,21 @@ public class IafHelperClass {
 //                "AnimationTicks: " + dragon.getAnimationTick(),
 
                 "Animation: " + Arrays.stream(dragon.getAnimations()).map(animation -> animation.getID()).toList() + String.format("(%d)", dragon.getAnimationTick()),
-                "Attacking? " + dragon.isAttacking(),
-
+//                "Attacking? " + dragon.isAttacking(),
+                "RideHeight: " + String.format("%s", (float) ((0.7F + sitProg + hoverProg + deadProg + sleepProg + flyProg + pitchY) * dragon.getRenderSize() * 0.3F + dragon.getScale() * 0.2F)),
+                "Render size: " + String.format("(%.2f)", dragon.getRenderSize()),
+                "Scale: " + String.format("(%.2f)", dragon.getScale()),
 //                "PlaneDist: " + String.format("%.4f", (float) ((Math.abs(dragon.getMotion().x) + Math.abs(dragon.getMotion().z)) * 6F)),
 //                "NoPath? " + dragon.getNavigator().noPath(),
 //                "PathTime: " + String.valueOf(dragon.world.getGameTime() - ((IafAdvancedDragonPathNavigator) dragon.getNavigator()).pathStartTime),
 //                "Flying:" + dragon.isFlying(),
 //                "Hovering:" + dragon.isHovering(),
-//                "Render size:" + dragon.getRenderSize() + String.format("(%.2f)", dragon.getRenderScale()),
 
                 "CanSeeSky? " + dragon.level.canSeeSkyFromBelowWater(dragon.blockPosition()),
+                "IsOverAir? " + ((IEntityDragonAccess)dragon).isOverAir$invoke(),
 
 //                "TimeSince:" + timeSinceLastPath,
-                "Speed:" + ((IafAdvancedDragonPathNavigator) dragon.getNavigation()).getSpeedFactor(),
+                "Speed:" + dragon.getSpeed(),
                 "AIMoveSpeed:" + dragon.getSpeed(),
 //                "FlightXZDistance:" + util.getDistanceXZ(dragon.position(), flightManager.finalFlightTarget),
 //                "FlightLevel:" + flightManager.flightLevel,

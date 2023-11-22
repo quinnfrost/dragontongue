@@ -5,19 +5,17 @@ import com.github.alexthe666.iceandfire.entity.EntityAmphithere;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.IafDragonAttacks;
 import com.github.alexthe666.iceandfire.entity.IafDragonFlightManager;
+import com.github.alexthe666.iceandfire.entity.behavior.utils.DragonFlightUtils;
 import com.github.alexthe666.iceandfire.entity.util.IFlyingMount;
 import com.github.alexthe666.iceandfire.util.IAFMath;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import com.github.quinnfrost.dragontongue.utils.util;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.MoveControl;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.pathfinder.NodeEvaluator;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
@@ -142,7 +140,7 @@ public class IafAdvancedDragonMoveController {
                 }
             }
             // Todo: 用AbstractPathJob#isPassableBB代替
-            if (dragon.verticalCollision && !IafDragonFlightUtil.isAreaPassable(
+            if (dragon.verticalCollision && !DragonFlightUtils.isAreaPassable(
                     dragon.level,
                     dragon.blockPosition().above((int) Math.ceil(dragon.getBoundingBox().getYsize())),
                     (int) dragon.getBoundingBox().getSize())) {
@@ -212,20 +210,24 @@ public class IafAdvancedDragonMoveController {
 
         @Override
         public void tick() {
-            if (!dragon.isControlledByLocalInstance()) {
-                double flySpeed = speedModifier * speedMod() * 3;
-                Vec3 dragonVec = dragon.position();
-                Vec3 moveVec = new Vec3(wantedX, wantedY, wantedZ);
-                Vec3 normalized = moveVec.subtract(dragonVec).normalize();
-                double dist = dragonVec.distanceTo(moveVec);
-                dragon.setDeltaMovement(normalized.x * flySpeed, normalized.y * flySpeed, normalized.z * flySpeed);
-                if (dist > 2.5E-7) {
-                    float yaw = (float) Math.toDegrees(Math.PI * 2 - Math.atan2(normalized.x, normalized.y));
-                    dragon.setYRot(rotlerp(dragon.getYRot(), yaw, 5));
-                    dragon.setSpeed((float) (speedModifier));
-                }
-                dragon.move(MoverType.SELF, dragon.getDeltaMovement());
+            if (dragon instanceof EntityDragonBase theDragon && theDragon.getControllingPassenger() != null) {
+                // New ride system doesn't need move controller
+                // The flight move control is disabled here, the walking move controller will stay Operation.WAIT so nothing will happen too
+                return;
             }
+
+            double flySpeed = speedModifier * speedMod() * 3;
+            Vec3 dragonVec = dragon.position();
+            Vec3 moveVec = new Vec3(wantedX, wantedY, wantedZ);
+            Vec3 normalized = moveVec.subtract(dragonVec).normalize();
+            double dist = dragonVec.distanceTo(moveVec);
+            dragon.setDeltaMovement(normalized.x * flySpeed, normalized.y * flySpeed, normalized.z * flySpeed);
+            if (dist > 2.5E-7) {
+                float yaw = (float) Math.toDegrees(Math.PI * 2 - Math.atan2(normalized.x, normalized.y));
+                dragon.setYRot(rotlerp(dragon.getYRot(), yaw, 5));
+                dragon.setSpeed((float) (speedModifier));
+            }
+            dragon.move(MoverType.SELF, dragon.getDeltaMovement());
         }
 
         public double speedMod() {

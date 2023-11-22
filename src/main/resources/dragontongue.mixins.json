@@ -7,6 +7,7 @@
     "MixinEntity",
     "MixinLivingEntity",
     "MixinMerchantOffer",
+    "MixinServerGamePacketListenerImpl",
     "MixinVillager",
     "MixinWanderingTrader",
     "iceandfire.MixinDragonBow",
@@ -14,12 +15,7 @@
     "iceandfire.accessor.IEntityDragonAccess",
     "iceandfire.behavior.MixinAbstractPathJob",
     "iceandfire.behavior.MixinEnumSurfaceType",
-    "iceandfire.behavior.MixinHippogryphAITarget",
-    "iceandfire.entity.MixinEntityDragonBase",
-    "iceandfire.entity.MixinEntityFireDragon",
-    "iceandfire.entity.MixinEntityHippogryph",
-    "iceandfire.entity.MixinEntityIceDragon",
-    "iceandfire.entity.MixinEntityLightningDragon"
+    "iceandfire.entity.MixinEntityDragonBase"
   ],
   "client": [
     "MixinFogRenderer",

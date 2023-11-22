@@ -334,7 +334,10 @@ public class ScreenDragon extends EffectRenderingInventoryScreen<ContainerDragon
 
         float dragonScale = 1F / Math.max(0.0001F, referencedDragon.getScale());
 
-        InventoryScreen.renderEntityInInventory(relX + 88, relY + (int) (0.5F * (referencedDragon.flyProgress)) + 55, (int) (dragonScale * 23F), relX + 51 - mousePosX, relY + 75 - 50 - mousePosY, referencedDragon);
+        if (IceAndFire.PROXY.getReferencedMob() instanceof EntityDragonBase dragon) {
+            referencedDragon = dragon;
+        }
+        InventoryScreen.renderEntityInInventory(relX + 88, relY + (int) (0.5F * (referencedDragon.flyProgress)) + 55, (int) (dragonScale * 23F), relX + 51 - this.mousePosX, relY + 75 - 50 - this.mousePosY, referencedDragon);
 
         Font font = this.getMinecraft().font;
         List<String> stringList = new ArrayList<>();

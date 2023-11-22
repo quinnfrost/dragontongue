@@ -29,6 +29,19 @@ public class IafDragonBehaviorHelper {
         if (IafHelperClass.isDragon(mobEntity)) {
             EntityDragonBase dragon = (EntityDragonBase) mobEntity;
 
+//            dragon.goalSelector.addGoal(0, new DragonAIAsYouWish(dragon));
+//            dragon.goalSelector.addGoal(0, new DragonAICalmLook(dragon));
+//
+//            dragon.targetSelector.addGoal(3, new DragonAIGuard<>(dragon, LivingEntity.class, false, new Predicate<LivingEntity>() {
+//                @Override
+//                public boolean apply(@Nullable LivingEntity entity) {
+//                    return (!(entity instanceof Player) || !((Player) entity).isCreative())
+//                            && DragonUtils.canHostilesTarget(entity)
+//                            && DragonUtils.isAlive(entity)
+//                            && util.isHostile(entity);
+//                }
+//            }));
+
             return true;
         }
         return false;
@@ -378,6 +391,10 @@ public class IafDragonBehaviorHelper {
 
         if (targetVec != null) {
             dragon.flightManager.setFlightTarget(targetVec);
+
+            if (!dragon.isFlying() && !dragon.isHovering()) {
+                dragon.setHovering(true);
+            }
         }
 
         return true;
