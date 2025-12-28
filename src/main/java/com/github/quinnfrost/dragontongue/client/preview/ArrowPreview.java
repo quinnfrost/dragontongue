@@ -1,20 +1,20 @@
 package com.github.quinnfrost.dragontongue.client.preview;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.AbstractArrowEntity;
-import net.minecraft.entity.projectile.ArrowEntity;
-import net.minecraft.item.BowItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.IPacket;
-import net.minecraft.network.play.server.SSpawnObjectPacket;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.Arrow;
+import net.minecraft.world.item.BowItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.util.math.*;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -22,23 +22,30 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
-public class ArrowPreview extends Entity implements PreviewEntity<AbstractArrowEntity> {
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+
+public class ArrowPreview extends Entity implements PreviewEntity<AbstractArrow> {
     protected Entity shooter;
     private boolean inGround;
-    public ArrowPreview(World worldIn) {
+    public ArrowPreview(Level worldIn) {
         super(EntityType.ARROW, worldIn);
     }
 
     @Override
-    public List<AbstractArrowEntity> initializeEntities(PlayerEntity player, ItemStack associatedItem) {
-        int timeleft = player.getItemInUseCount();
+    public List<AbstractArrow> initializeEntities(Player player, ItemStack associatedItem) {
+        int timeleft = player.getUseItemRemainingTicks();
         if (timeleft > 0) {
-            int maxduration = player.getHeldItemMainhand().getUseDuration();
+            int maxduration = player.getMainHandItem().getUseDuration();
             int difference = maxduration - timeleft;
-            float arrowVelocity = BowItem.getArrowVelocity(difference);
+            float arrowVelocity = BowItem.getPowerForTime(difference);
             if ((double)arrowVelocity >= 0.1) {
-                ArrowEntity entityArrow = new ArrowEntity(this.world, player);
-                entityArrow.setDirectionAndMovement(player, player.rotationPitch, player.rotationYaw, 0.0F, 3.0F * arrowVelocity, 0.0F);
+                Arrow entityArrow = new Arrow(this.level, player);
+                entityArrow.shootFromRotation(player, player.xRot, player.yRot, 0.0F, 3.0F * arrowVelocity, 0.0F);
                 this.shooter = player;
                 return Collections.singletonList(entityArrow);
             }
@@ -52,28 +59,28 @@ public class ArrowPreview extends Entity implements PreviewEntity<AbstractArrowE
     }
 
     @Override
-    public void simulateShot(AbstractArrowEntity simulatedEntity) {
+    public void simulateShot(AbstractArrow simulatedEntity) {
         super.tick();
-        Vector3d motion = this.getMotion();
+        Vec3 motion = this.getDeltaMovement();
         double value = motion.x * motion.x + motion.z * motion.z;
-        if (this.prevRotationPitch == 0.0F && this.prevRotationYaw == 0.0F) {
-            float f = MathHelper.sqrt(value);
-            this.rotationYaw = (float)(MathHelper.atan2(motion.x, motion.z) * 57.29577951308232);
-            this.rotationPitch = (float)(MathHelper.atan2(motion.y, (double)f) * 57.29577951308232);
-            this.prevRotationYaw = this.rotationYaw;
-            this.prevRotationPitch = this.rotationPitch;
+        if (this.xRotO == 0.0F && this.yRotO == 0.0F) {
+            float f = Mth.sqrt(value);
+            this.yRot = (float)(Mth.atan2(motion.x, motion.z) * 57.29577951308232);
+            this.xRot = (float)(Mth.atan2(motion.y, (double)f) * 57.29577951308232);
+            this.yRotO = this.yRot;
+            this.xRotO = this.xRot;
         }
 
-        BlockPos blockpos = new BlockPos(this.getPosX(), this.getPosY(), this.getPosZ());
-        BlockState iblockstate = this.world.getBlockState(blockpos);
-        if (!iblockstate.isAir(this.world, blockpos)) {
-            VoxelShape voxelshape = iblockstate.getCollisionShapeUncached(this.world, blockpos);
+        BlockPos blockpos = new BlockPos(this.getX(), this.getY(), this.getZ());
+        BlockState iblockstate = this.level.getBlockState(blockpos);
+        if (!iblockstate.isAir(this.level, blockpos)) {
+            VoxelShape voxelshape = iblockstate.getCollisionShape(this.level, blockpos);
             if (!voxelshape.isEmpty()) {
-                Iterator var8 = voxelshape.toBoundingBoxList().iterator();
+                Iterator var8 = voxelshape.toAabbs().iterator();
 
                 while(var8.hasNext()) {
-                    AxisAlignedBB axisalignedbb = (AxisAlignedBB)var8.next();
-                    if (axisalignedbb.offset(blockpos).contains(new Vector3d(this.getPosX(), this.getPosY(), this.getPosZ()))) {
+                    AABB axisalignedbb = (AABB)var8.next();
+                    if (axisalignedbb.move(blockpos).contains(new Vec3(this.getX(), this.getY(), this.getZ()))) {
                         this.inGround = true;
                         break;
                     }
@@ -84,19 +91,19 @@ public class ArrowPreview extends Entity implements PreviewEntity<AbstractArrowE
         if (this.inGround) {
             this.remove();
         } else {
-            Vector3d vec3d1 = new Vector3d(this.getPosX(), this.getPosY(), this.getPosZ());
-            Vector3d vec3d = (new Vector3d(this.getPosX(), this.getPosY(), this.getPosZ())).add(motion);
-            BlockRayTraceResult raytraceresult = this.world.rayTraceBlocks(new RayTraceContext(vec3d1, vec3d, RayTraceContext.BlockMode.COLLIDER, RayTraceContext.FluidMode.NONE, this));
-            vec3d1 = new Vector3d(this.getPosX(), this.getPosY(), this.getPosZ());
-            vec3d = new Vector3d(this.getPosX() + motion.x, this.getPosY() + motion.y, this.getPosZ() + motion.z);
-            if (raytraceresult.getType() != RayTraceResult.Type.MISS) {
-                vec3d = new Vector3d(raytraceresult.getHitVec().x, raytraceresult.getHitVec().y, raytraceresult.getHitVec().z);
+            Vec3 vec3d1 = new Vec3(this.getX(), this.getY(), this.getZ());
+            Vec3 vec3d = (new Vec3(this.getX(), this.getY(), this.getZ())).add(motion);
+            BlockHitResult raytraceresult = this.level.clip(new ClipContext(vec3d1, vec3d, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+            vec3d1 = new Vec3(this.getX(), this.getY(), this.getZ());
+            vec3d = new Vec3(this.getX() + motion.x, this.getY() + motion.y, this.getZ() + motion.z);
+            if (raytraceresult.getType() != HitResult.Type.MISS) {
+                vec3d = new Vec3(raytraceresult.getLocation().x, raytraceresult.getLocation().y, raytraceresult.getLocation().z);
             }
 
             Entity entity = this.findEntityOnPath(vec3d1, vec3d);
-            if (entity instanceof PlayerEntity) {
-                PlayerEntity entityplayer = (PlayerEntity)entity;
-                if (this.shooter instanceof PlayerEntity && !((PlayerEntity)this.shooter).canAttackPlayer(entityplayer)) {
+            if (entity instanceof Player) {
+                Player entityplayer = (Player)entity;
+                if (this.shooter instanceof Player && !((Player)this.shooter).canHarmPlayer(entityplayer)) {
                     raytraceresult = null;
                 }
             }
@@ -105,51 +112,51 @@ public class ArrowPreview extends Entity implements PreviewEntity<AbstractArrowE
                 this.remove();
             }
 
-            if (raytraceresult != null && raytraceresult.getType() != RayTraceResult.Type.MISS) {
+            if (raytraceresult != null && raytraceresult.getType() != HitResult.Type.MISS) {
                 this.remove();
             }
 
-            this.setPosition(this.getPosX() + motion.x, this.getPosY() + motion.y, this.getPosZ() + motion.z);
-            float f4 = MathHelper.sqrt(value);
-            this.rotationYaw = (float)(MathHelper.atan2(motion.x, motion.z) * 57.29577951308232);
+            this.setPos(this.getX() + motion.x, this.getY() + motion.y, this.getZ() + motion.z);
+            float f4 = Mth.sqrt(value);
+            this.yRot = (float)(Mth.atan2(motion.x, motion.z) * 57.29577951308232);
 
-            for(this.rotationPitch = (float)(MathHelper.atan2(motion.y, (double)f4) * 57.29577951308232); this.rotationPitch - this.prevRotationPitch < -180.0F; this.prevRotationPitch -= 360.0F) {
+            for(this.xRot = (float)(Mth.atan2(motion.y, (double)f4) * 57.29577951308232); this.xRot - this.xRotO < -180.0F; this.xRotO -= 360.0F) {
             }
 
-            while(this.rotationPitch - this.prevRotationPitch >= 180.0F) {
-                this.prevRotationPitch += 360.0F;
+            while(this.xRot - this.xRotO >= 180.0F) {
+                this.xRotO += 360.0F;
             }
 
-            while(this.rotationYaw - this.prevRotationYaw < -180.0F) {
-                this.prevRotationYaw -= 360.0F;
+            while(this.yRot - this.yRotO < -180.0F) {
+                this.yRotO -= 360.0F;
             }
 
-            while(this.rotationYaw - this.prevRotationYaw >= 180.0F) {
-                this.prevRotationYaw += 360.0F;
+            while(this.yRot - this.yRotO >= 180.0F) {
+                this.yRotO += 360.0F;
             }
 
-            this.rotationPitch = this.prevRotationPitch + (this.rotationPitch - this.prevRotationPitch) * 0.2F;
-            this.rotationYaw = this.prevRotationYaw + (this.rotationYaw - this.prevRotationYaw) * 0.2F;
+            this.xRot = this.xRotO + (this.xRot - this.xRotO) * 0.2F;
+            this.yRot = this.yRotO + (this.yRot - this.yRotO) * 0.2F;
             float f1 = 0.99F;
             if (this.isInWater()) {
                 f1 = this.waterDrag();
             }
 
-            this.setMotion(motion.x * (double)f1, motion.y * (double)f1, motion.z * (double)f1);
-            if (!this.hasNoGravity()) {
-                this.addVelocity(0.0, -0.05000000074505806, 0.0);
+            this.setDeltaMovement(motion.x * (double)f1, motion.y * (double)f1, motion.z * (double)f1);
+            if (!this.isNoGravity()) {
+                this.push(0.0, -0.05000000074505806, 0.0);
             }
 
-            this.doBlockCollisions();
+            this.checkInsideBlocks();
         }
 
     }
 
     @Nullable
-    private Entity findEntityOnPath(Vector3d start, Vector3d end) {
+    private Entity findEntityOnPath(Vec3 start, Vec3 end) {
         Entity entity = null;
-        List<Entity> list = this.world.getEntitiesInAABBexcluding(this, this.getBoundingBox().expand(this.getMotion()).grow(1.0), (entity1x) -> {
-            return !entity1x.isSpectator() && entity1x.isAlive() && entity1x.canBeCollidedWith();
+        List<Entity> list = this.level.getEntities(this, this.getBoundingBox().expandTowards(this.getDeltaMovement()).inflate(1.0), (entity1x) -> {
+            return !entity1x.isSpectator() && entity1x.isAlive() && entity1x.isPickable();
         });
         double d0 = 0.0;
         Iterator var7 = list.iterator();
@@ -168,11 +175,11 @@ public class ArrowPreview extends Entity implements PreviewEntity<AbstractArrowE
                         entity1 = (Entity)var7.next();
                     } while(entity1 == this.shooter);
 
-                    AxisAlignedBB axisalignedbb = entity1.getBoundingBox().grow(0.30000001192092896);
-                    raytraceresult = axisalignedbb.rayTrace(start, end);
+                    AABB axisalignedbb = entity1.getBoundingBox().inflate(0.30000001192092896);
+                    raytraceresult = axisalignedbb.clip(start, end);
                 } while(!raytraceresult.isPresent());
 
-                d1 = start.squareDistanceTo((Vector3d)raytraceresult.get());
+                d1 = start.distanceToSqr((Vec3)raytraceresult.get());
             } while(!(d1 < d0) && d0 != 0.0);
 
             entity = entity1;
@@ -182,22 +189,22 @@ public class ArrowPreview extends Entity implements PreviewEntity<AbstractArrowE
 
 
     @Override
-    protected void registerData() {
+    protected void defineSynchedData() {
 
     }
 
     @Override
-    protected void readAdditional(CompoundNBT compound) {
+    protected void readAdditionalSaveData(CompoundTag compound) {
 
     }
 
     @Override
-    protected void writeAdditional(CompoundNBT compound) {
+    protected void addAdditionalSaveData(CompoundTag compound) {
 
     }
 
     @Override
-    public IPacket<?> createSpawnPacket() {
-        return new SSpawnObjectPacket(this);
+    public Packet<?> getAddEntityPacket() {
+        return new ClientboundAddEntityPacket(this);
     }
 }

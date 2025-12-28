@@ -2,8 +2,8 @@ package com.github.quinnfrost.dragontongue.message;
 
 import com.github.quinnfrost.dragontongue.client.render.RenderNode;
 import com.github.quinnfrost.dragontongue.enums.EnumClientDraw;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
 
@@ -12,33 +12,33 @@ import java.util.function.Supplier;
 public class MessageClientDraw {
     private EnumClientDraw type;
     private int time = 2;
-    private Vector3d pos;
-    private Vector3d start;
+    private Vec3 pos;
+    private Vec3 start;
     private Integer index;
 
-    public MessageClientDraw(Integer index, Vector3d pos, Vector3d start) {
+    public MessageClientDraw(Integer index, Vec3 pos, Vec3 start) {
         this.index = index;
         this.pos = pos;
         this.start = start;
     }
 
-    public static MessageClientDraw decoder(PacketBuffer buffer) {
+    public static MessageClientDraw decoder(FriendlyByteBuf buffer) {
         if (buffer.readBoolean()) {
-            return new MessageClientDraw(buffer.readInt(), new Vector3d(
+            return new MessageClientDraw(buffer.readInt(), new Vec3(
                     buffer.readDouble(),
                     buffer.readDouble(),
                     buffer.readDouble()
-            ), new Vector3d(
+            ), new Vec3(
                     buffer.readDouble(),
                     buffer.readDouble(),
                     buffer.readDouble()
             ));
         } else {
-            return new MessageClientDraw(null, new Vector3d(
+            return new MessageClientDraw(null, new Vec3(
                     buffer.readDouble(),
                     buffer.readDouble(),
                     buffer.readDouble()
-            ), new Vector3d(
+            ), new Vec3(
                     buffer.readDouble(),
                     buffer.readDouble(),
                     buffer.readDouble()
@@ -46,7 +46,7 @@ public class MessageClientDraw {
         }
     }
 
-    public void encoder(PacketBuffer buffer) {
+    public void encoder(FriendlyByteBuf buffer) {
         if (index != null) {
             buffer.writeBoolean(true);
             buffer.writeInt(index);

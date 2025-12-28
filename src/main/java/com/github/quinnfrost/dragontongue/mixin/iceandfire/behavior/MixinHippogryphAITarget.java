@@ -2,8 +2,8 @@ package com.github.quinnfrost.dragontongue.mixin.iceandfire.behavior;
 
 import com.github.alexthe666.iceandfire.entity.EntityHippogryph;
 import com.github.alexthe666.iceandfire.entity.ai.HippogryphAITarget;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.goal.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,7 +15,7 @@ public abstract class MixinHippogryphAITarget extends NearestAttackableTargetGoa
 
     @Shadow(remap = false) private EntityHippogryph hippogryph;
 
-    public MixinHippogryphAITarget(MobEntity goalOwnerIn, Class targetClassIn, boolean checkSight) {
+    public MixinHippogryphAITarget(Mob goalOwnerIn, Class targetClassIn, boolean checkSight) {
         super(goalOwnerIn, targetClassIn, checkSight);
     }
 
@@ -25,7 +25,7 @@ public abstract class MixinHippogryphAITarget extends NearestAttackableTargetGoa
             cancellable = true
     )
     public void $shouldExecute(CallbackInfoReturnable<Boolean> cir) {
-        if (this.hippogryph.isTamed()) {
+        if (this.hippogryph.isTame()) {
             cir.setReturnValue(false);
             cir.cancel();
         }

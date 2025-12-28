@@ -6,33 +6,33 @@ import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonFlightUtil;
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.entity.ai.RandomPositionGenerator;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.memory.WalkTarget;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.GlobalPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.gen.Heightmap;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.WalkTarget;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.server.level.ServerLevel;
 
 import javax.annotation.Nullable;
 import java.util.*;
 
-public class DragonTaskGlide extends Task<EntityDragonBase> {
+public class DragonTaskGlide extends Behavior<EntityDragonBase> {
     public final int GLIDE_DISTANCE = 128;
-    Queue<Vector3d> glidePosition = new ArrayDeque<>();
+    Queue<Vec3> glidePosition = new ArrayDeque<>();
     //    List<BlockPos> glidePosition;
-    Vector3d currentPosition;
+    Vec3 currentPosition;
     private final float speed;
     private final int maxXZ;
     private final int maxY;
 
     public DragonTaskGlide(float speedIn, int maxXZ, int maxY, int durationMinIn, int durationMaxIn) {
         super(ImmutableMap.of(
-                MemoryModuleType.WALK_TARGET, MemoryModuleStatus.VALUE_ABSENT,
-                MemoryModuleType.HOME, MemoryModuleStatus.REGISTERED
+                MemoryModuleType.WALK_TARGET, MemoryStatus.VALUE_ABSENT,
+                MemoryModuleType.HOME, MemoryStatus.REGISTERED
         ), durationMinIn, durationMaxIn);
         this.speed = speedIn;
         this.maxXZ = maxXZ;
@@ -44,14 +44,14 @@ public class DragonTaskGlide extends Task<EntityDragonBase> {
     }
 
     @Override
-    protected boolean shouldExecute(ServerWorld worldIn, EntityDragonBase dragon) {
+    protected boolean checkExtraStartConditions(ServerLevel worldIn, EntityDragonBase dragon) {
         if (!dragon.canMove() || dragon.getAnimation() == EntityDragonBase.ANIMATION_SHAKEPREY || dragon.isFuelingForge()) {
             return false;
         }
         if (!IafDragonBehaviorHelper.isDragonInAir(dragon)) {
             return false;
         }
-        Vector3d newPos = Vector3d.copyCenteredHorizontally(IafDragonFlightUtil.getBlockInView(dragon));
+        Vec3 newPos = Vec3.atBottomCenterOf(IafDragonFlightUtil.getBlockInView(dragon));
         if (newPos != null) {
             glidePosition.add(newPos);
             currentPosition = newPos;
@@ -62,7 +62,7 @@ public class DragonTaskGlide extends Task<EntityDragonBase> {
     }
 
     @Override
-    protected boolean shouldContinueExecuting(ServerWorld worldIn, EntityDragonBase dragon, long gameTimeIn) {
+    protected boolean canStillUse(ServerLevel worldIn, EntityDragonBase dragon, long gameTimeIn) {
         if (!IafDragonBehaviorHelper.isDragonInAir(dragon)) {
             return false;
         }
@@ -70,12 +70,12 @@ public class DragonTaskGlide extends Task<EntityDragonBase> {
     }
 
     @Override
-    protected void resetTask(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+    protected void stop(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
 //        glidePosition.clear();
     }
 
     @Override
-    protected void startExecuting(ServerWorld worldIn, EntityDragonBase dragon, long gameTimeIn) {
+    protected void start(ServerLevel worldIn, EntityDragonBase dragon, long gameTimeIn) {
         if (glidePosition == null) {
             glidePosition = new ArrayDeque<>();
         }
@@ -91,16 +91,16 @@ public class DragonTaskGlide extends Task<EntityDragonBase> {
     }
 
     @Override
-    protected void updateTask(ServerWorld worldIn, EntityDragonBase dragon, long gameTime) {
+    protected void tick(ServerLevel worldIn, EntityDragonBase dragon, long gameTime) {
         if (currentPosition == null
-                || currentPosition.distanceTo(dragon.getPositionVec()) < dragon.getBoundingBox().getAverageEdgeLength()) {
-            Optional<Vector3d> targetPosition = Optional.ofNullable(glidePosition.poll());
+                || currentPosition.distanceTo(dragon.position()) < dragon.getBoundingBox().getSize()) {
+            Optional<Vec3> targetPosition = Optional.ofNullable(glidePosition.poll());
             targetPosition.ifPresent(vector3d -> {
                 currentPosition = vector3d;
             });
         }
         dragon.getBrain().setMemory(MemoryModuleType.WALK_TARGET,
-                new WalkTarget(currentPosition, this.speed, (int) Math.ceil(dragon.getBoundingBox().getAverageEdgeLength()))
+                new WalkTarget(currentPosition, this.speed, (int) Math.ceil(dragon.getBoundingBox().getSize()))
         );
     }
 
@@ -128,47 +128,47 @@ public class DragonTaskGlide extends Task<EntityDragonBase> {
 //        }
 //    }
 
-    public List<Vector3d> getRandomGlidePos(EntityDragonBase dragon, Vector3d center, int minRange, int maxRange) {
-        List<Vector3d> posList = new ArrayList<>();
+    public List<Vec3> getRandomGlidePos(EntityDragonBase dragon, Vec3 center, int minRange, int maxRange) {
+        List<Vec3> posList = new ArrayList<>();
 
         for (int i = 0; i < 5; i++) {
 //        float range = 12 * (0.7F * dragon.getRenderSize() / 3);
 
             int preferredFlightHeight = IafDragonFlightUtil.getPreferredFlightLevel(dragon);
-            float renderYawOffset = dragon.renderYawOffset;
+            float renderYawOffset = dragon.yBodyRot;
 //            float neg = dragon.getRNG().nextBoolean() ? 1 : -1;
 
-            float range = minRange + dragon.getRNG().nextInt(maxRange + 1 - minRange);
-            float anglePos = (0.01745329251F * renderYawOffset) + 3.15F + (dragon.getRNG().nextFloat());
-            double extraXPos = range * MathHelper.sin((float) (Math.PI + anglePos));
-            double extraZPos = range * MathHelper.cos(anglePos);
-            BlockPos radialPosPositive = new BlockPos(center.getX() + extraXPos, 0, center.getZ() + extraZPos);
-            BlockPos groundPos = dragon.world.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, radialPosPositive);
-            int distFromGroundPos = (int) center.getY() - groundPos.getY();
-            BlockPos newPos = radialPosPositive.up(distFromGroundPos > preferredFlightHeight
-                    ? (int) Math.min(IafConfig.maxDragonFlight, center.getY() + dragon.getRNG().nextInt(preferredFlightHeight) - preferredFlightHeight / 2)
-                    : (int) center.getY() + dragon.getRNG().nextInt(preferredFlightHeight) + 1);
+            float range = minRange + dragon.getRandom().nextInt(maxRange + 1 - minRange);
+            float anglePos = (0.01745329251F * renderYawOffset) + 3.15F + (dragon.getRandom().nextFloat());
+            double extraXPos = range * Mth.sin((float) (Math.PI + anglePos));
+            double extraZPos = range * Mth.cos(anglePos);
+            BlockPos radialPosPositive = new BlockPos(center.x() + extraXPos, 0, center.z() + extraZPos);
+            BlockPos groundPos = dragon.level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, radialPosPositive);
+            int distFromGroundPos = (int) center.y() - groundPos.getY();
+            BlockPos newPos = radialPosPositive.above(distFromGroundPos > preferredFlightHeight
+                    ? (int) Math.min(IafConfig.maxDragonFlight, center.y() + dragon.getRandom().nextInt(preferredFlightHeight) - preferredFlightHeight / 2)
+                    : (int) center.y() + dragon.getRandom().nextInt(preferredFlightHeight) + 1);
             BlockPos pos = dragon.doesWantToLand() ? groundPos : newPos;
 
-            if (dragon.getDistanceSquared(Vector3d.copyCentered(newPos)) > 6 && !dragon.isTargetBlocked(Vector3d.copyCentered(newPos))) {
-                posList.add(Vector3d.copyCenteredHorizontally(pos));
+            if (dragon.getDistanceSquared(Vec3.atCenterOf(newPos)) > 6 && !dragon.isTargetBlocked(Vec3.atCenterOf(newPos))) {
+                posList.add(Vec3.atBottomCenterOf(pos));
             }
 
 
-            float rangeNeg = minRange + dragon.getRNG().nextInt(maxRange + 1 - minRange);
-            float angleNeg = (0.01745329251F * renderYawOffset) + 3.15F + (dragon.getRNG().nextFloat() * -1);
-            double extraXNeg = rangeNeg * MathHelper.sin((float) (Math.PI + angleNeg));
-            double extraZNeg = rangeNeg * MathHelper.cos(angleNeg);
-            BlockPos radialPoseNegative = new BlockPos(center.getX() + extraXNeg, 0, center.getZ() + extraZNeg);
-            BlockPos groundNeg = dragon.world.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, radialPoseNegative);
-            int distFromGroundNeg = (int) center.getY() - groundNeg.getY();
-            BlockPos newPosNeg = radialPoseNegative.up(distFromGroundNeg > preferredFlightHeight
-                    ? (int) Math.min(IafConfig.maxDragonFlight, center.getY() + dragon.getRNG().nextInt(preferredFlightHeight) - preferredFlightHeight / 2)
-                    : (int) center.getY() + dragon.getRNG().nextInt(preferredFlightHeight) + 1);
+            float rangeNeg = minRange + dragon.getRandom().nextInt(maxRange + 1 - minRange);
+            float angleNeg = (0.01745329251F * renderYawOffset) + 3.15F + (dragon.getRandom().nextFloat() * -1);
+            double extraXNeg = rangeNeg * Mth.sin((float) (Math.PI + angleNeg));
+            double extraZNeg = rangeNeg * Mth.cos(angleNeg);
+            BlockPos radialPoseNegative = new BlockPos(center.x() + extraXNeg, 0, center.z() + extraZNeg);
+            BlockPos groundNeg = dragon.level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, radialPoseNegative);
+            int distFromGroundNeg = (int) center.y() - groundNeg.getY();
+            BlockPos newPosNeg = radialPoseNegative.above(distFromGroundNeg > preferredFlightHeight
+                    ? (int) Math.min(IafConfig.maxDragonFlight, center.y() + dragon.getRandom().nextInt(preferredFlightHeight) - preferredFlightHeight / 2)
+                    : (int) center.y() + dragon.getRandom().nextInt(preferredFlightHeight) + 1);
             BlockPos posNeg = dragon.doesWantToLand() ? groundNeg : newPosNeg;
 
-            if (dragon.getDistanceSquared(Vector3d.copyCentered(newPosNeg)) > 6 && !dragon.isTargetBlocked(Vector3d.copyCentered(newPosNeg))) {
-                posList.add(Vector3d.copyCenteredHorizontally(posNeg));
+            if (dragon.getDistanceSquared(Vec3.atCenterOf(newPosNeg)) > 6 && !dragon.isTargetBlocked(Vec3.atCenterOf(newPosNeg))) {
+                posList.add(Vec3.atBottomCenterOf(posNeg));
             }
         }
 

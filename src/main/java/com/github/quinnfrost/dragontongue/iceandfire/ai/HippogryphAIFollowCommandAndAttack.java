@@ -6,7 +6,7 @@ import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import net.minecraft.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 
 public class HippogryphAIFollowCommandAndAttack extends MeleeAttackGoal {
     EntityHippogryph hippogryph;
@@ -18,26 +18,11 @@ public class HippogryphAIFollowCommandAndAttack extends MeleeAttackGoal {
     }
 
     @Override
-    public boolean shouldExecute() {
-        if (this.attacker.getAttackTarget() != null || capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE) {
+    public boolean canUse() {
+        if (this.mob.getTarget() != null || capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE) {
             return true;
         }
-        if (super.shouldExecute()) {
-            return true;
-        }
-        if (capabilityInfoHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE) == EnumCommandSettingType.AttackDecisionType.GUARD
-                || capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE)
-        {
-            return true;
-        }
-        return false;
-    }
-    @Override
-    public boolean shouldContinueExecuting() {
-        if (this.attacker.getAttackTarget() != null || capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE) {
-            return true;
-        }
-        if (super.shouldContinueExecuting()) {
+        if (super.canUse()) {
             return true;
         }
         if (capabilityInfoHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE) == EnumCommandSettingType.AttackDecisionType.GUARD
@@ -48,31 +33,46 @@ public class HippogryphAIFollowCommandAndAttack extends MeleeAttackGoal {
         return false;
     }
     @Override
-    public void startExecuting() {
-        if (hippogryph.getAttackTarget() != null) {
-            super.startExecuting();
+    public boolean canContinueToUse() {
+        if (this.mob.getTarget() != null || capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE) {
+            return true;
+        }
+        if (super.canContinueToUse()) {
+            return true;
+        }
+        if (capabilityInfoHolder.getObjectSetting(EnumCommandSettingType.ATTACK_DECISION_TYPE) == EnumCommandSettingType.AttackDecisionType.GUARD
+                || capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE)
+        {
+            return true;
+        }
+        return false;
+    }
+    @Override
+    public void start() {
+        if (hippogryph.getTarget() != null) {
+            super.start();
         }
     }
 
     @Override
     public void tick() {
         if (capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE
-                && hippogryph.getAttackTarget() == null) {
+                && hippogryph.getTarget() == null) {
 
             capabilityInfoHolder.getDestination().ifPresent(blockPos -> {
-                if (hippogryph.world.isAirBlock(blockPos) && hippogryph.world.isAirBlock(blockPos.down())) {
+                if (hippogryph.level.isEmptyBlock(blockPos) && hippogryph.level.isEmptyBlock(blockPos.below())) {
                     hippogryph.setFlying(true);
-                    hippogryph.getMoveHelper().setMoveTo(
+                    hippogryph.getMoveControl().setWantedPosition(
                             blockPos.getX(),
                             blockPos.getY(),
                             blockPos.getZ(),
                             1.1D
                     );
                 } else {
-                    if (!hippogryph.world.isAirBlock(hippogryph.getPosition()) || !hippogryph.world.isAirBlock(hippogryph.getPosition().down())) {
+                    if (!hippogryph.level.isEmptyBlock(hippogryph.blockPosition()) || !hippogryph.level.isEmptyBlock(hippogryph.blockPosition().below())) {
                         hippogryph.setFlying(false);
                     }
-                    hippogryph.getNavigator().tryMoveToXYZ(
+                    hippogryph.getNavigation().moveTo(
                             blockPos.getX(),
                             blockPos.getY(),
                             blockPos.getZ(),
@@ -82,8 +82,8 @@ public class HippogryphAIFollowCommandAndAttack extends MeleeAttackGoal {
 
             });
         }
-        if (hippogryph.getAttackTarget() != null) {
-            hippogryph.getNavigator().tryMoveToEntityLiving(hippogryph.getAttackTarget(), 1.1f);
+        if (hippogryph.getTarget() != null) {
+            hippogryph.getNavigation().moveTo(hippogryph.getTarget(), 1.1f);
             super.tick();
         }
     }

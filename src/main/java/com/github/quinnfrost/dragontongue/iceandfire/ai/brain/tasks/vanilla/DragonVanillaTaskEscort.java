@@ -2,11 +2,11 @@ package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks.vanilla;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.google.common.collect.ImmutableMap;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 
-public class DragonVanillaTaskEscort extends Task<EntityDragonBase> {
+public class DragonVanillaTaskEscort extends Behavior<EntityDragonBase> {
     private BlockPos previousPosition;
     private final float maxRange = 2000F;
     public DragonVanillaTaskEscort(int durationMinIn, int durationMaxIn) {
@@ -16,32 +16,32 @@ public class DragonVanillaTaskEscort extends Task<EntityDragonBase> {
     }
 
     @Override
-    protected boolean shouldExecute(ServerWorld worldIn, EntityDragonBase owner) {
-        return owner.canMove() && owner.getAttackTarget() == null && owner.getOwner() != null && owner.getCommand() == 2;
+    protected boolean checkExtraStartConditions(ServerLevel worldIn, EntityDragonBase owner) {
+        return owner.canMove() && owner.getTarget() == null && owner.getOwner() != null && owner.getCommand() == 2;
     }
 
     @Override
-    protected boolean shouldContinueExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
-        return entityIn.canMove() && entityIn.getAttackTarget() == null && entityIn.getOwner() != null && entityIn.getOwner().isAlive() && (entityIn.getDistance(entityIn.getOwner()) > 15 || !entityIn.getNavigator().noPath());
+    protected boolean canStillUse(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+        return entityIn.canMove() && entityIn.getTarget() == null && entityIn.getOwner() != null && entityIn.getOwner().isAlive() && (entityIn.distanceTo(entityIn.getOwner()) > 15 || !entityIn.getNavigation().isDone());
     }
 
     @Override
-    protected void updateTask(ServerWorld worldIn, EntityDragonBase owner, long gameTime) {
+    protected void tick(ServerLevel worldIn, EntityDragonBase owner, long gameTime) {
         if (owner.getOwner() != null) {
-            final float dist = owner.getDistance(owner.getOwner());
+            final float dist = owner.distanceTo(owner.getOwner());
             if (dist > maxRange){
                 return;
             }
-            if (dist > owner.getBoundingBox().getAverageEdgeLength() && (!owner.isFlying() && !owner.isHovering() || !owner.isAllowedToTriggerFlight())) {
-                if(previousPosition == null || previousPosition.distanceSq(owner.getOwner().getPosition()) > 9) {
-                    owner.getNavigator().tryMoveToEntityLiving(owner.getOwner(), 1F);
-                    previousPosition = owner.getOwner().getPosition();
+            if (dist > owner.getBoundingBox().getSize() && (!owner.isFlying() && !owner.isHovering() || !owner.isAllowedToTriggerFlight())) {
+                if(previousPosition == null || previousPosition.distSqr(owner.getOwner().blockPosition()) > 9) {
+                    owner.getNavigation().moveTo(owner.getOwner(), 1F);
+                    previousPosition = owner.getOwner().blockPosition();
                 }
             }
-            if ((dist > 30F || owner.getOwner().getPosY() - owner.getPosY() > 8) && !owner.isFlying() && !owner.isHovering() && owner.isAllowedToTriggerFlight()) {
+            if ((dist > 30F || owner.getOwner().getY() - owner.getY() > 8) && !owner.isFlying() && !owner.isHovering() && owner.isAllowedToTriggerFlight()) {
                 owner.setHovering(true);
-                owner.setQueuedToSit(false);
-                owner.setSitting(false);
+                owner.setInSittingPose(false);
+                owner.setOrderedToSit(false);
                 owner.flyTicks = 0;
             }
         }

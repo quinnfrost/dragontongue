@@ -7,10 +7,10 @@ import com.github.quinnfrost.dragontongue.iceandfire.message.MessageSyncPathReac
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Pathfinding;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.MobEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
@@ -24,10 +24,10 @@ import java.util.function.Supplier;
 public class MessageDebugEntity {
     private final boolean isActive;
     private int entityId;
-    private List<Vector3d> associatedTarget;
+    private List<Vec3> associatedTarget;
     private List<String> serverEntityInfo;
 
-    public MessageDebugEntity(int entityIdIn, List<Vector3d> associatedTargetIn, List<String> serverEntityInfoIn) {
+    public MessageDebugEntity(int entityIdIn, List<Vec3> associatedTargetIn, List<String> serverEntityInfoIn) {
         this.isActive = true;
         this.entityId = entityIdIn;
         this.associatedTarget = associatedTargetIn;
@@ -42,13 +42,13 @@ public class MessageDebugEntity {
         this(entityIdIn, new ArrayList<>(), new ArrayList<>());
     }
 
-    public void encoder(PacketBuffer buffer) {
+    public void encoder(FriendlyByteBuf buffer) {
         buffer.writeBoolean(isActive);
         if (isActive) {
             buffer.writeInt(entityId);
 
             buffer.writeInt(associatedTarget.size());
-            for (Vector3d target :
+            for (Vec3 target :
                     associatedTarget) {
                 buffer.writeDouble(target.x);
                 buffer.writeDouble(target.y);
@@ -58,18 +58,18 @@ public class MessageDebugEntity {
             buffer.writeInt(serverEntityInfo.size());
             for (String infoItem :
                     serverEntityInfo) {
-                buffer.writeString(infoItem);
+                buffer.writeUtf(infoItem);
             }
         }
     }
 
-    public static MessageDebugEntity decoder(PacketBuffer buffer) {
+    public static MessageDebugEntity decoder(FriendlyByteBuf buffer) {
         if (buffer.readBoolean()) {
             int entityId = buffer.readInt();
             int length = buffer.readInt();
-            List<Vector3d> associatedTarget = new ArrayList<>();
+            List<Vec3> associatedTarget = new ArrayList<>();
             for (int i = 0; i < length; i++) {
-                associatedTarget.add(new Vector3d(
+                associatedTarget.add(new Vec3(
                         buffer.readDouble(),
                         buffer.readDouble(),
                         buffer.readDouble()
@@ -79,7 +79,7 @@ public class MessageDebugEntity {
             length = buffer.readInt();
             List<String> serverEntityInfo = new ArrayList<>();
             for (int i = 0; i < length; i++) {
-                serverEntityInfo.add(buffer.readString());
+                serverEntityInfo.add(buffer.readUtf());
             }
 
             return new MessageDebugEntity(entityId, associatedTarget, serverEntityInfo);
@@ -94,12 +94,12 @@ public class MessageDebugEntity {
 
             if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
                 if (isActive) {
-                    MobEntity targetEntity = (MobEntity) Minecraft.getInstance().world.getEntityByID(entityId);
+                    Mob targetEntity = (Mob) Minecraft.getInstance().level.getEntity(entityId);
 
-                    for (Vector3d target:
+                    for (Vec3 target:
                          associatedTarget) {
                         RenderNode.drawCube(2, target, false, null);
-                        RenderNode.drawLine(2, targetEntity.getPositionVec(), target, null);
+                        RenderNode.drawLine(2, targetEntity.position(), target, null);
                     }
 
                     OverlayInfoPanel.bufferInfoLeft = serverEntityInfo;
@@ -111,7 +111,7 @@ public class MessageDebugEntity {
 
             } else if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_SERVER) {
                 if (EntityBehaviorDebugger.targetEntity == null) {
-                    EntityBehaviorDebugger.startDebugFor(contextSupplier.get().getSender(), (MobEntity) contextSupplier.get().getSender().getServerWorld().getEntityByID(entityId));
+                    EntityBehaviorDebugger.startDebugFor(contextSupplier.get().getSender(), (Mob) contextSupplier.get().getSender().getLevel().getEntity(entityId));
                 } else {
                     EntityBehaviorDebugger.stopDebug();
                 }

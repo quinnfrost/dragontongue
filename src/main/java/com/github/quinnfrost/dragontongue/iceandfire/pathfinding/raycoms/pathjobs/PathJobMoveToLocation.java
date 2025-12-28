@@ -6,11 +6,11 @@ package com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.pathjo
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Node;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.Pathfinding;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.pathfinding.Path;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3i;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
+import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
 
@@ -35,7 +35,7 @@ public class PathJobMoveToLocation extends AbstractPathJob {
      * @param range  max search range.
      * @param entity the entity.
      */
-    public PathJobMoveToLocation(final World world, final BlockPos start, final BlockPos end, final int range, final LivingEntity entity) {
+    public PathJobMoveToLocation(final Level world, final BlockPos start, final BlockPos end, final int range, final LivingEntity entity) {
         super(world, start, end, range, entity);
 
         this.destination = new BlockPos(end);
@@ -69,7 +69,7 @@ public class PathJobMoveToLocation extends AbstractPathJob {
 
     @Override
     protected double computeHeuristic(final BlockPos pos) {
-        return Math.sqrt(destination.distanceSq(pos));
+        return Math.sqrt(destination.distSqr(pos));
     }
 
     /**
@@ -87,9 +87,9 @@ public class PathJobMoveToLocation extends AbstractPathJob {
         }
 
         if (n.pos.getY() == destination.getY() - 1) {
-            return destination.withinDistance(new Vector3i(n.pos.getX(), destination.getY(), n.pos.getZ()), DESTINATION_SLACK_ADJACENT);
+            return destination.closerThan(new Vec3i(n.pos.getX(), destination.getY(), n.pos.getZ()), DESTINATION_SLACK_ADJACENT);
         }
-        return destination.withinDistance(n.pos, DESTINATION_SLACK_ADJACENT);
+        return destination.closerThan(n.pos, DESTINATION_SLACK_ADJACENT);
     }
 
     /**
@@ -101,6 +101,6 @@ public class PathJobMoveToLocation extends AbstractPathJob {
     @Override
     protected double getNodeResultScore(final Node n) {
         //  For Result Score lower is better
-        return destination.distanceSq(n.pos);
+        return destination.distSqr(n.pos);
     }
 }

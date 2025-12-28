@@ -12,10 +12,10 @@ import com.github.quinnfrost.dragontongue.iceandfire.container.RegistryContainer
 import com.github.quinnfrost.dragontongue.event.ClientEvents;
 import com.github.quinnfrost.dragontongue.event.ServerEvents;
 import com.github.quinnfrost.dragontongue.utils.util;
-import net.minecraft.block.Block;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.ScreenManager;
-import net.minecraft.entity.Entity;
+import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
@@ -126,7 +126,7 @@ public class DragonTongue
 
 
         event.enqueueWork(() -> {
-            ScreenManager.registerFactory(RegistryContainers.CONTAINER_DRAGON.get(), ScreenDragon::new);
+            MenuScreens.register(RegistryContainers.CONTAINER_DRAGON.get(), ScreenDragon::new);
         });
     }
 
@@ -148,7 +148,7 @@ public class DragonTongue
     public void onServerStarting(FMLServerStartingEvent event) {
         // do something when the server starts
 //        LOGGER.info("HELLO from server starting");
-        RegistryCommands.registerCommands(event.getServer().getFunctionManager().getCommandDispatcher());
+        RegistryCommands.registerCommands(event.getServer().getFunctions().getDispatcher());
     }
 
     @SubscribeEvent

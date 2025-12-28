@@ -5,12 +5,14 @@ import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonFlightUtil;
 import com.mojang.datafixers.util.Pair;
-import net.minecraft.entity.ai.RandomPositionGenerator;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.entity.ai.util.RandomPos;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
+
+import net.minecraft.world.entity.ai.goal.Goal.Flag;
 
 public class DragonAIWander extends Goal {
     private EntityDragonBase dragon;
@@ -30,13 +32,13 @@ public class DragonAIWander extends Goal {
         this.dragon = creatureIn;
         this.speed = speedIn;
         this.executionChance = chance;
-        this.setMutexFlags(EnumSet.of(Flag.MOVE));
+        this.setFlags(EnumSet.of(Flag.MOVE));
 
         this.failedToFindPlainPenalty = 0;
     }
 
     @Override
-    public boolean shouldExecute() {
+    public boolean canUse() {
         if (!dragon.canMove() || dragon.isFuelingForge()) {
             return false;
         }
@@ -47,20 +49,20 @@ public class DragonAIWander extends Goal {
             return false;
         }
         if (!this.mustUpdate) {
-            if (this.dragon.getRNG().nextInt(executionChance) != 0) {
+            if (this.dragon.getRandom().nextInt(executionChance) != 0) {
                 return false;
             }
         }
-        Vector3d randomTarget = RandomPositionGenerator.findRandomTarget(this.dragon, 10 + 5 * dragon.getDragonStage(), 7 + dragon.getDragonStage());
+        Vec3 randomTarget = RandomPos.getPos(this.dragon, 10 + 5 * dragon.getDragonStage(), 7 + dragon.getDragonStage());
         for (int i = 0; i < 5; i++) {
             if (randomTarget == null) {
                 continue;
             }
-            if (dragon.hasHomePosition && randomTarget.distanceTo(dragon.getPositionVec()) > IafConfig.dragonWanderFromHomeDistance) {
+            if (dragon.hasHomePosition && randomTarget.distanceTo(dragon.position()) > IafConfig.dragonWanderFromHomeDistance) {
                 randomTarget = null;
                 continue;
             }
-            Pair<BlockPos, BlockPos> feature = IafDragonFlightUtil.getTerrainFeatureInRadius(dragon.world, new BlockPos(randomTarget), dragon.getDragonStage());
+            Pair<BlockPos, BlockPos> feature = IafDragonFlightUtil.getTerrainFeatureInRadius(dragon.level, new BlockPos(randomTarget), dragon.getDragonStage());
             if (Math.abs(feature.getFirst().getY() - feature.getSecond().getY()) >= 2) {
                 randomTarget = null;
                 continue;
@@ -68,7 +70,7 @@ public class DragonAIWander extends Goal {
             break;
         }
         if (randomTarget == null) {
-            if (this.dragon.getRNG().nextInt(++failedToFindPlainPenalty) > 10) {
+            if (this.dragon.getRandom().nextInt(++failedToFindPlainPenalty) > 10) {
                 IafDragonBehaviorHelper.setDragonTakeOff(dragon);
             }
             return false;
@@ -86,20 +88,20 @@ public class DragonAIWander extends Goal {
     }
 
     @Override
-    public boolean shouldContinueExecuting() {
-        return !this.dragon.getNavigator().noPath() && this.dragon.canMove();
+    public boolean canContinueToUse() {
+        return !this.dragon.getNavigation().isDone() && this.dragon.canMove();
     }
 
     @Override
-    public void startExecuting() {
+    public void start() {
         failedToFindPlainPenalty = 0;
-        this.dragon.getNavigator().tryMoveToXYZ(this.xPosition, this.yPosition, this.zPosition, this.speed);
+        this.dragon.getNavigation().moveTo(this.xPosition, this.yPosition, this.zPosition, this.speed);
     }
 
     @Override
-    public void resetTask() {
-        super.resetTask();
-        this.dragon.getNavigator().clearPath();
+    public void stop() {
+        super.stop();
+        this.dragon.getNavigation().stop();
     }
 
     public void makeUpdate() {

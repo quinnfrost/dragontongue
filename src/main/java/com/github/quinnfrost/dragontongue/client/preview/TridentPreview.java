@@ -1,17 +1,17 @@
 package com.github.quinnfrost.dragontongue.client.preview;
 
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.AbstractArrowEntity;
-import net.minecraft.entity.projectile.TridentEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.ThrownTrident;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 import java.util.Collections;
 import java.util.List;
 
 public class TridentPreview extends ArrowPreview {
-    public TridentPreview(World worldIn) {
+    public TridentPreview(Level worldIn) {
         super(worldIn);
     }
 
@@ -19,16 +19,16 @@ public class TridentPreview extends ArrowPreview {
         return 0.99F;
     }
 
-    public List<AbstractArrowEntity> initializeEntities(PlayerEntity player, ItemStack associatedItem) {
-        int timeleft = player.getItemInUseCount();
+    public List<AbstractArrow> initializeEntities(Player player, ItemStack associatedItem) {
+        int timeleft = player.getUseItemRemainingTicks();
         if (timeleft > 0) {
             int maxduration = associatedItem.getUseDuration();
             int difference = maxduration - timeleft;
             if (difference >= 10) {
-                int j = EnchantmentHelper.getRiptideModifier(associatedItem);
-                if ((j <= 0 || player.isWet()) && j == 0) {
-                    TridentEntity tridententity = new TridentEntity(player.world, player, associatedItem);
-                    tridententity.setDirectionAndMovement(player, player.rotationPitch, player.rotationYaw, 0.0F, 2.5F + (float)j * 0.5F, 0.0F);
+                int j = EnchantmentHelper.getRiptide(associatedItem);
+                if ((j <= 0 || player.isInWaterOrRain()) && j == 0) {
+                    ThrownTrident tridententity = new ThrownTrident(player.level, player, associatedItem);
+                    tridententity.shootFromRotation(player, player.xRot, player.yRot, 0.0F, 2.5F + (float)j * 0.5F, 0.0F);
                     this.shooter = player;
                     return Collections.singletonList(tridententity);
                 }

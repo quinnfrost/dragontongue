@@ -1,7 +1,7 @@
 package com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms;
 
 import com.github.alexthe666.iceandfire.IceAndFire;
-import net.minecraft.pathfinding.Path;
+import net.minecraft.world.level.pathfinder.Path;
 
 import javax.annotation.Nullable;
 import java.util.concurrent.Callable;
@@ -116,7 +116,7 @@ public class PathResult<T extends Callable<Path>>
      */
     public int getPathLength()
     {
-        return path.getCurrentPathLength();
+        return path.getNodeCount();
     }
 
     /**

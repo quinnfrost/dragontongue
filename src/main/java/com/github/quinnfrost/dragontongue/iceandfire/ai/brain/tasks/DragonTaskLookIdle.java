@@ -2,21 +2,21 @@ package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.google.common.collect.ImmutableMap;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPosWrapper;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.ai.behavior.BlockPosTracker;
+import net.minecraft.util.Mth;
+import net.minecraft.server.level.ServerLevel;
 
-public class DragonTaskLookIdle extends Task<EntityDragonBase> {
+public class DragonTaskLookIdle extends Behavior<EntityDragonBase> {
     private double lookX;
     private double lookZ;
     private int idleTime;
     public DragonTaskLookIdle(int durationMinIn, int durationMaxIn) {
         super(ImmutableMap.of(
-                MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.VALUE_ABSENT
+                MemoryModuleType.LOOK_TARGET, MemoryStatus.VALUE_ABSENT
         ), durationMinIn, durationMaxIn);
     }
     public DragonTaskLookIdle() {
@@ -24,15 +24,15 @@ public class DragonTaskLookIdle extends Task<EntityDragonBase> {
     }
 
     @Override
-    protected boolean shouldExecute(ServerWorld worldIn, EntityDragonBase owner) {
+    protected boolean checkExtraStartConditions(ServerLevel worldIn, EntityDragonBase owner) {
         if (!owner.canMove() || owner.getAnimation() == EntityDragonBase.ANIMATION_SHAKEPREY || owner.isFuelingForge()) {
             return false;
         }
-        return owner.getRNG().nextFloat() < 0.02F;
+        return owner.getRandom().nextFloat() < 0.02F;
     }
 
     @Override
-    protected boolean shouldContinueExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+    protected boolean canStillUse(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
         if (!entityIn.canMove()) {
             return false;
         }
@@ -40,19 +40,19 @@ public class DragonTaskLookIdle extends Task<EntityDragonBase> {
     }
 
     @Override
-    protected void startExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
-        final double d0 = (Math.PI * 2D) * entityIn.getRNG().nextDouble();
-        this.lookX = MathHelper.cos((float) d0);
-        this.lookZ = MathHelper.sin((float) d0);
-        this.idleTime = 20 + entityIn.getRNG().nextInt(20);
+    protected void start(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+        final double d0 = (Math.PI * 2D) * entityIn.getRandom().nextDouble();
+        this.lookX = Mth.cos((float) d0);
+        this.lookZ = Mth.sin((float) d0);
+        this.idleTime = 20 + entityIn.getRandom().nextInt(20);
     }
 
     @Override
-    protected void updateTask(ServerWorld worldIn, EntityDragonBase owner, long gameTime) {
+    protected void tick(ServerLevel worldIn, EntityDragonBase owner, long gameTime) {
         if (this.idleTime > 0) {
             --this.idleTime;
         }
-        BlockPos lookPos = new BlockPos(owner.getPosX() + this.lookX, owner.getPosY() + owner.getEyeHeight(), owner.getPosZ() + this.lookZ);
-        owner.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, new BlockPosWrapper(lookPos));
+        BlockPos lookPos = new BlockPos(owner.getX() + this.lookX, owner.getY() + owner.getEyeHeight(), owner.getZ() + this.lookZ);
+        owner.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, new BlockPosTracker(lookPos));
     }
 }

@@ -2,10 +2,10 @@ package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.google.common.collect.ImmutableMap;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.server.level.ServerLevel;
 
-public class DragonTaskScoutTerritory extends Task<EntityDragonBase> {
+public class DragonTaskScoutTerritory extends Behavior<EntityDragonBase> {
     public DragonTaskScoutTerritory(int durationMinIn, int durationMaxIn) {
         super(ImmutableMap.of(
 
@@ -16,23 +16,23 @@ public class DragonTaskScoutTerritory extends Task<EntityDragonBase> {
     }
 
     @Override
-    protected boolean shouldExecute(ServerWorld worldIn, EntityDragonBase owner) {
-        return super.shouldExecute(worldIn, owner);
+    protected boolean checkExtraStartConditions(ServerLevel worldIn, EntityDragonBase owner) {
+        return super.checkExtraStartConditions(worldIn, owner);
     }
 
     @Override
-    protected boolean shouldContinueExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
-        return super.shouldContinueExecuting(worldIn, entityIn, gameTimeIn);
+    protected boolean canStillUse(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+        return super.canStillUse(worldIn, entityIn, gameTimeIn);
     }
 
     @Override
-    protected void startExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
-        super.startExecuting(worldIn, entityIn, gameTimeIn);
+    protected void start(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+        super.start(worldIn, entityIn, gameTimeIn);
     }
 
     @Override
-    protected void updateTask(ServerWorld worldIn, EntityDragonBase owner, long gameTime) {
-        super.updateTask(worldIn, owner, gameTime);
+    protected void tick(ServerLevel worldIn, EntityDragonBase owner, long gameTime) {
+        super.tick(worldIn, owner, gameTime);
     }
 
 }

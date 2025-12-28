@@ -6,12 +6,12 @@ import com.github.quinnfrost.dragontongue.client.KeyBindRegistry;
 import com.github.quinnfrost.dragontongue.client.overlay.OverlayCrossHair;
 import com.github.quinnfrost.dragontongue.utils.Vector2f;
 import com.github.quinnfrost.dragontongue.utils.util;
-import net.minecraft.client.GameSettings;
+import net.minecraft.client.Options;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.item.Items;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.*;
@@ -20,7 +20,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 @OnlyIn(Dist.CLIENT)
 public class ClientEvents {
-    public static GameSettings gameSettings = Minecraft.getInstance().gameSettings;
+    public static Options gameSettings = Minecraft.getInstance().options;
     public static int lastMouseKeyCode = 0;
     public static boolean keySneakPressed = false;
     public static boolean keySprintPressed = false;
@@ -40,9 +40,9 @@ public class ClientEvents {
     @SubscribeEvent
     public static void detectClicks(InputEvent.ClickInputEvent event) {
         if (
-                KeyBindRegistry.command_tamed.isKeyDown()
-                || KeyBindRegistry.select_tamed.isKeyDown()
-                || KeyBindRegistry.set_tamed_status.isKeyDown()
+                KeyBindRegistry.command_tamed.isDown()
+                || KeyBindRegistry.select_tamed.isDown()
+                || KeyBindRegistry.set_tamed_status.isDown()
         ) {
             event.setSwingHand(false);
             event.setCanceled(true);
@@ -51,20 +51,20 @@ public class ClientEvents {
 
     @SubscribeEvent
     public static void detectKeys(InputEvent.KeyInputEvent event) {
-        ClientPlayerEntity clientPlayerEntity = Minecraft.getInstance().player;
+        LocalPlayer clientPlayerEntity = Minecraft.getInstance().player;
     }
 
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event){
-        int maxDistance = Minecraft.getInstance().gameSettings.renderDistanceChunks * 16;
-        ClientPlayerEntity clientPlayerEntity = Minecraft.getInstance().player;
+        int maxDistance = Minecraft.getInstance().options.renderDistance * 16;
+        LocalPlayer clientPlayerEntity = Minecraft.getInstance().player;
 
-        if (clientPlayerEntity != null && clientPlayerEntity.isSneaking() && (clientPlayerEntity.getHeldItem(Hand.MAIN_HAND).getItem() == IafItemRegistry.DRAGON_BOW
-        || clientPlayerEntity.getHeldItem(Hand.MAIN_HAND).getItem() == Items.BOW)) {
+        if (clientPlayerEntity != null && clientPlayerEntity.isShiftKeyDown() && (clientPlayerEntity.getItemInHand(InteractionHand.MAIN_HAND).getItem() == IafItemRegistry.DRAGON_BOW
+        || clientPlayerEntity.getItemInHand(InteractionHand.MAIN_HAND).getItem() == Items.BOW)) {
             OverlayCrossHair.renderScope = true;
-            RayTraceResult rayTraceResult = util.getTargetBlockOrEntity(clientPlayerEntity, maxDistance, null);
-            if (rayTraceResult.getType() != RayTraceResult.Type.MISS) {
-                double distance = clientPlayerEntity.getClientEyePosition(1.0f).distanceTo(rayTraceResult.getHitVec());
+            HitResult rayTraceResult = util.getTargetBlockOrEntity(clientPlayerEntity, maxDistance, null);
+            if (rayTraceResult.getType() != HitResult.Type.MISS) {
+                double distance = clientPlayerEntity.getLightProbePosition(1.0f).distanceTo(rayTraceResult.getLocation());
                 OverlayCrossHair.scopeSuggestion = (float) distance;
                 OverlayCrossHair.setCrossHairString(
                         Vector2f.CR_DISTANCE,
@@ -114,19 +114,19 @@ public class ClientEvents {
 
     @SubscribeEvent
     public static void onGuiKeyPressed(GuiScreenEvent.KeyboardKeyPressedEvent event) {
-        if (event.getKeyCode() == gameSettings.keyBindSneak.getKey().getKeyCode()) {
+        if (event.getKeyCode() == gameSettings.keyShift.getKey().getValue()) {
             keySneakPressed = true;
         }
-        if (event.getKeyCode() == gameSettings.keyBindSprint.getKey().getKeyCode()) {
+        if (event.getKeyCode() == gameSettings.keySprint.getKey().getValue()) {
             keySprintPressed = true;
         }
     }
     @SubscribeEvent
     public static void onGuiKeyReleased(GuiScreenEvent.KeyboardKeyReleasedEvent event) {
-        if (event.getKeyCode() == gameSettings.keyBindSneak.getKey().getKeyCode()) {
+        if (event.getKeyCode() == gameSettings.keyShift.getKey().getValue()) {
             keySneakPressed = false;
         }
-        if (event.getKeyCode() == gameSettings.keyBindSprint.getKey().getKeyCode()) {
+        if (event.getKeyCode() == gameSettings.keySprint.getKey().getValue()) {
             keySprintPressed = false;
         }
     }
@@ -143,7 +143,7 @@ public class ClientEvents {
 
     @SubscribeEvent
     public static void onSetFogDensity(EntityViewRenderEvent.FogDensity event) {
-        ClientPlayerEntity player = Minecraft.getInstance().player;
+        LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
             return;
         }
@@ -158,7 +158,7 @@ public class ClientEvents {
 
     @SubscribeEvent
     public static void renderOverlay(RenderBlockOverlayEvent event) {
-        ClientPlayerEntity player = Minecraft.getInstance().player;
+        LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
             return;
         }

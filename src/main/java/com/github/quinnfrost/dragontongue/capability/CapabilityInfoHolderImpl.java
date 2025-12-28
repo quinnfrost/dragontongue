@@ -2,8 +2,8 @@ package com.github.quinnfrost.dragontongue.capability;
 
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.core.BlockPos;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -32,8 +32,8 @@ public class CapabilityInfoHolderImpl implements ICapabilityInfoHolder {
     public CapabilityInfoHolderImpl(Entity entity) {
         this.entity = entity;
         if (entity != null) {
-            this.commandDestination = Optional.of(entity.getPosition());
-            this.fallbackPosition = entity.getPosition();
+            this.commandDestination = Optional.of(entity.blockPosition());
+            this.fallbackPosition = entity.blockPosition();
         }
         commandMaps.put(EnumCommandSettingType.COMMAND_STATUS, EnumCommandSettingType.CommandStatus.NONE);
         commandMaps.put(EnumCommandSettingType.GROUND_ATTACK_TYPE, EnumCommandSettingType.GroundAttackType.ANY);

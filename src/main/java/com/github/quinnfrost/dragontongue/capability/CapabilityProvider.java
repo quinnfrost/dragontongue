@@ -1,8 +1,8 @@
 package com.github.quinnfrost.dragontongue.capability;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.util.Direction;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.core.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.LazyOptional;
@@ -10,7 +10,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class CapabilityProvider implements ICapabilitySerializable<ListNBT> {
+public class CapabilityProvider implements ICapabilitySerializable<ListTag> {
     private final CapabilityInfoHolderImpl data;
     private final LazyOptional<ICapabilityInfoHolder> dataOptional;
 
@@ -40,16 +40,16 @@ public class CapabilityProvider implements ICapabilitySerializable<ListNBT> {
     }
 
     @Override
-    public ListNBT serializeNBT() {
+    public ListTag serializeNBT() {
         if (CapabilityInfoHolder.TARGET_HOLDER == null){
-            return new ListNBT();
+            return new ListTag();
         }else {
-            return (ListNBT) CapabilityInfoHolder.TARGET_HOLDER.writeNBT(data,null);
+            return (ListTag) CapabilityInfoHolder.TARGET_HOLDER.writeNBT(data,null);
         }
     }
 
     @Override
-    public void deserializeNBT(ListNBT nbt) {
+    public void deserializeNBT(ListTag nbt) {
         if (CapabilityInfoHolder.TARGET_HOLDER != null){
             CapabilityInfoHolder.TARGET_HOLDER.readNBT(data,null,nbt);
         }

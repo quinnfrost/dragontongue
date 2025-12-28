@@ -7,21 +7,21 @@ import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.command.ISuggestionProvider;
-import net.minecraft.command.arguments.EntityArgument;
-import net.minecraft.entity.Entity;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.world.entity.Entity;
 
 import java.util.Arrays;
 
 public class RegistryCommands {
-    public static void registerCommands(CommandDispatcher<CommandSource> dispatcher) {
-        dispatcher.register(Commands.literal("dragon").requires(commandSource -> commandSource.hasPermissionLevel(0))
+    public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(Commands.literal("dragon").requires(commandSource -> commandSource.hasPermission(0))
                 .then(Commands.argument("target", EntityArgument.entity())
                         .then(Commands.argument("setting", StringArgumentType.word())
                                 .suggests((context, builder) -> {
-                                    return ISuggestionProvider.suggest(Arrays.asList("home", "breath"), builder);
+                                    return SharedSuggestionProvider.suggest(Arrays.asList("home", "breath"), builder);
                                 })
                                 .then(Commands.argument("bool", BoolArgumentType.bool())
                                         .executes(context -> {
@@ -33,7 +33,7 @@ public class RegistryCommands {
                                             return 0;
                                         }))
                                 .then(Commands.argument("value", StringArgumentType.word())
-                                        .suggests((context, builder) -> ISuggestionProvider.suggest(Arrays.asList("none", "without_blast", "any"), builder))
+                                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(Arrays.asList("none", "without_blast", "any"), builder))
                                         .executes(context -> {
                                             Entity entity = EntityArgument.getEntity(context, "target");
                                             ICapabilityInfoHolder cap = entity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(entity));

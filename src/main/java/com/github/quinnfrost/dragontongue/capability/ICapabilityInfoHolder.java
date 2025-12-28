@@ -1,8 +1,8 @@
 package com.github.quinnfrost.dragontongue.capability;
 
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.core.BlockPos;
 
 import java.util.List;
 import java.util.Map;

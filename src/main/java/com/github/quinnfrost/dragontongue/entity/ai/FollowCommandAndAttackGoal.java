@@ -4,26 +4,26 @@ import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import net.minecraft.entity.CreatureEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 
 import java.util.EnumSet;
 
 public class FollowCommandAndAttackGoal extends MeleeAttackGoal {
-    protected CreatureEntity creature;
+    protected PathfinderMob creature;
     protected ICapabilityInfoHolder capabilityInfoHolder;
 
-    public FollowCommandAndAttackGoal(CreatureEntity creature, double speedIn, boolean useLongMemory) {
+    public FollowCommandAndAttackGoal(PathfinderMob creature, double speedIn, boolean useLongMemory) {
         super(creature, speedIn, useLongMemory);
         this.creature = creature;
         this.capabilityInfoHolder = creature.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(creature));
-        this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
+        this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
     };
 
     @Override
-    public boolean shouldExecute() {
-        if (super.shouldExecute()) {
+    public boolean canUse() {
+        if (super.canUse()) {
             return true;
         }
         if (capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE)
@@ -33,8 +33,8 @@ public class FollowCommandAndAttackGoal extends MeleeAttackGoal {
         return false;
     }
     @Override
-    public boolean shouldContinueExecuting() {
-        if (super.shouldContinueExecuting()) {
+    public boolean canContinueToUse() {
+        if (super.canContinueToUse()) {
             return true;
         }
         if (capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE)
@@ -44,18 +44,18 @@ public class FollowCommandAndAttackGoal extends MeleeAttackGoal {
         return false;
     }
     @Override
-    public void startExecuting() {
-        if (creature.getAttackTarget() != null) {
-            super.startExecuting();
+    public void start() {
+        if (creature.getTarget() != null) {
+            super.start();
         }
     }
 
     @Override
     public void tick() {
         if (capabilityInfoHolder.getCommandStatus() != EnumCommandSettingType.CommandStatus.NONE
-                && creature.getAttackTarget() == null) {
+                && creature.getTarget() == null) {
             capabilityInfoHolder.getDestination().ifPresent(blockPos -> {
-                creature.getNavigator().tryMoveToXYZ(
+                creature.getNavigation().moveTo(
                         blockPos.getX(),
                         blockPos.getY(),
                         blockPos.getZ(),
@@ -64,7 +64,7 @@ public class FollowCommandAndAttackGoal extends MeleeAttackGoal {
 
             });
         }
-        if (creature.getAttackTarget() != null) {
+        if (creature.getTarget() != null) {
             super.tick();
         }
     }

@@ -3,27 +3,27 @@ package com.github.quinnfrost.dragontongue.utils;
 import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.iceandfire.IafHelperClass;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityPredicate;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.ai.goal.GoalSelector;
-import net.minecraft.entity.monster.IMob;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.entity.projectile.ProjectileHelper;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.particles.IParticleData;
-import net.minecraft.potion.Effects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.targeting.TargetingConditions;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.GoalSelector;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.util.Direction;
+import net.minecraft.core.Direction;
 import net.minecraft.util.math.*;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.ModList;
@@ -33,6 +33,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 
 public class util {
     /**
@@ -57,11 +64,11 @@ public class util {
         }
     }
 
-    public static boolean isShooter(@Nullable ProjectileEntity target, @Nullable LivingEntity owner) {
+    public static boolean isShooter(@Nullable Projectile target, @Nullable LivingEntity owner) {
         if (target == null || owner == null) {
             return false;
         }
-        return target.getShooter() == owner;
+        return target.getOwner() == owner;
     }
 
     /**
@@ -77,9 +84,9 @@ public class util {
             return false;
         }
         try {
-            CompoundNBT compoundNBT = new CompoundNBT();
-            target.writeAdditional(compoundNBT);
-            if (compoundNBT.getUniqueId("Owner").equals(owner.getUniqueID())) {
+            CompoundTag compoundNBT = new CompoundTag();
+            target.addAdditionalSaveData(compoundNBT);
+            if (compoundNBT.getUUID("Owner").equals(owner.getUUID())) {
                 return true;
             } else {
                 return false;
@@ -93,12 +100,12 @@ public class util {
         if (attacker == null || target == null) {
             return false;
         }
-        EntityPredicate entityPredicate = EntityPredicate.DEFAULT;
-        entityPredicate.setIgnoresLineOfSight();
+        TargetingConditions entityPredicate = TargetingConditions.DEFAULT;
+        entityPredicate.allowUnseeable();
         if (checkDistance > 0) {
-            entityPredicate.setDistance(checkDistance);
+            entityPredicate.range(checkDistance);
         }
-        return entityPredicate.canTarget(attacker, target);
+        return entityPredicate.test(attacker, target);
     }
 
     /**
@@ -111,14 +118,14 @@ public class util {
      * @param excludeEntity
      * @return  A BlockRayTraceResult or EntityRayTraceResult, separated by its type
      */
-    public static RayTraceResult getTargetBlockOrEntity(Entity entity, float maxDistance, @Nullable Predicate<? super Entity> excludeEntity) {
-        BlockRayTraceResult blockRayTraceResult = getTargetBlock(entity, maxDistance, 1.0f, RayTraceContext.BlockMode.COLLIDER);
+    public static HitResult getTargetBlockOrEntity(Entity entity, float maxDistance, @Nullable Predicate<? super Entity> excludeEntity) {
+        BlockHitResult blockRayTraceResult = getTargetBlock(entity, maxDistance, 1.0f, ClipContext.Block.COLLIDER);
         float entityRayTraceDistance = maxDistance;
-        if (blockRayTraceResult.getType() != RayTraceResult.Type.MISS) {
-            entityRayTraceDistance = (float) Math.sqrt(entity.getDistanceSq(blockRayTraceResult.getHitVec()));
+        if (blockRayTraceResult.getType() != HitResult.Type.MISS) {
+            entityRayTraceDistance = (float) Math.sqrt(entity.distanceToSqr(blockRayTraceResult.getLocation()));
         }
         // Limit the max ray trace distance to the first block it sees
-        EntityRayTraceResult entityRayTraceResult = getTargetEntity(entity, entityRayTraceDistance, 1.0f, null);
+        EntityHitResult entityRayTraceResult = getTargetEntity(entity, entityRayTraceDistance, 1.0f, null);
         if (entityRayTraceResult != null) {
             return entityRayTraceResult;
         } else {
@@ -139,27 +146,27 @@ public class util {
      * @return Result of ray trace, or null if nothing within the distance is found
      */
     @Nullable
-    public static EntityRayTraceResult getTargetEntity(Entity entity, float maxDistance, float partialTicks,
+    public static EntityHitResult getTargetEntity(Entity entity, float maxDistance, float partialTicks,
                                                        @Nullable Predicate<? super Entity> excludeEntity) {
         if (excludeEntity == null) {
             excludeEntity = (Predicate<Entity>) notExclude -> notExclude instanceof LivingEntity;
         }
 
-        Vector3d vector3d = entity.getEyePosition(partialTicks);
+        Vec3 vector3d = entity.getEyePosition(partialTicks);
         double d0 = maxDistance;
         double d1 = d0 * d0;
 
         // 获取实体视线
-        Vector3d vector3d1 = entity.getLook(1.0F);
+        Vec3 vector3d1 = entity.getViewVector(1.0F);
         // 结束位置向量
-        Vector3d vector3d2 = vector3d.add(vector3d1.x * d0, vector3d1.y * d0, vector3d1.z * d0);
+        Vec3 vector3d2 = vector3d.add(vector3d1.x * d0, vector3d1.y * d0, vector3d1.z * d0);
         float f = 1.0F;
         // 计算结束位置向量构成的区域(Bounding Box)
-        AxisAlignedBB axisalignedbb = entity.getBoundingBox().expand(vector3d1.scale(d0)).grow(1.0D, 1.0D, 1.0D);
+        AABB axisalignedbb = entity.getBoundingBox().expandTowards(vector3d1.scale(d0)).inflate(1.0D, 1.0D, 1.0D);
 
-        EntityRayTraceResult entityraytraceresult = ProjectileHelper.rayTraceEntities(entity.world, entity, vector3d, vector3d2,
+        EntityHitResult entityraytraceresult = ProjectileUtil.getEntityHitResult(entity.level, entity, vector3d, vector3d2,
                 axisalignedbb, ((Predicate<Entity>) notExclude -> !notExclude.isSpectator()
-                        && notExclude.canBeCollidedWith())
+                        && notExclude.isPickable())
                         .and(excludeEntity)
         );
         return entityraytraceresult;
@@ -176,28 +183,28 @@ public class util {
      * @param blockMode
      * @return Result of ray trace, or RayTraceResult.Type.MISS if nothing within the distance is found
      */
-    public static BlockRayTraceResult getTargetBlock(Entity entity, float maxDistance, float partialTicks, RayTraceContext.BlockMode blockMode) {
-        final RayTraceContext.FluidMode fluidMode = RayTraceContext.FluidMode.NONE;
+    public static BlockHitResult getTargetBlock(Entity entity, float maxDistance, float partialTicks, ClipContext.Block blockMode) {
+        final ClipContext.Fluid fluidMode = ClipContext.Fluid.NONE;
 
-        Vector3d vector3d = entity.getEyePosition(partialTicks);
+        Vec3 vector3d = entity.getEyePosition(partialTicks);
         double d0 = maxDistance;
         double d1 = d0 * d0;
 
         // 获取实体视线
-        Vector3d vector3d1 = entity.getLook(1.0F);
+        Vec3 vector3d1 = entity.getViewVector(1.0F);
         // 结束位置向量
-        Vector3d vector3d2 = vector3d.add(vector3d1.x * d0, vector3d1.y * d0, vector3d1.z * d0);
+        Vec3 vector3d2 = vector3d.add(vector3d1.x * d0, vector3d1.y * d0, vector3d1.z * d0);
 
-        BlockRayTraceResult blockRayTraceResult = entity.world.rayTraceBlocks(
-                new RayTraceContext(vector3d, vector3d2, blockMode, fluidMode, entity)
+        BlockHitResult blockRayTraceResult = entity.level.clip(
+                new ClipContext(vector3d, vector3d2, blockMode, fluidMode, entity)
         );
         return blockRayTraceResult;
     }
 
     @Deprecated
-    public static BlockRayTraceResult rayTraceBlock(World world, Vector3d startVec, Vector3d endVec) {
-        return world.rayTraceBlocks(new RayTraceContext(startVec, endVec, RayTraceContext.BlockMode.VISUAL,
-                RayTraceContext.FluidMode.NONE, null));
+    public static BlockHitResult rayTraceBlock(Level world, Vec3 startVec, Vec3 endVec) {
+        return world.clip(new ClipContext(startVec, endVec, ClipContext.Block.VISUAL,
+                ClipContext.Fluid.NONE, null));
     }
 
 
@@ -218,10 +225,10 @@ public class util {
     @Deprecated
     public static boolean setByteTag(LivingEntity target, String path, byte value) {
         try {
-            CompoundNBT compoundNBT = new CompoundNBT();
-            target.writeAdditional(compoundNBT);
+            CompoundTag compoundNBT = new CompoundTag();
+            target.addAdditionalSaveData(compoundNBT);
             compoundNBT.putByte(path, value);
-            target.readAdditional(compoundNBT);
+            target.readAdditionalSaveData(compoundNBT);
             return true;
         } catch (Exception e) {
             return false;
@@ -237,8 +244,8 @@ public class util {
     @Deprecated
     public static Optional<Byte> getByteTag(LivingEntity target, String path) {
         try {
-            CompoundNBT compoundNBT = new CompoundNBT();
-            target.writeAdditional(compoundNBT);
+            CompoundTag compoundNBT = new CompoundTag();
+            target.addAdditionalSaveData(compoundNBT);
             if (compoundNBT.contains(path)) {
                 return Optional.of(compoundNBT.getByte(path));
             } else {
@@ -254,8 +261,8 @@ public class util {
      * @param player
      * @param pos
      */
-    public static void teleportPlayer(PlayerEntity player, BlockPos pos) {
-        player.teleportKeepLoaded(pos.getX(), pos.getY(), pos.getZ());
+    public static void teleportPlayer(Player player, BlockPos pos) {
+        player.teleportToWithTicket(pos.getX(), pos.getY(), pos.getZ());
     }
 
     /**
@@ -265,8 +272,8 @@ public class util {
      * @return
      */
     public static Direction getFacingFromEntity(BlockPos clickedBlock, LivingEntity entity) {
-        return Direction.getFacingFromVector((float) (entity.getPosX() - clickedBlock.getX()),
-                (float) (entity.getPosY() - clickedBlock.getY()), (float) (entity.getPosZ() - clickedBlock.getZ()));
+        return Direction.getNearest((float) (entity.getX() - clickedBlock.getX()),
+                (float) (entity.getY() - clickedBlock.getY()), (float) (entity.getZ() - clickedBlock.getZ()));
     }
 
     /**
@@ -280,7 +287,7 @@ public class util {
         double targetY = pos.getY();
         double targetZ = pos.getZ();
 
-        AxisAlignedBB axisAlignedBB = new AxisAlignedBB(targetX,targetY,targetZ,targetX,targetY,targetZ).grow(accuracy == null ? entity.getBoundingBox().getAverageEdgeLength() : accuracy);
+        AABB axisAlignedBB = new AABB(targetX,targetY,targetZ,targetX,targetY,targetZ).inflate(accuracy == null ? entity.getBoundingBox().getSize() : accuracy);
 //        AxisAlignedBB axisAlignedBB = new AxisAlignedBB(targetX,targetY,targetZ,targetX,targetY,targetZ).grow(accuracy == null ? (float) Math.sqrt(2f) : accuracy);
         if (axisAlignedBB.intersects(entity.getBoundingBox())) {
             return true;
@@ -292,22 +299,22 @@ public class util {
     }
 
     public static double getDistance(BlockPos start, BlockPos end) {
-        return getDistance(Vector3d.copy(start), Vector3d.copy(end));
+        return getDistance(Vec3.atLowerCornerOf(start), Vec3.atLowerCornerOf(end));
     }
-    public static double getDistance(Vector3d start, Vector3d end) {
+    public static double getDistance(Vec3 start, Vec3 end) {
         return start.distanceTo(end);
     }
 
-    public static double getSpeed(MobEntity entity) {
-        return 43.178 * entity.getBaseAttributeValue(Attributes.MOVEMENT_SPEED) - 0.02141;
+    public static double getSpeed(Mob entity) {
+        return 43.178 * entity.getAttributeBaseValue(Attributes.MOVEMENT_SPEED) - 0.02141;
     }
 
-    public static <T extends IParticleData> int spawnParticleForce(ServerWorld serverWorld, T type, double posX, double posY, double posZ, int particleCount, double xOffset, double yOffset, double zOffset, double speed) {
+    public static <T extends ParticleOptions> int spawnParticleForce(ServerLevel serverWorld, T type, double posX, double posY, double posZ, int particleCount, double xOffset, double yOffset, double zOffset, double speed) {
         int i = 0;
 
-        for(int j = 0; j < serverWorld.getPlayers().size(); ++j) {
-            ServerPlayerEntity serverplayerentity = serverWorld.getPlayers().get(j);
-            if (serverWorld.spawnParticle(serverplayerentity, type, true, posX, posY, posZ, particleCount, xOffset, yOffset, zOffset, speed)) {
+        for(int j = 0; j < serverWorld.players().size(); ++j) {
+            ServerPlayer serverplayerentity = serverWorld.players().get(j);
+            if (serverWorld.sendParticles(serverplayerentity, type, true, posX, posY, posZ, particleCount, xOffset, yOffset, zOffset, speed)) {
                 ++i;
             }
         }
@@ -316,7 +323,7 @@ public class util {
     }
 
     public static boolean isHostile(LivingEntity livingEntity) {
-        if (livingEntity instanceof IMob) {
+        if (livingEntity instanceof Enemy) {
             return true;
         }
         if (DragonTongue.isIafPresent && IafHelperClass.isIafHostile(livingEntity)) {
@@ -336,7 +343,7 @@ public class util {
         }
         for (Goal targetGoal :
                 currentTargetGoalList) {
-            targetGoal.resetTask();
+            targetGoal.stop();
         }
         return true;
     }
@@ -350,17 +357,17 @@ public class util {
         if (DragonTongue.isIafPresent && IafHelperClass.canSwimInLava(entityIn)) {
             return true;
         }
-        if (entityIn instanceof PlayerEntity) {
-            PlayerEntity playerEntity = (PlayerEntity) entityIn;
+        if (entityIn instanceof Player) {
+            Player playerEntity = (Player) entityIn;
             if (playerEntity.isSpectator() || playerEntity.isCreative()) {
 //                return true;
             }
-            return playerEntity.areEyesInFluid(FluidTags.LAVA) && playerEntity.isPotionActive(Effects.FIRE_RESISTANCE);
+            return playerEntity.isEyeInFluid(FluidTags.LAVA) && playerEntity.hasEffect(MobEffects.FIRE_RESISTANCE);
         }
         return false;
     }
 
-    public static double getDistanceXZ(Vector3d vector1, Vector3d vector2) {
+    public static double getDistanceXZ(Vec3 vector1, Vec3 vector2) {
         if (vector1 == null || vector2 == null) {
             return 0;
         }
@@ -370,7 +377,7 @@ public class util {
     }
 
     @OnlyIn(Dist.CLIENT)
-    public static PlayerEntity getClientSidePlayer() {
+    public static Player getClientSidePlayer() {
         return Minecraft.getInstance().player;
     }
 

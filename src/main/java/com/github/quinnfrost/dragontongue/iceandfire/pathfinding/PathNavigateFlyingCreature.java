@@ -1,17 +1,17 @@
 package com.github.quinnfrost.dragontongue.iceandfire.pathfinding;
 
-import net.minecraft.entity.MobEntity;
-import net.minecraft.pathfinding.FlyingPathNavigator;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 
-public class PathNavigateFlyingCreature extends FlyingPathNavigator {
+public class PathNavigateFlyingCreature extends FlyingPathNavigation {
 
-    public PathNavigateFlyingCreature(MobEntity entity, World world) {
+    public PathNavigateFlyingCreature(Mob entity, Level world) {
         super(entity, world);
     }
 
-    public boolean canEntityStandOnPos(BlockPos pos) {
-        return this.world.isAirBlock(pos.down());
+    public boolean isStableDestination(BlockPos pos) {
+        return this.level.isEmptyBlock(pos.below());
     }
 }

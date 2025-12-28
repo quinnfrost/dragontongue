@@ -4,14 +4,14 @@ import com.github.quinnfrost.dragontongue.DragonTongue;
 import com.github.quinnfrost.dragontongue.References;
 import com.github.quinnfrost.dragontongue.config.Config;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.INBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.CapabilityManager;
@@ -42,18 +42,18 @@ public class CapabilityInfoHolder {
     public static class Storage implements Capability.IStorage<ICapabilityInfoHolder> {
         @Nullable
         @Override
-        public INBT writeNBT(Capability<ICapabilityInfoHolder> capability, ICapabilityInfoHolder instance, Direction side) {
-            ListNBT listNBT = new ListNBT();
+        public Tag writeNBT(Capability<ICapabilityInfoHolder> capability, ICapabilityInfoHolder instance, Direction side) {
+            ListTag listNBT = new ListTag();
             try {
-                CompoundNBT dataNBT = new CompoundNBT();
-                dataNBT.putLong("FallbackPosL", instance.getFallbackPosition().toLong());
+                CompoundTag dataNBT = new CompoundTag();
+                dataNBT.putLong("FallbackPosL", instance.getFallbackPosition().asLong());
                 dataNBT.putInt("FallbackTimer", instance.getFallbackTimer());
-                dataNBT.putLong("Destination", instance.getDestination().orElse(INVALID_POS).toLong());
+                dataNBT.putLong("Destination", instance.getDestination().orElse(INVALID_POS).asLong());
                 dataNBT.putDouble("CommandDistance", instance.getCommandDistance());
                 dataNBT.putDouble("SelectDistance", instance.getSelectDistance());
 
-                dataNBT.putLong("BreathTarget", instance.getBreathTarget().orElse(INVALID_POS).toLong());
-                dataNBT.putLong("HomePosition", instance.getHomePosition().orElse(INVALID_POS).toLong());
+                dataNBT.putLong("BreathTarget", instance.getBreathTarget().orElse(INVALID_POS).asLong());
+                dataNBT.putLong("HomePosition", instance.getHomePosition().orElse(INVALID_POS).asLong());
                 dataNBT.putString("HomeDimension", instance.getHomeDimension().orElse(""));
                 dataNBT.putBoolean("ReturnRoost", instance.getReturnHome());
                 dataNBT.putBoolean("ShouldSleep", instance.getShouldSleep());
@@ -70,8 +70,8 @@ public class CapabilityInfoHolder {
 
                 List<UUID> uuids = instance.getCommandEntities();
                 for (int i = 0; i < uuids.size(); i++) {
-                    CompoundNBT uuidNBT = new CompoundNBT();
-                    uuidNBT.putUniqueId(String.valueOf(i), uuids.get(i));
+                    CompoundTag uuidNBT = new CompoundTag();
+                    uuidNBT.putUUID(String.valueOf(i), uuids.get(i));
                     listNBT.add(uuidNBT);
                 }
             } catch (Exception e) {
@@ -82,28 +82,28 @@ public class CapabilityInfoHolder {
         }
 
         @Override
-        public void readNBT(Capability<ICapabilityInfoHolder> capability, ICapabilityInfoHolder instance, Direction side, INBT nbt) {
-            ListNBT listNBT = (ListNBT) nbt;
+        public void readNBT(Capability<ICapabilityInfoHolder> capability, ICapabilityInfoHolder instance, Direction side, Tag nbt) {
+            ListTag listNBT = (ListTag) nbt;
             try {
-                CompoundNBT dataNBT = listNBT.getCompound(0);
+                CompoundTag dataNBT = listNBT.getCompound(0);
 //                BlockPos blockPos = ;
 //                int fallbackTimer = ;
 ////                CommandStatus commandStatus = CommandStatus.valueOf(dataNBT.getString("CommandStatus"));
 //                BlockPos destination = ;
 //                double commandDistance = ;
 
-                instance.setFallbackPosition(BlockPos.fromLong(dataNBT.getLong("FallbackPosL")));
+                instance.setFallbackPosition(BlockPos.of(dataNBT.getLong("FallbackPosL")));
                 instance.setFallbackTimer(dataNBT.getInt("FallbackTimer"));
 //                instance.setCommandStatus(commandStatus);
 
-                BlockPos destinationPos = BlockPos.fromLong(dataNBT.getLong("Destination"));
+                BlockPos destinationPos = BlockPos.of(dataNBT.getLong("Destination"));
                 instance.setDestination(!destinationPos.equals(INVALID_POS) ? destinationPos : null);
                 instance.setCommandDistance(dataNBT.getDouble("CommandDistance"));
                 instance.setSelectDistance(dataNBT.getDouble("SelectDistance"));
 
-                BlockPos breathTarget = BlockPos.fromLong(dataNBT.getLong("BreathTarget"));
+                BlockPos breathTarget = BlockPos.of(dataNBT.getLong("BreathTarget"));
                 instance.setBreathTarget(!breathTarget.equals(INVALID_POS) ? breathTarget : null);
-                BlockPos homePos = BlockPos.fromLong(dataNBT.getLong("HomePosition"));
+                BlockPos homePos = BlockPos.of(dataNBT.getLong("HomePosition"));
                 instance.setHomePosition(!homePos.equals(INVALID_POS) ? homePos : null);
                 instance.setHomeDimension(!homePos.equals(INVALID_POS) ? dataNBT.getString("HomeDimension") : "");
                 instance.setReturnHome(dataNBT.getBoolean("ReturnRoost"));
@@ -128,8 +128,8 @@ public class CapabilityInfoHolder {
 
                 List<UUID> uuids = new ArrayList<>(Config.COMMAND_ENTITIES_MAX.get());
                 for (int i = 1; i < listNBT.size(); i++) {
-                    CompoundNBT uuidNBT = listNBT.getCompound(i);
-                    uuids.add(uuidNBT.getUniqueId(String.valueOf(i - 1)));
+                    CompoundTag uuidNBT = listNBT.getCompound(i);
+                    uuids.add(uuidNBT.getUUID(String.valueOf(i - 1)));
                 }
                 instance.setCommandEntities(uuids);
             } catch (Exception e) {

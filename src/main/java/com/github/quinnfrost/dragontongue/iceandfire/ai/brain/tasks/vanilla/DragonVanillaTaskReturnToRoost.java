@@ -3,11 +3,11 @@ package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks.vanilla;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.google.common.collect.ImmutableMap;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.server.level.ServerLevel;
 
-public class DragonVanillaTaskReturnToRoost extends Task<EntityDragonBase> {
+public class DragonVanillaTaskReturnToRoost extends Behavior<EntityDragonBase> {
     public DragonVanillaTaskReturnToRoost(int durationMinIn, int durationMaxIn) {
         super(ImmutableMap.of(
 
@@ -15,44 +15,44 @@ public class DragonVanillaTaskReturnToRoost extends Task<EntityDragonBase> {
     }
 
     @Override
-    protected boolean shouldExecute(ServerWorld worldIn, EntityDragonBase owner) {
+    protected boolean checkExtraStartConditions(ServerLevel worldIn, EntityDragonBase owner) {
         return owner.canMove() && owner.lookingForRoostAIFlag
-                && (owner.getAttackTarget() == null || !owner.getAttackTarget().isAlive())
-                && owner.getHomePosition() != null
+                && (owner.getTarget() == null || !owner.getTarget().isAlive())
+                && owner.getRestrictCenter() != null
                 && DragonUtils.isInHomeDimension(owner)
-                && owner.getDistanceSquared(Vector3d.copyCentered(owner.getHomePosition())) > owner.getWidth()
-                * owner.getWidth();
+                && owner.getDistanceSquared(Vec3.atCenterOf(owner.getRestrictCenter())) > owner.getBbWidth()
+                * owner.getBbWidth();
     }
 
     @Override
-    protected boolean shouldContinueExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
-        return super.shouldExecute(worldIn, entityIn);
+    protected boolean canStillUse(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+        return super.checkExtraStartConditions(worldIn, entityIn);
     }
 
     @Override
-    protected void updateTask(ServerWorld worldIn, EntityDragonBase owner, long gameTime) {
-        if (owner.getHomePosition() != null) {
-            final double dist = Math.sqrt(owner.getDistanceSquared(Vector3d.copyCentered(owner.getHomePosition())));
-            final double xDist = Math.abs(owner.getPosX() - owner.getHomePosition().getX() - 0.5F);
-            final double zDist = Math.abs(owner.getPosZ() - owner.getHomePosition().getZ() - 0.5F);
+    protected void tick(ServerLevel worldIn, EntityDragonBase owner, long gameTime) {
+        if (owner.getRestrictCenter() != null) {
+            final double dist = Math.sqrt(owner.getDistanceSquared(Vec3.atCenterOf(owner.getRestrictCenter())));
+            final double xDist = Math.abs(owner.getX() - owner.getRestrictCenter().getX() - 0.5F);
+            final double zDist = Math.abs(owner.getZ() - owner.getRestrictCenter().getZ() - 0.5F);
             final double xzDist = Math.sqrt(xDist * xDist + zDist * zDist);
 
-            if (dist < owner.getWidth()) {
+            if (dist < owner.getBbWidth()) {
                 owner.setFlying(false);
                 owner.setHovering(false);
-                owner.getNavigator().tryMoveToXYZ(owner.getHomePosition().getX(),
-                        owner.getHomePosition().getY(), owner.getHomePosition().getZ(), 1.0F);
+                owner.getNavigation().moveTo(owner.getRestrictCenter().getX(),
+                        owner.getRestrictCenter().getY(), owner.getRestrictCenter().getZ(), 1.0F);
             } else {
-                double yAddition = 15 + owner.getRNG().nextInt(3);
+                double yAddition = 15 + owner.getRandom().nextInt(3);
                 if (xzDist < 40) {
                     yAddition = 0;
                     if (owner.isOnGround()) {
                         owner.setFlying(false);
                         owner.setHovering(false);
                         owner.flightManager.setFlightTarget(
-                                Vector3d.copyCenteredWithVerticalOffset(owner.getHomePosition(), yAddition));
-                        owner.getNavigator().tryMoveToXYZ(owner.getHomePosition().getX(),
-                                owner.getHomePosition().getY(), owner.getHomePosition().getZ(), 1.0F);
+                                Vec3.upFromBottomCenterOf(owner.getRestrictCenter(), yAddition));
+                        owner.getNavigation().moveTo(owner.getRestrictCenter().getX(),
+                                owner.getRestrictCenter().getY(), owner.getRestrictCenter().getZ(), 1.0F);
                         return;
                     }
                 }
@@ -61,9 +61,9 @@ public class DragonVanillaTaskReturnToRoost extends Task<EntityDragonBase> {
                 }
                 if (owner.isFlying()) {
                     owner.flightManager.setFlightTarget(
-                            Vector3d.copyCenteredWithVerticalOffset(owner.getHomePosition(), yAddition));
-                    owner.getNavigator().tryMoveToXYZ(owner.getHomePosition().getX(),
-                            yAddition + owner.getHomePosition().getY(), owner.getHomePosition().getZ(), 1F);
+                            Vec3.upFromBottomCenterOf(owner.getRestrictCenter(), yAddition));
+                    owner.getNavigation().moveTo(owner.getRestrictCenter().getX(),
+                            yAddition + owner.getRestrictCenter().getY(), owner.getRestrictCenter().getZ(), 1F);
                 }
                 owner.flyTicks = 0;
             }

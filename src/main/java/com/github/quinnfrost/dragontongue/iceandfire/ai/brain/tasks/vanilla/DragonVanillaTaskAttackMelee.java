@@ -3,13 +3,13 @@ package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks.vanilla;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.google.common.collect.ImmutableMap;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.Hand;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.server.level.ServerLevel;
 
-public class DragonVanillaTaskAttackMelee extends Task<EntityDragonBase> {
+public class DragonVanillaTaskAttackMelee extends Behavior<EntityDragonBase> {
     private int attackTick;
     private boolean longMemory;
     private int delayCounter;
@@ -28,9 +28,9 @@ public class DragonVanillaTaskAttackMelee extends Task<EntityDragonBase> {
     }
 
     @Override
-    protected boolean shouldExecute(ServerWorld worldIn, EntityDragonBase owner) {
-        LivingEntity livingEntity = owner.getAttackTarget();
-        if (!(owner.getNavigator() instanceof AdvancedPathNavigate)) {
+    protected boolean checkExtraStartConditions(ServerLevel worldIn, EntityDragonBase owner) {
+        LivingEntity livingEntity = owner.getTarget();
+        if (!(owner.getNavigation() instanceof AdvancedPathNavigate)) {
             return false;
         }
         if (livingEntity == null) {
@@ -40,19 +40,19 @@ public class DragonVanillaTaskAttackMelee extends Task<EntityDragonBase> {
         } else if (!owner.canMove() || owner.isHovering() || owner.isFlying()) {
             return false;
         } else {
-            ((AdvancedPathNavigate) owner.getNavigator()).moveToLivingEntity(livingEntity, speedTowardsTarget);
+            ((AdvancedPathNavigate) owner.getNavigation()).moveToLivingEntity(livingEntity, speedTowardsTarget);
             return true;
         }
     }
 
     @Override
-    protected boolean shouldContinueExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
-        if (!(entityIn.getNavigator() instanceof AdvancedPathNavigate)) {
+    protected boolean canStillUse(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+        if (!(entityIn.getNavigation() instanceof AdvancedPathNavigate)) {
             return false;
         }
-        LivingEntity livingEntity = entityIn.getAttackTarget();
+        LivingEntity livingEntity = entityIn.getTarget();
         if (livingEntity != null && !livingEntity.isAlive()) {
-            this.resetTask(worldIn, entityIn, gameTimeIn);
+            this.stop(worldIn, entityIn, gameTimeIn);
             return false;
         }
 
@@ -60,47 +60,47 @@ public class DragonVanillaTaskAttackMelee extends Task<EntityDragonBase> {
     }
 
     @Override
-    protected void startExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+    protected void start(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
         this.delayCounter = 0;
     }
 
     @Override
-    protected void resetTask(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
-        LivingEntity LivingEntity = entityIn.getAttackTarget();
-        if (LivingEntity instanceof PlayerEntity && (LivingEntity.isSpectator() || ((PlayerEntity) LivingEntity).isCreative())) {
-            entityIn.setAttackTarget(null);
+    protected void stop(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+        LivingEntity LivingEntity = entityIn.getTarget();
+        if (LivingEntity instanceof Player && (LivingEntity.isSpectator() || ((Player) LivingEntity).isCreative())) {
+            entityIn.setTarget(null);
         }
-        entityIn.getNavigator().clearPath();
+        entityIn.getNavigation().stop();
     }
 
     @Override
-    protected void updateTask(ServerWorld worldIn, EntityDragonBase owner, long gameTime) {
-        LivingEntity entity = owner.getAttackTarget();
+    protected void tick(ServerLevel worldIn, EntityDragonBase owner, long gameTime) {
+        LivingEntity entity = owner.getTarget();
         if(delayCounter > 0){
             delayCounter--;
         }
         if (entity != null) {
             if (owner.getAnimation() == EntityDragonBase.ANIMATION_SHAKEPREY) {
-                this.resetTask(worldIn, owner, gameTime);
+                this.stop(worldIn, owner, gameTime);
                 return;
             }
 
-            ((AdvancedPathNavigate) owner.getNavigator()).moveToLivingEntity(entity, speedTowardsTarget);
+            ((AdvancedPathNavigate) owner.getNavigation()).moveToLivingEntity(entity, speedTowardsTarget);
 
-            final double d0 = owner.getDistanceSq(entity.getPosX(), entity.getBoundingBox().minY, entity.getPosZ());
+            final double d0 = owner.distanceToSqr(entity.getX(), entity.getBoundingBox().minY, entity.getZ());
             final double d1 = this.getAttackReachSqr(owner, entity);
             --this.delayCounter;
-            if ((this.longMemory || owner.getEntitySenses().canSee(entity)) && this.delayCounter <= 0 && (this.targetX == 0.0D && this.targetY == 0.0D && this.targetZ == 0.0D || entity.getDistanceSq(this.targetX, this.targetY, this.targetZ) >= 1.0D || owner.getRNG().nextFloat() < 0.05F)) {
-                this.targetX = entity.getPosX();
+            if ((this.longMemory || owner.getSensing().canSee(entity)) && this.delayCounter <= 0 && (this.targetX == 0.0D && this.targetY == 0.0D && this.targetZ == 0.0D || entity.distanceToSqr(this.targetX, this.targetY, this.targetZ) >= 1.0D || owner.getRandom().nextFloat() < 0.05F)) {
+                this.targetX = entity.getX();
                 this.targetY = entity.getBoundingBox().minY;
-                this.targetZ = entity.getPosZ();
-                this.delayCounter = 4 + owner.getRNG().nextInt(7);
+                this.targetZ = entity.getZ();
+                this.delayCounter = 4 + owner.getRandom().nextInt(7);
 
                 if (this.canPenalize) {
                     this.delayCounter += failedPathFindingPenalty;
-                    if (owner.getNavigator().getPath() != null) {
-                        net.minecraft.pathfinding.PathPoint finalPathPoint = owner.getNavigator().getPath().getFinalPathPoint();
-                        if (finalPathPoint != null && entity.getDistanceSq(finalPathPoint.x, finalPathPoint.y, finalPathPoint.z) < 1)
+                    if (owner.getNavigation().getPath() != null) {
+                        net.minecraft.world.level.pathfinder.Node finalPathPoint = owner.getNavigation().getPath().getEndNode();
+                        if (finalPathPoint != null && entity.distanceToSqr(finalPathPoint.x, finalPathPoint.y, finalPathPoint.z) < 1)
                             failedPathFindingPenalty = 0;
                         else
                             failedPathFindingPenalty += 10;
@@ -123,13 +123,13 @@ public class DragonVanillaTaskAttackMelee extends Task<EntityDragonBase> {
 
             if (d0 <= d1 && this.attackTick <= 0) {
                 this.attackTick = 20;
-                owner.swingArm(Hand.MAIN_HAND);
-                owner.attackEntityAsMob(entity);
+                owner.swing(InteractionHand.MAIN_HAND);
+                owner.doHurtTarget(entity);
             }
         }
     }
     protected double getAttackReachSqr(EntityDragonBase dragon, LivingEntity attackTarget) {
-        return dragon.getWidth() * 2.0F * dragon.getWidth() * 2.0F + attackTarget.getWidth();
+        return dragon.getBbWidth() * 2.0F * dragon.getBbWidth() * 2.0F + attackTarget.getBbWidth();
     }
 
 }

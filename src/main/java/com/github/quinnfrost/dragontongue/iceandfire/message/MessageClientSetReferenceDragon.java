@@ -3,8 +3,8 @@ package com.github.quinnfrost.dragontongue.iceandfire.message;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.iceandfire.gui.ScreenDragon;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
 
@@ -17,11 +17,11 @@ public class MessageClientSetReferenceDragon {
         this.entityID = entityID;
     }
 
-    public static MessageClientSetReferenceDragon decoder(PacketBuffer buffer) {
+    public static MessageClientSetReferenceDragon decoder(FriendlyByteBuf buffer) {
         return new MessageClientSetReferenceDragon(buffer.readInt());
     }
 
-    public void encoder(PacketBuffer buffer) {
+    public void encoder(FriendlyByteBuf buffer) {
         buffer.writeInt(entityID);
     }
 
@@ -30,7 +30,7 @@ public class MessageClientSetReferenceDragon {
             contextSupplier.get().setPacketHandled(true);
 
             if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
-                Entity entity = Minecraft.getInstance().world.getEntityByID(entityID);
+                Entity entity = Minecraft.getInstance().level.getEntity(entityID);
                 if (entity instanceof EntityDragonBase) {
                     ScreenDragon.referencedDragon = (EntityDragonBase) entity;
                 }

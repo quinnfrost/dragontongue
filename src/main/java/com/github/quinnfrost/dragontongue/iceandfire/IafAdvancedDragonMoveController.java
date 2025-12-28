@@ -12,35 +12,37 @@ import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.utils.util;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.MoverType;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.controller.MovementController;
-import net.minecraft.pathfinding.NodeProcessor;
-import net.minecraft.pathfinding.PathNavigator;
-import net.minecraft.pathfinding.PathNodeType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.MoveControl;
+import net.minecraft.world.level.pathfinder.NodeEvaluator;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
+
+import net.minecraft.world.entity.ai.control.MoveControl.Operation;
 
 public class IafAdvancedDragonMoveController {
-    public static class GroundMoveHelper extends MovementController {
-        public GroundMoveHelper(MobEntity LivingEntityIn) {
+    public static class GroundMoveHelper extends MoveControl {
+        public GroundMoveHelper(Mob LivingEntityIn) {
             super(LivingEntityIn);
         }
 
         public float distance(float rotateAngleFrom, float rotateAngleTo) {
-            return (float) IAFMath.atan2_accurate(MathHelper.sin(rotateAngleTo - rotateAngleFrom), MathHelper.cos(rotateAngleTo - rotateAngleFrom));
+            return (float) IAFMath.atan2_accurate(Mth.sin(rotateAngleTo - rotateAngleFrom), Mth.cos(rotateAngleTo - rotateAngleFrom));
         }
 
         public void tick() {
-            if (this.action == Action.STRAFE) {
+            if (this.operation == Operation.STRAFE) {
                 float f = (float) this.mob.getAttribute(Attributes.MOVEMENT_SPEED).getValue();
-                float f1 = (float) this.speed * f;
-                float f2 = this.moveForward;
-                float f3 = this.moveStrafe;
-                float f4 = MathHelper.sqrt(f2 * f2 + f3 * f3);
+                float f1 = (float) this.speedModifier * f;
+                float f2 = this.strafeForwards;
+                float f3 = this.strafeRight;
+                float f4 = Mth.sqrt(f2 * f2 + f3 * f3);
 
                 if (f4 < 1.0F) {
                     f4 = 1.0F;
@@ -49,61 +51,61 @@ public class IafAdvancedDragonMoveController {
                 f4 = f1 / f4;
                 f2 = f2 * f4;
                 f3 = f3 * f4;
-                float f5 = MathHelper.sin(this.mob.rotationYaw * 0.017453292F);
-                float f6 = MathHelper.cos(this.mob.rotationYaw * 0.017453292F);
+                float f5 = Mth.sin(this.mob.yRot * 0.017453292F);
+                float f6 = Mth.cos(this.mob.yRot * 0.017453292F);
                 float f7 = f2 * f6 - f3 * f5;
                 float f8 = f3 * f6 + f2 * f5;
-                PathNavigator pathnavigate = this.mob.getNavigator();
+                PathNavigation pathnavigate = this.mob.getNavigation();
                 if (pathnavigate != null) {
-                    NodeProcessor nodeprocessor = pathnavigate.getNodeProcessor();
-                    if (nodeprocessor != null && nodeprocessor.getFloorNodeType(this.mob.world, MathHelper.floor(this.mob.getPosX() + (double) f7), MathHelper.floor(this.mob.getPosY()), MathHelper.floor(this.mob.getPosZ() + (double) f8)) != PathNodeType.WALKABLE) {
-                        this.moveForward = 1.0F;
-                        this.moveStrafe = 0.0F;
+                    NodeEvaluator nodeprocessor = pathnavigate.getNodeEvaluator();
+                    if (nodeprocessor != null && nodeprocessor.getBlockPathType(this.mob.level, Mth.floor(this.mob.getX() + (double) f7), Mth.floor(this.mob.getY()), Mth.floor(this.mob.getZ() + (double) f8)) != BlockPathTypes.WALKABLE) {
+                        this.strafeForwards = 1.0F;
+                        this.strafeRight = 0.0F;
                         f1 = f;
                     }
                 }
-                this.mob.setAIMoveSpeed(f1);
-                this.mob.setMoveForward(this.moveForward);
-                this.mob.setMoveStrafing(this.moveStrafe);
-                this.action = Action.WAIT;
-            } else if (this.action == Action.MOVE_TO) {
-                this.action = Action.WAIT;
+                this.mob.setSpeed(f1);
+                this.mob.setZza(this.strafeForwards);
+                this.mob.setXxa(this.strafeRight);
+                this.operation = Operation.WAIT;
+            } else if (this.operation == Operation.MOVE_TO) {
+                this.operation = Operation.WAIT;
                 EntityDragonBase dragonBase = (EntityDragonBase) mob;
-                double d0 = this.getX() - this.mob.getPosX();
-                double d1 = this.getZ() - this.mob.getPosZ();
-                double d2 = this.getY() - this.mob.getPosY();
+                double d0 = this.getWantedX() - this.mob.getX();
+                double d1 = this.getWantedZ() - this.mob.getZ();
+                double d2 = this.getWantedY() - this.mob.getY();
                 double d3 = d0 * d0 + d2 * d2 + d1 * d1;
 
                 if (d3 < 2.500000277905201E-7D) {
-                    this.mob.setMoveForward(0.0F);
+                    this.mob.setZza(0.0F);
                     return;
                 }
-                float targetDegree = (float) (MathHelper.atan2(d1, d0) * (180D / Math.PI)) - 90.0F;
+                float targetDegree = (float) (Mth.atan2(d1, d0) * (180D / Math.PI)) - 90.0F;
                 float changeRange = 70F;
-                if (Math.ceil(dragonBase.getWidth()) > 2F) {
+                if (Math.ceil(dragonBase.getBbWidth()) > 2F) {
                     float ageMod = 1F - Math.min(dragonBase.getAgeInDays(), 125) / 125F;
                     changeRange = 5 + ageMod * 10;
                 }
-                this.mob.rotationYaw = this.limitAngle(this.mob.rotationYaw, targetDegree, changeRange);
-                this.mob.setAIMoveSpeed((float) (this.speed * this.mob.getAttribute(Attributes.MOVEMENT_SPEED).getValue()));
-                if (d2 > (double) this.mob.stepHeight && d0 * d0 + d1 * d1 < (double) Math.max(1.0F, this.mob.getWidth() / 2)) {
-                    this.mob.getJumpController().setJumping();
-                    this.action = Action.JUMPING;
+                this.mob.yRot = this.rotlerp(this.mob.yRot, targetDegree, changeRange);
+                this.mob.setSpeed((float) (this.speedModifier * this.mob.getAttribute(Attributes.MOVEMENT_SPEED).getValue()));
+                if (d2 > (double) this.mob.maxUpStep && d0 * d0 + d1 * d1 < (double) Math.max(1.0F, this.mob.getBbWidth() / 2)) {
+                    this.mob.getJumpControl().jump();
+                    this.operation = Operation.JUMPING;
                 }
-            } else if (this.action == Action.JUMPING) {
-                this.mob.setAIMoveSpeed((float) (this.speed * this.mob.getAttribute(Attributes.MOVEMENT_SPEED).getValue()));
+            } else if (this.operation == Operation.JUMPING) {
+                this.mob.setSpeed((float) (this.speedModifier * this.mob.getAttribute(Attributes.MOVEMENT_SPEED).getValue()));
 
                 if (this.mob.isOnGround()) {
-                    this.action = Action.WAIT;
+                    this.operation = Operation.WAIT;
                 }
             } else {
-                this.mob.setMoveForward(0.0F);
+                this.mob.setZza(0.0F);
             }
         }
 
     }
 
-    public static class FlightMoveHelper extends MovementController {
+    public static class FlightMoveHelper extends MoveControl {
 
         private EntityDragonBase dragon;
 
@@ -114,7 +116,7 @@ public class IafAdvancedDragonMoveController {
         2: flying over the terrain
          */
         private int detourState;
-        private Vector3d detourTarget;
+        private Vec3 detourTarget;
 
         public FlightMoveHelper(EntityDragonBase dragonBase) {
             super(dragonBase);
@@ -132,70 +134,70 @@ public class IafAdvancedDragonMoveController {
             ICapabilityInfoHolder cap = dragon.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl());
             EnumCommandSettingType.CommandStatus commandStatus = cap.getCommandStatus();
             IafAdvancedDragonFlightManager dragonFlightManager = (IafAdvancedDragonFlightManager) dragon.flightManager;
-            Vector3d flightTarget = dragonFlightManager.getFlightTarget();
+            Vec3 flightTarget = dragonFlightManager.getFlightTarget();
 
-            if (dragon.collidedHorizontally) {
-                if (dragon.getPositionVec().y < IafConfig.maxDragonFlight) {
-                    dragon.setMotion(new Vector3d(dragon.getMotion().scale(-0.5d).x, 0.2, dragon.getMotion().scale(-0.5d).y));
+            if (dragon.horizontalCollision) {
+                if (dragon.position().y < IafConfig.maxDragonFlight) {
+                    dragon.setDeltaMovement(new Vec3(dragon.getDeltaMovement().scale(-0.5d).x, 0.2, dragon.getDeltaMovement().scale(-0.5d).y));
                     return;
                 }
             }
             // Todo: 用AbstractPathJob#isPassableBB代替
-            if (dragon.collidedVertically && !IafDragonFlightUtil.isAreaPassable(
-                    dragon.world,
-                    dragon.getPosition().up((int) Math.ceil(dragon.getBoundingBox().getYSize())),
-                    (int) dragon.getBoundingBox().getAverageEdgeLength())) {
-                dragon.setMotion(new Vector3d(dragon.getMotion().scale(1d).x, -0.2, dragon.getMotion().scale(1d).y));
+            if (dragon.verticalCollision && !IafDragonFlightUtil.isAreaPassable(
+                    dragon.level,
+                    dragon.blockPosition().above((int) Math.ceil(dragon.getBoundingBox().getYsize())),
+                    (int) dragon.getBoundingBox().getSize())) {
+                dragon.setDeltaMovement(new Vec3(dragon.getDeltaMovement().scale(1d).x, -0.2, dragon.getDeltaMovement().scale(1d).y));
             }
 
-            float distToX = (float) (flightTarget.x - dragon.getPosX());
-            float distToY = (float) (flightTarget.y - dragon.getPosY());
-            float distToZ = (float) (flightTarget.z - dragon.getPosZ());
+            float distToX = (float) (flightTarget.x - dragon.getX());
+            float distToY = (float) (flightTarget.y - dragon.getY());
+            float distToZ = (float) (flightTarget.z - dragon.getZ());
 
             // Following logic makes dragon actually fly to the target, it's not touched except the name
             // The shortest possible distance to the target plane (parallel to y)
-            double xzPlaneDist = MathHelper.sqrt(distToX * distToX + distToZ * distToZ);
+            double xzPlaneDist = Mth.sqrt(distToX * distToX + distToZ * distToZ);
             // f = 1 - |0.7 * Y| / sqrt(X^2+Y^2)
-            double yDistMod = 1.0D - (double) MathHelper.abs(distToY * 0.7F) / xzPlaneDist;
+            double yDistMod = 1.0D - (double) Mth.abs(distToY * 0.7F) / xzPlaneDist;
             distToX = (float) ((double) distToX * yDistMod);
             distToZ = (float) ((double) distToZ * yDistMod);
-            xzPlaneDist = MathHelper.sqrt(distToX * distToX + distToZ * distToZ);
-            double distToTarget = MathHelper.sqrt(distToX * distToX + distToZ * distToZ + distToY * distToY);
+            xzPlaneDist = Mth.sqrt(distToX * distToX + distToZ * distToZ);
+            double distToTarget = Mth.sqrt(distToX * distToX + distToZ * distToZ + distToY * distToY);
             if (distToTarget > 1.0F) {
-                float oldYaw = dragon.rotationYaw;
+                float oldYaw = dragon.yRot;
                 // Theta = atan2(y,x) - the angle of (x,y)
-                float targetYaw = (float) MathHelper.atan2(distToZ, distToX);
-                float currentYawTurn = MathHelper.wrapDegrees(dragon.rotationYaw + 90);
+                float targetYaw = (float) Mth.atan2(distToZ, distToX);
+                float currentYawTurn = Mth.wrapDegrees(dragon.yRot + 90);
                 // Radian to degree
-                float targetYawDegrees = MathHelper.wrapDegrees(targetYaw * 57.295776F);
-                dragon.rotationYaw = IafDragonFlightManager.approachDegrees(currentYawTurn, targetYawDegrees, dragon.airAttack == IafDragonAttacks.Air.TACKLE && dragon.getAttackTarget() != null ? 10 : 4.0F) - 90.0F;
-                dragon.renderYawOffset = dragon.rotationYaw;
-                if (IafDragonFlightManager.degreesDifferenceAbs(oldYaw, dragon.rotationYaw) < 3.0F) {
-                    speed = IafDragonFlightManager.approach((float) speed, 1.8F, 0.005F * (1.8F / (float) speed));
+                float targetYawDegrees = Mth.wrapDegrees(targetYaw * 57.295776F);
+                dragon.yRot = IafDragonFlightManager.approachDegrees(currentYawTurn, targetYawDegrees, dragon.airAttack == IafDragonAttacks.Air.TACKLE && dragon.getTarget() != null ? 10 : 4.0F) - 90.0F;
+                dragon.yBodyRot = dragon.yRot;
+                if (IafDragonFlightManager.degreesDifferenceAbs(oldYaw, dragon.yRot) < 3.0F) {
+                    speedModifier = IafDragonFlightManager.approach((float) speedModifier, 1.8F, 0.005F * (1.8F / (float) speedModifier));
                 } else {
-                    speed = IafDragonFlightManager.approach((float) speed, 0.2F, 0.025F);
-                    if (distToTarget < 100D && dragon.getAttackTarget() != null) {
-                        speed = speed * (distToTarget / 100D);
+                    speedModifier = IafDragonFlightManager.approach((float) speedModifier, 0.2F, 0.025F);
+                    if (distToTarget < 100D && dragon.getTarget() != null) {
+                        speedModifier = speedModifier * (distToTarget / 100D);
                     }
                 }
-                float finPitch = (float) (-(MathHelper.atan2(-distToY, xzPlaneDist) * 57.2957763671875D));
-                dragon.rotationPitch = finPitch;
-                float yawTurnHead = dragon.rotationYaw + 90.0F;
-                speed *= dragon.getFlightSpeedModifier();
-                speed *= dragonFlightManager.getFlightPhase() == IafAdvancedDragonFlightManager.FlightPhase.DIRECT
+                float finPitch = (float) (-(Mth.atan2(-distToY, xzPlaneDist) * 57.2957763671875D));
+                dragon.xRot = finPitch;
+                float yawTurnHead = dragon.yRot + 90.0F;
+                speedModifier *= dragon.getFlightSpeedModifier();
+                speedModifier *= dragonFlightManager.getFlightPhase() == IafAdvancedDragonFlightManager.FlightPhase.DIRECT
                         ? Math.min(1, distToTarget / 50 + 0.3)  //Make the dragon fly slower when close to target
                         : 1;    // Do not limit speed when detouring
-                double lvt_16_1_ = speed * MathHelper.cos(yawTurnHead * 0.017453292F) * Math.abs((double) distToX / distToTarget);
-                double lvt_18_1_ = speed * MathHelper.sin(yawTurnHead * 0.017453292F) * Math.abs((double) distToZ / distToTarget);
-                double lvt_20_1_ = speed * MathHelper.sin(finPitch * 0.017453292F) * Math.abs((double) distToY / distToTarget);
+                double lvt_16_1_ = speedModifier * Mth.cos(yawTurnHead * 0.017453292F) * Math.abs((double) distToX / distToTarget);
+                double lvt_18_1_ = speedModifier * Mth.sin(yawTurnHead * 0.017453292F) * Math.abs((double) distToZ / distToTarget);
+                double lvt_20_1_ = speedModifier * Mth.sin(finPitch * 0.017453292F) * Math.abs((double) distToY / distToTarget);
                 double motionCap = 0.2D;
-                dragon.setMotion(dragon.getMotion().add(Math.min(lvt_16_1_ * 0.2D, motionCap), Math.min(lvt_20_1_ * 0.2D, motionCap), Math.min(lvt_18_1_ * 0.2D, motionCap)));
+                dragon.setDeltaMovement(dragon.getDeltaMovement().add(Math.min(lvt_16_1_ * 0.2D, motionCap), Math.min(lvt_20_1_ * 0.2D, motionCap), Math.min(lvt_18_1_ * 0.2D, motionCap)));
             }
 
         }
     }
 
-    public static class PlayerFlightMoveHelper<T extends MobEntity & IFlyingMount> extends MovementController {
+    public static class PlayerFlightMoveHelper<T extends Mob & IFlyingMount> extends MoveControl {
 
         private T dragon;
 
@@ -206,18 +208,18 @@ public class IafAdvancedDragonMoveController {
 
         @Override
         public void tick() {
-            double flySpeed = speed * speedMod();
-            Vector3d dragonVec = dragon.getPositionVec();
-            Vector3d moveVec = new Vector3d(posX, posY, posZ);
-            Vector3d normalized = moveVec.subtract(dragonVec).normalize();
+            double flySpeed = speedModifier * speedMod();
+            Vec3 dragonVec = dragon.position();
+            Vec3 moveVec = new Vec3(wantedX, wantedY, wantedZ);
+            Vec3 normalized = moveVec.subtract(dragonVec).normalize();
             double dist = dragonVec.distanceTo(moveVec);
-            dragon.setMotion(normalized.x * flySpeed, normalized.y * flySpeed, normalized.z * flySpeed);
+            dragon.setDeltaMovement(normalized.x * flySpeed, normalized.y * flySpeed, normalized.z * flySpeed);
             if (dist > 2.5E-7) {
                 float yaw = (float) Math.toDegrees(Math.PI * 2 - Math.atan2(normalized.x, normalized.y));
-                dragon.rotationYaw = limitAngle(dragon.rotationYaw, yaw, 5);
-                dragon.setAIMoveSpeed((float) (speed));
+                dragon.yRot = rotlerp(dragon.yRot, yaw, 5);
+                dragon.setSpeed((float) (speedModifier));
             }
-            dragon.move(MoverType.SELF, dragon.getMotion());
+            dragon.move(MoverType.SELF, dragon.getDeltaMovement());
         }
 
         public double speedMod() {

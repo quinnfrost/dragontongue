@@ -9,12 +9,12 @@ import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.github.quinnfrost.dragontongue.utils.util;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.RayTraceContext;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
@@ -22,14 +22,14 @@ import java.util.Optional;
 public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
     private EntityDragonBase dragon;
     private ICapabilityInfoHolder cap;
-    public Vector3d currentFlightTarget;
-    public Vector3d finalFlightTarget;
+    public Vec3 currentFlightTarget;
+    public Vec3 finalFlightTarget;
     public FlightPhase flightPhase = FlightPhase.DIRECT;
     public Optional<Double> preferredFlightLevel = Optional.empty();
-    public Vector3d flightLevel;
+    public Vec3 flightLevel;
     private IafDragonAttacks.Air prevAirAttack;
-    private Vector3d startAttackVec;
-    private Vector3d startPreyVec;
+    private Vec3 startAttackVec;
+    private Vec3 startPreyVec;
     private boolean hasStartedToScorch = false;
     private LivingEntity prevAttackTarget = null;
 
@@ -55,7 +55,7 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
         return true;
     }
 
-    public static Vector3d getCurrentFlightTargetFor(LivingEntity dragonIn) {
+    public static Vec3 getCurrentFlightTargetFor(LivingEntity dragonIn) {
         if (!IafHelperClass.isDragon(dragonIn)) {
             return null;
         }
@@ -70,20 +70,20 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
     public void update() {
         // Periodic check if the target is in sight
         if (finalFlightTarget != null) {
-            if (dragon.getBoundingBox().grow(dragon.getRenderSize()).contains(finalFlightTarget) || dragon.isInWater()) {
+            if (dragon.getBoundingBox().inflate(dragon.getRenderSize()).contains(finalFlightTarget) || dragon.isInWater()) {
                 flightPhase = FlightPhase.DIRECT;
             } else {
-                flightLevel = Vector3d.copyCenteredHorizontally(
-                        IafDragonFlightUtil.getHighestPosOnPath(dragon, finalFlightTarget).add(0, 0, 0)
+                flightLevel = Vec3.atBottomCenterOf(
+                        IafDragonFlightUtil.getHighestPosOnPath(dragon, finalFlightTarget).offset(0, 0, 0)
                 );
                 if (!dragon.isTargetBlocked(finalFlightTarget)) {
-                    if (util.getDistanceXZ(finalFlightTarget, dragon.getPositionVec()) < 30 || flightLevel.y <= finalFlightTarget.y) {
+                    if (util.getDistanceXZ(finalFlightTarget, dragon.position()) < 30 || flightLevel.y <= finalFlightTarget.y) {
                         flightPhase = FlightPhase.DIRECT;
                     } else {
                         flightPhase = FlightPhase.CRUISE;
                     }
                 } else {
-                    if (IafDragonFlightUtil.canAreaSeeSky(dragon.world, dragon.getPosition(), dragon.getYNavSize())) {
+                    if (IafDragonFlightUtil.canAreaSeeSky(dragon.level, dragon.blockPosition(), dragon.getYNavSize())) {
                         flightPhase = FlightPhase.CLIMB;
                     } else {
                         flightPhase = FlightPhase.DETOUR;
@@ -99,25 +99,25 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
                     break;
                 case CLIMB:
                     if (!preferredFlightLevel.isPresent()) {
-                        preferredFlightLevel = Optional.of(flightLevel.getY() + 2 * dragon.getYNavSize());
+                        preferredFlightLevel = Optional.of(flightLevel.y() + 2 * dragon.getYNavSize());
                     }
-                    currentFlightTarget = new Vector3d(flightLevel.x, preferredFlightLevel.orElse(flightLevel.y + 3 * dragon.getYNavSize()), flightLevel.z);
-                    if (dragon.getPositionVec().y > flightLevel.y + 2 * dragon.getYNavSize()) {
+                    currentFlightTarget = new Vec3(flightLevel.x, preferredFlightLevel.orElse(flightLevel.y + 3 * dragon.getYNavSize()), flightLevel.z);
+                    if (dragon.position().y > flightLevel.y + 2 * dragon.getYNavSize()) {
                         flightPhase = FlightPhase.CRUISE;
                     }
                     break;
                 case CRUISE:
                     if (!preferredFlightLevel.isPresent()) {
-                        preferredFlightLevel = Optional.of(flightLevel.getY() + 2 * dragon.getYNavSize());
+                        preferredFlightLevel = Optional.of(flightLevel.y() + 2 * dragon.getYNavSize());
                     }
-                    currentFlightTarget = new Vector3d(finalFlightTarget.x, flightLevel.y + 2 * dragon.getYNavSize(), finalFlightTarget.z);
+                    currentFlightTarget = new Vec3(finalFlightTarget.x, flightLevel.y + 2 * dragon.getYNavSize(), finalFlightTarget.z);
                     break;
                 case DETOUR:
-                    BlockPos skyPos = IafDragonFlightUtil.getSkyPosOnPath(dragon.world, dragon.getPositionVec(), dragon.getPositionVec().subtract(finalFlightTarget), 128f, dragon.getYNavSize());
+                    BlockPos skyPos = IafDragonFlightUtil.getSkyPosOnPath(dragon.level, dragon.position(), dragon.position().subtract(finalFlightTarget), 128f, dragon.getYNavSize());
                     if (skyPos != null) {
-                        currentFlightTarget = Vector3d.copyCenteredHorizontally(skyPos);
+                        currentFlightTarget = Vec3.atBottomCenterOf(skyPos);
                         flightPhase = FlightPhase.DETOUR;
-                        if (dragon.getPosY() > currentFlightTarget.getY() || IafDragonFlightUtil.canAreaSeeSky(dragon.world, dragon.getPosition(), dragon.getYNavSize())) {
+                        if (dragon.getY() > currentFlightTarget.y() || IafDragonFlightUtil.canAreaSeeSky(dragon.level, dragon.blockPosition(), dragon.getYNavSize())) {
                             flightPhase = FlightPhase.CLIMB;
                         }
                     } else {
@@ -128,24 +128,24 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
             }
         }
 
-        if (dragon.collidedHorizontally) {
+        if (dragon.horizontalCollision) {
             if (flightLevel != null && flightLevel.y < IafConfig.maxDragonFlight) {
                 flightLevel.add(0, dragon.getYNavSize(), 0);
             }
         }
-        if (dragon.collidedVertically) {
+        if (dragon.verticalCollision) {
 
         }
 
         // Attack related
-        if (dragon.getAttackTarget() != null && dragon.getAttackTarget().isAlive()) {
+        if (dragon.getTarget() != null && dragon.getTarget().isAlive()) {
             flightToAttackTarget();
 //
         } else if (finalFlightTarget == null ||
                 (cap.getCommandStatus() == EnumCommandSettingType.CommandStatus.NONE
-                        && dragon.getDistanceSq(currentFlightTarget.x, currentFlightTarget.y, currentFlightTarget.z) < 4)
-                || !(dragon.world.isAirBlock(new BlockPos(finalFlightTarget))
-                        || dragon.world.getBlockState(new BlockPos(finalFlightTarget).up()).getMaterial().isLiquid())
+                        && dragon.distanceToSqr(currentFlightTarget.x, currentFlightTarget.y, currentFlightTarget.z) < 4)
+                || !(dragon.level.isEmptyBlock(new BlockPos(finalFlightTarget))
+                        || dragon.level.getBlockState(new BlockPos(finalFlightTarget).above()).getMaterial().isLiquid())
                 && (dragon.isHovering() || dragon.isFlying())
                 || dragon.getCommand() == 2 && dragon.shouldTPtoOwner()
         ) {
@@ -155,10 +155,10 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
         // Ceil to max height
         if (currentFlightTarget != null) {
             if (currentFlightTarget.y > IafConfig.maxDragonFlight) {
-                currentFlightTarget = new Vector3d(currentFlightTarget.x, IafConfig.maxDragonFlight, currentFlightTarget.z);
+                currentFlightTarget = new Vec3(currentFlightTarget.x, IafConfig.maxDragonFlight, currentFlightTarget.z);
             }
-            if (currentFlightTarget.y >= dragon.getPosY() && !dragon.isModelDead() && !dragon.isInWater()) {
-                dragon.setMotion(dragon.getMotion().add(0, 0.1D, 0));
+            if (currentFlightTarget.y >= dragon.getY() && !dragon.isModelDead() && !dragon.isInWater()) {
+                dragon.setDeltaMovement(dragon.getDeltaMovement().add(0, 0.1D, 0));
 
             }
         }
@@ -196,12 +196,12 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
                 viewBlock = IafDragonFlightUtil.getBlockInViewEscort(dragon);
             }
         } else if (dragon.lookingForRoostAIFlag) {
-            double xDist = Math.abs(dragon.getPosX() - dragon.getHomePosition().getX() - 0.5F);
-            double zDist = Math.abs(dragon.getPosZ() - dragon.getHomePosition().getZ() - 0.5F);
+            double xDist = Math.abs(dragon.getX() - dragon.getRestrictCenter().getX() - 0.5F);
+            double zDist = Math.abs(dragon.getZ() - dragon.getRestrictCenter().getZ() - 0.5F);
             double xzDist = Math.sqrt(xDist * xDist + zDist * zDist);
-            BlockPos upPos = dragon.getHomePosition();
-            if (dragon.getDistanceSquared(Vector3d.copyCentered(dragon.getHomePosition())) > 200) {
-                upPos = upPos.up(30);
+            BlockPos upPos = dragon.getRestrictCenter();
+            if (dragon.getDistanceSquared(Vec3.atCenterOf(dragon.getRestrictCenter())) > 200) {
+                upPos = upPos.above(30);
             }
             viewBlock = upPos;
 
@@ -209,57 +209,57 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
             viewBlock = IafDragonFlightUtil.getBlockInView(dragon);
         }
         if (viewBlock != null) {
-            setFlightTarget(new Vector3d(viewBlock.getX() + 0.5, viewBlock.getY() + 0.5, viewBlock.getZ() + 0.5));
+            setFlightTarget(new Vec3(viewBlock.getX() + 0.5, viewBlock.getY() + 0.5, viewBlock.getZ() + 0.5));
         }
     }
 
     private void flightToAttackTarget() {
         // Ice dragon in water attack
         if (dragon instanceof EntityIceDragon && dragon.isInWater()) {
-            if (dragon.getAttackTarget() == null) {
+            if (dragon.getTarget() == null) {
                 dragon.airAttack = IafDragonAttacks.Air.SCORCH_STREAM;
             } else {
                 dragon.airAttack = IafDragonAttacks.Air.TACKLE;
             }
         }
 
-        LivingEntity entity = dragon.getAttackTarget();
+        LivingEntity entity = dragon.getTarget();
         if (dragon.airAttack == IafDragonAttacks.Air.TACKLE) {
-            setFlightTarget(new Vector3d(entity.getPosX(), entity.getPosY() + entity.getHeight(), entity.getPosZ()));
+            setFlightTarget(new Vec3(entity.getX(), entity.getY() + entity.getBbHeight(), entity.getZ()));
         }
         if (dragon.airAttack == IafDragonAttacks.Air.HOVER_BLAST) {
             float distY = 5 + dragon.getDragonStage() * 2;
             int randomDist = 20;
-            if (dragon.getDistanceSq(entity.getPosX(), dragon.getPosY(), entity.getPosZ()) < 16 || dragon.getDistanceSq(entity.getPosX(), dragon.getPosY(), entity.getPosZ()) > 900) {
-                setFlightTarget(new Vector3d(entity.getPosX() + dragon.getRNG().nextInt(randomDist) - randomDist / 2, entity.getPosY() + distY, entity.getPosZ() + dragon.getRNG().nextInt(randomDist) - randomDist / 2));
+            if (dragon.distanceToSqr(entity.getX(), dragon.getY(), entity.getZ()) < 16 || dragon.distanceToSqr(entity.getX(), dragon.getY(), entity.getZ()) > 900) {
+                setFlightTarget(new Vec3(entity.getX() + dragon.getRandom().nextInt(randomDist) - randomDist / 2, entity.getY() + distY, entity.getZ() + dragon.getRandom().nextInt(randomDist) - randomDist / 2));
             }
-            dragon.stimulateFire(entity.getPosX(), entity.getPosY(), entity.getPosZ(), 3);
+            dragon.stimulateFire(entity.getX(), entity.getY(), entity.getZ(), 3);
         }
         if (dragon.airAttack == IafDragonAttacks.Air.SCORCH_STREAM && startPreyVec != null && startAttackVec != null) {
             float distX = (float) (startPreyVec.x - startAttackVec.x);
             float distY = 5 + dragon.getDragonStage() * 2;
             float distZ = (float) (startPreyVec.z - startAttackVec.z);
-            setFlightTarget(new Vector3d(entity.getPosX() + distX, entity.getPosY() + distY, entity.getPosZ() + distZ));
+            setFlightTarget(new Vec3(entity.getX() + distX, entity.getY() + distY, entity.getZ() + distZ));
             dragon.tryScorchTarget();
             hasStartedToScorch = true;
-            if (getFinalFlightTarget() != null && dragon.getDistanceSq(getFinalFlightTarget().x, getFinalFlightTarget().y, getFinalFlightTarget().z) < 100) {
-                setFlightTarget(new Vector3d(entity.getPosX() - distX, entity.getPosY() + distY, entity.getPosZ() - distZ));
+            if (getFinalFlightTarget() != null && dragon.distanceToSqr(getFinalFlightTarget().x, getFinalFlightTarget().y, getFinalFlightTarget().z) < 100) {
+                setFlightTarget(new Vec3(entity.getX() - distX, entity.getY() + distY, entity.getZ() - distZ));
             }
         }
     }
 
     @Nullable
     @Override
-    public Vector3d getFlightTarget() {
+    public Vec3 getFlightTarget() {
         return currentFlightTarget;
     }
 
-    public Vector3d getFinalFlightTarget() {
+    public Vec3 getFinalFlightTarget() {
         return finalFlightTarget;
     }
 
     @Override
-    public void setFlightTarget(@Nullable Vector3d target) {
+    public void setFlightTarget(@Nullable Vec3 target) {
         this.finalFlightTarget = target;
     }
 
@@ -267,11 +267,11 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
     public void onSetAttackTarget(@Nullable LivingEntity LivingEntityIn) {
         if (prevAttackTarget != LivingEntityIn) {
             if (LivingEntityIn != null) {
-                startPreyVec = new Vector3d(LivingEntityIn.getPosX(), LivingEntityIn.getPosY(), LivingEntityIn.getPosZ());
+                startPreyVec = new Vec3(LivingEntityIn.getX(), LivingEntityIn.getY(), LivingEntityIn.getZ());
             } else {
-                startPreyVec = new Vector3d(dragon.getPosX(), dragon.getPosY(), dragon.getPosZ());
+                startPreyVec = new Vec3(dragon.getX(), dragon.getY(), dragon.getZ());
             }
-            startAttackVec = new Vector3d(dragon.getPosX(), dragon.getPosY(), dragon.getPosZ());
+            startAttackVec = new Vec3(dragon.getX(), dragon.getY(), dragon.getZ());
         }
         prevAttackTarget = LivingEntityIn;
     }
@@ -282,14 +282,14 @@ public class IafAdvancedDragonFlightManager extends IafDragonFlightManager {
 
     public boolean isFlightTargetBlocked() {
         if (finalFlightTarget != null) {
-            final BlockRayTraceResult rayTrace = this.dragon.world.rayTraceBlocks(new RayTraceContext(this.dragon.getPositionVec().add(0, this.dragon.getEyeHeight(), 0), finalFlightTarget, RayTraceContext.BlockMode.COLLIDER, RayTraceContext.FluidMode.NONE, this.dragon));
-            final BlockPos sidePos = rayTrace.getPos();
-            if (!this.dragon.world.isAirBlock(sidePos)) {
+            final BlockHitResult rayTrace = this.dragon.level.clip(new ClipContext(this.dragon.position().add(0, this.dragon.getEyeHeight(), 0), finalFlightTarget, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this.dragon));
+            final BlockPos sidePos = rayTrace.getBlockPos();
+            if (!this.dragon.level.isEmptyBlock(sidePos)) {
                 return true;
-            } else if (!this.dragon.world.isAirBlock(new BlockPos(rayTrace.getHitVec()))) {
+            } else if (!this.dragon.level.isEmptyBlock(new BlockPos(rayTrace.getLocation()))) {
                 return true;
             }
-            return rayTrace.getType() == RayTraceResult.Type.BLOCK;
+            return rayTrace.getType() == HitResult.Type.BLOCK;
         }
         return false;
     }

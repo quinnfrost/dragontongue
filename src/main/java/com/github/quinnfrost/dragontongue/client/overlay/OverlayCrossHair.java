@@ -1,17 +1,17 @@
 package com.github.quinnfrost.dragontongue.client.overlay;
 
 import com.github.quinnfrost.dragontongue.utils.Vector2f;
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.AbstractGui;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.Font;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.client.gui.GuiUtils;
@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @OnlyIn(Dist.CLIENT)
-public class OverlayCrossHair extends AbstractGui {
+public class OverlayCrossHair extends GuiComponent {
     public static ResourceLocation markTexture = new ResourceLocation("dragontongue", "textures/gui/mark.png");
     public static ResourceLocation scopeTexture = new ResourceLocation("dragontongue", "textures/misc/scope.png");
     public static boolean renderScope = false;
@@ -135,88 +135,88 @@ public class OverlayCrossHair extends AbstractGui {
         }
     }
 
-    public static void renderStringCrossHair(MatrixStack ms) {
+    public static void renderStringCrossHair(PoseStack ms) {
         Minecraft minecraft = Minecraft.getInstance();
-        PlayerEntity player = minecraft.player;
-        FontRenderer fontRender = minecraft.fontRenderer;
+        Player player = minecraft.player;
+        Font fontRender = minecraft.font;
         Color colour = new Color(255, 255, 255, 255);
 
 //        int width = event.getWindow().getScaledWidth();
 //        int height = event.getWindow().getScaledHeight();
-        int scaledWidth = Minecraft.getInstance().getMainWindow().getScaledWidth();
-        int scaledHeight = Minecraft.getInstance().getMainWindow().getScaledHeight();
+        int scaledWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
+        int scaledHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
 
         synchronized (lock) {
             if (!bufferStringMap.isEmpty()) {
                 bufferStringMap.forEach((vector2f, integerStringPair) -> {
-                    fontRender.drawString(ms, integerStringPair.getSecond(), scaledWidth / 2.0f + vector2f.x, scaledHeight / 2.0f + vector2f.y, colour.getRGB());
+                    fontRender.draw(ms, integerStringPair.getSecond(), scaledWidth / 2.0f + vector2f.x, scaledHeight / 2.0f + vector2f.y, colour.getRGB());
                 });
             }
         }
     }
 
-    public static void renderScope(MatrixStack ms) {
+    public static void renderScope(PoseStack ms) {
         if (!renderScope) {
             return;
         }
         int scopeTextureLength = 256;
-        int scaledWidth = Minecraft.getInstance().getMainWindow().getScaledWidth();
-        int scaledHeight = Minecraft.getInstance().getMainWindow().getScaledHeight();
+        int scaledWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
+        int scaledHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
 
-        Minecraft.getInstance().getTextureManager().bindTexture(scopeTexture);
+        Minecraft.getInstance().getTextureManager().bind(scopeTexture);
         GuiUtils.drawTexturedModalRect(ms, scaledWidth / 2 - scopeTextureLength / 2, scaledHeight / 2, 0, 0, scopeTextureLength, scopeTextureLength, 1);
     }
 
-    public static void renderScopeSuggestion(MatrixStack ms) {
+    public static void renderScopeSuggestion(PoseStack ms) {
         if (!renderScope) {
             return;
         }
         final float suggestionWidth = 40;
 
-        int scaledWidth = Minecraft.getInstance().getMainWindow().getScaledWidth();
-        int scaledHeight = Minecraft.getInstance().getMainWindow().getScaledHeight();
+        int scaledWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
+        int scaledHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
 
         float suggestPos = (float) (0.4058604333 * Math.pow(scopeSuggestion, 1.395441973));
 
         RenderSystem.pushTextureAttributes();
-        ms.push();
+        ms.pushPose();
         RenderSystem.enableDepthTest();
         RenderSystem.disableTexture();
         RenderSystem.disableBlend();
         RenderSystem.disableLighting();
 
-        final Tessellator tessellator = Tessellator.getInstance();
-        final BufferBuilder vertexBuffer = tessellator.getBuffer();
+        final Tesselator tessellator = Tesselator.getInstance();
+        final BufferBuilder vertexBuffer = tessellator.getBuilder();
 
         GL11.glLineWidth(2.0F);
-        vertexBuffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
-        vertexBuffer.pos(0.5 + scaledWidth / 2f - suggestionWidth / 2, 0.5 + scaledHeight / 2f + suggestPos, 0).color(0, 0, 0, 255).endVertex();
-        vertexBuffer.pos(0.5 + scaledWidth / 2f + suggestionWidth / 2, 0.5 + scaledHeight / 2f + suggestPos, 0).color(0, 0, 0, 255).endVertex();
+        vertexBuffer.begin(GL11.GL_LINES, DefaultVertexFormat.POSITION_COLOR);
+        vertexBuffer.vertex(0.5 + scaledWidth / 2f - suggestionWidth / 2, 0.5 + scaledHeight / 2f + suggestPos, 0).color(0, 0, 0, 255).endVertex();
+        vertexBuffer.vertex(0.5 + scaledWidth / 2f + suggestionWidth / 2, 0.5 + scaledHeight / 2f + suggestPos, 0).color(0, 0, 0, 255).endVertex();
 
-        vertexBuffer.pos(scaledWidth / 2f - suggestionWidth / 2, scaledHeight / 2f + suggestPos, 0).color(255, 255, 255, 255).endVertex();
-        vertexBuffer.pos(scaledWidth / 2f + suggestionWidth / 2, scaledHeight / 2f + suggestPos, 0).color(255, 255, 255, 255).endVertex();
-        tessellator.draw();
+        vertexBuffer.vertex(scaledWidth / 2f - suggestionWidth / 2, scaledHeight / 2f + suggestPos, 0).color(255, 255, 255, 255).endVertex();
+        vertexBuffer.vertex(scaledWidth / 2f + suggestionWidth / 2, scaledHeight / 2f + suggestPos, 0).color(255, 255, 255, 255).endVertex();
+        tessellator.end();
 
         GL11.glLineWidth(1.0F);
         RenderSystem.disableDepthTest();
         RenderSystem.popAttributes();
-        ms.pop();
+        ms.popPose();
     }
 
-    public static void renderIconCrossHair(MatrixStack ms) {
+    public static void renderIconCrossHair(PoseStack ms) {
         synchronized (lock) {
             if (!bufferIconMap.isEmpty()) {
                 bufferIconMap.forEach((vector2f, integerIconTypePair) -> {
                     Minecraft minecraft = Minecraft.getInstance();
                     int markTextureLength = 16;
-                    int scaledWidth = minecraft.getMainWindow().getScaledWidth();
-                    int scaledHeight = minecraft.getMainWindow().getScaledHeight();
+                    int scaledWidth = minecraft.getWindow().getGuiScaledWidth();
+                    int scaledHeight = minecraft.getWindow().getGuiScaledHeight();
                     int xOffset = 0;
                     int yOffset = 0;
 
                     int xPosition = (int) (scaledWidth / 2 - markTextureLength / 2 + vector2f.x);
                     int yPosition = (int) (scaledHeight / 2 - markTextureLength / 2 + vector2f.y);
-                    minecraft.getTextureManager().bindTexture(markTexture);
+                    minecraft.getTextureManager().bind(markTexture);
                     switch (integerIconTypePair.getSecond()) {
 
                         case HIT:

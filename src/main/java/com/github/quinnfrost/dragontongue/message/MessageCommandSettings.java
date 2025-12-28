@@ -4,9 +4,9 @@ import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.capability.CapabilityInfoHolderImpl;
 import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
-import net.minecraft.entity.Entity;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
 
@@ -19,20 +19,20 @@ public class MessageCommandSettings {
     private int objectValue;
 
     public MessageCommandSettings(Entity entity, EnumCommandSettingType objectSettings, Enum settingEnum) {
-        this.entityUUID = entity.getUniqueID();
+        this.entityUUID = entity.getUUID();
         this.objectSettings = objectSettings;
         this.objectValue = settingEnum.ordinal();
     }
 
-    public MessageCommandSettings(PacketBuffer buffer) {
-        this.entityUUID = buffer.readUniqueId();
-        this.objectSettings = buffer.readEnumValue(EnumCommandSettingType.class);
+    public MessageCommandSettings(FriendlyByteBuf buffer) {
+        this.entityUUID = buffer.readUUID();
+        this.objectSettings = buffer.readEnum(EnumCommandSettingType.class);
         this.objectValue = buffer.readInt();
     }
 
-    public void encoder(PacketBuffer buffer) {
-        buffer.writeUniqueId(entityUUID);
-        buffer.writeEnumValue(objectSettings);
+    public void encoder(FriendlyByteBuf buffer) {
+        buffer.writeUUID(entityUUID);
+        buffer.writeEnum(objectSettings);
         buffer.writeInt(objectValue);
     }
 
@@ -41,8 +41,8 @@ public class MessageCommandSettings {
             contextSupplier.get().setPacketHandled(true);
 
             boolean response = contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_SERVER;
-            ServerWorld serverWorld = contextSupplier.get().getSender().getServerWorld();
-            Entity entity = serverWorld.getEntityByUuid(entityUUID);
+            ServerLevel serverWorld = contextSupplier.get().getSender().getLevel();
+            Entity entity = serverWorld.getEntity(entityUUID);
             ICapabilityInfoHolder cap = entity.getCapability(CapabilityInfoHolder.TARGET_HOLDER).orElse(new CapabilityInfoHolderImpl(entity));
 
             switch (objectSettings) {

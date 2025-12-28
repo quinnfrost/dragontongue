@@ -2,8 +2,8 @@ package com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms;
 /*
     All of this code is used with permission from Raycoms, one of the developers of the minecolonies project.
  */
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.BlockPos;
 
 import javax.annotation.Nullable;
 
@@ -131,7 +131,7 @@ public class Node implements Comparable<Node>
      * Create an MNode from a bytebuf.
      * @param byteBuf the buffer to load it from.
      */
-    public Node(final PacketBuffer byteBuf)
+    public Node(final FriendlyByteBuf byteBuf)
     {
         if (byteBuf.readBoolean())
         {
@@ -149,7 +149,7 @@ public class Node implements Comparable<Node>
      * Serialize the Node to buf.
      * @param byteBuf
      */
-    public void serializeToBuf(final PacketBuffer byteBuf)
+    public void serializeToBuf(final FriendlyByteBuf byteBuf)
     {
         byteBuf.writeBoolean(this.parent != null);
         if (this.parent != null)

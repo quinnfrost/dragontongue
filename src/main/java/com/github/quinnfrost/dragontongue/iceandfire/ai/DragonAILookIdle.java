@@ -1,10 +1,12 @@
 package com.github.quinnfrost.dragontongue.iceandfire.ai;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.util.Mth;
 
 import java.util.EnumSet;
+
+import net.minecraft.world.entity.ai.goal.Goal.Flag;
 
 public class DragonAILookIdle extends Goal {
     private EntityDragonBase dragon;
@@ -14,19 +16,19 @@ public class DragonAILookIdle extends Goal {
 
     public DragonAILookIdle(EntityDragonBase prehistoric) {
         this.dragon = prehistoric;
-        this.setMutexFlags(EnumSet.of(Flag.LOOK));
+        this.setFlags(EnumSet.of(Flag.LOOK));
     }
 
     @Override
-    public boolean shouldExecute() {
+    public boolean canUse() {
         if (!this.dragon.canMove() || dragon.getAnimation() == EntityDragonBase.ANIMATION_SHAKEPREY || dragon.isFuelingForge()) {
             return false;
         }
-        return this.dragon.getRNG().nextFloat() < 0.02F;
+        return this.dragon.getRandom().nextFloat() < 0.02F;
     }
 
     @Override
-    public boolean shouldContinueExecuting() {
+    public boolean canContinueToUse() {
         if (!this.dragon.canMove()) {
             return false;
         }
@@ -34,11 +36,11 @@ public class DragonAILookIdle extends Goal {
     }
 
     @Override
-    public void startExecuting() {
-        final double d0 = (Math.PI * 2D) * this.dragon.getRNG().nextDouble();
-        this.lookX = MathHelper.cos((float) d0);
-        this.lookZ = MathHelper.sin((float) d0);
-        this.idleTime = 20 + this.dragon.getRNG().nextInt(20);
+    public void start() {
+        final double d0 = (Math.PI * 2D) * this.dragon.getRandom().nextDouble();
+        this.lookX = Mth.cos((float) d0);
+        this.lookZ = Mth.sin((float) d0);
+        this.idleTime = 20 + this.dragon.getRandom().nextInt(20);
     }
 
     @Override
@@ -46,6 +48,6 @@ public class DragonAILookIdle extends Goal {
     	if (this.idleTime > 0) {
     		--this.idleTime;
     	}
-        this.dragon.getLookController().setLookPosition(this.dragon.getPosX() + this.lookX, this.dragon.getPosY() + this.dragon.getEyeHeight(), this.dragon.getPosZ() + this.lookZ, this.dragon.getHorizontalFaceSpeed(), this.dragon.getVerticalFaceSpeed());
+        this.dragon.getLookControl().setLookAt(this.dragon.getX() + this.lookX, this.dragon.getY() + this.dragon.getEyeHeight(), this.dragon.getZ() + this.lookZ, this.dragon.getMaxHeadYRot(), this.dragon.getMaxHeadXRot());
     }
 }

@@ -4,11 +4,11 @@ import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.utils.util;
 import com.google.common.collect.ImmutableMap;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.memory.WalkTarget;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.WalkTarget;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.server.level.ServerLevel;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
@@ -19,7 +19,7 @@ import java.util.Optional;
  * WALK_TARGET: value present <br>
  * CANT_REACH_WALK_TARGET_SINCE: registered <br>
  */
-public class DragonBehaviorWalk extends Task<EntityDragonBase> {
+public class DragonBehaviorWalk extends Behavior<EntityDragonBase> {
     // We can't simply extend vanilla WalkToTargetTask since they use vanilla path find method
 
     @Nullable
@@ -27,8 +27,8 @@ public class DragonBehaviorWalk extends Task<EntityDragonBase> {
 
     public DragonBehaviorWalk(int durationMinIn, int durationMaxIn) {
         super(ImmutableMap.of(
-                MemoryModuleType.WALK_TARGET, MemoryModuleStatus.VALUE_PRESENT,
-                MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, MemoryModuleStatus.REGISTERED
+                MemoryModuleType.WALK_TARGET, MemoryStatus.VALUE_PRESENT,
+                MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, MemoryStatus.REGISTERED
         ), durationMinIn, durationMaxIn);
     }
 
@@ -37,7 +37,7 @@ public class DragonBehaviorWalk extends Task<EntityDragonBase> {
     }
 
     @Override
-    protected boolean shouldExecute(ServerWorld worldIn, EntityDragonBase dragon) {
+    protected boolean checkExtraStartConditions(ServerLevel worldIn, EntityDragonBase dragon) {
         if (IafDragonBehaviorHelper.isDragonInAir(dragon)) {
             return false;
         }
@@ -51,49 +51,49 @@ public class DragonBehaviorWalk extends Task<EntityDragonBase> {
     }
 
     @Override
-    protected boolean shouldContinueExecuting(ServerWorld worldIn, EntityDragonBase dragon, long gameTimeIn) {
+    protected boolean canStillUse(ServerLevel worldIn, EntityDragonBase dragon, long gameTimeIn) {
         if (IafDragonBehaviorHelper.isDragonInAir(dragon)) {
             return false;
         }
         if (target != null && !hasArrived(dragon)) {
             return true;
         }
-        dragon.getBrain().removeMemory(MemoryModuleType.WALK_TARGET);
+        dragon.getBrain().eraseMemory(MemoryModuleType.WALK_TARGET);
         return false;
     }
 
     @Override
-    protected void resetTask(ServerWorld worldIn, EntityDragonBase dragon, long gameTimeIn) {
+    protected void stop(ServerLevel worldIn, EntityDragonBase dragon, long gameTimeIn) {
         this.target = null;
-        dragon.getNavigator().clearPath();
+        dragon.getNavigation().stop();
     }
 
     @Override
-    protected boolean isTimedOut(long gameTime) {
+    protected boolean timedOut(long gameTime) {
         return false;
     }
 
     @Override
-    protected void startExecuting(ServerWorld worldIn, EntityDragonBase entityIn, long gameTimeIn) {
+    protected void start(ServerLevel worldIn, EntityDragonBase entityIn, long gameTimeIn) {
     }
 
     @Override
-    protected void updateTask(ServerWorld worldIn, EntityDragonBase owner, long gameTime) {
+    protected void tick(ServerLevel worldIn, EntityDragonBase owner, long gameTime) {
         target = owner.getBrain().getMemory(MemoryModuleType.WALK_TARGET).orElse(null);
         if (target != null) {
-            IafDragonBehaviorHelper.setDragonWalkTarget(owner, target.getTarget().getBlockPos());
+            IafDragonBehaviorHelper.setDragonWalkTarget(owner, target.getTarget().currentBlockPosition());
         }
     }
 
     private boolean hasArrived(EntityDragonBase dragon) {
-        if (dragon.getNavigator().noPath() && util.hasArrived(dragon, target.getTarget().getBlockPos(), null)) {
+        if (dragon.getNavigation().isDone() && util.hasArrived(dragon, target.getTarget().currentBlockPosition(), null)) {
             return true;
         }
         return false;
     }
 
     private boolean hasReachedTarget(EntityDragonBase mobEntity, WalkTarget targetPos) {
-        return targetPos.getTarget().getBlockPos().manhattanDistance(mobEntity.getPosition()) <= targetPos.getDistance();
+        return targetPos.getTarget().currentBlockPosition().distManhattan(mobEntity.blockPosition()) <= targetPos.getCloseEnoughDist();
     }
 }
 
