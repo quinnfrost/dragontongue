@@ -17,7 +17,6 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.math.*;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import com.mojang.math.Quaternion;
 import net.minecraft.world.phys.Vec3;

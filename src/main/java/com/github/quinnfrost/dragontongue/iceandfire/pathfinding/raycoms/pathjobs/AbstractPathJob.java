@@ -14,7 +14,6 @@ import com.github.quinnfrost.dragontongue.message.RegistryMessages;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.block.*;
 import net.minecraft.world.level.material.Material;
-import net.minecraft.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;

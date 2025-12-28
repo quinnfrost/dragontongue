@@ -5,8 +5,6 @@ import com.github.quinnfrost.dragontongue.capability.ICapabilityInfoHolder;
 import com.github.quinnfrost.dragontongue.enums.EnumCommandSettingType;
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.world.entity.ai.util.RandomPos;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.behavior.Behavior;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerLevel;

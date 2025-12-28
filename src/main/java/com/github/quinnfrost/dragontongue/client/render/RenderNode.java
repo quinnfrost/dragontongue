@@ -10,7 +10,6 @@ import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.util.math.shapes.*;
 import com.mojang.math.Matrix4f;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.opengl.GL11;

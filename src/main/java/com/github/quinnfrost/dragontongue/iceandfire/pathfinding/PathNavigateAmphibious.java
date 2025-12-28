@@ -5,7 +5,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.pathfinding.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;

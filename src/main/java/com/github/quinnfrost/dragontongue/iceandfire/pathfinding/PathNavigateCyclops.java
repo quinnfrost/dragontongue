@@ -2,7 +2,6 @@ package com.github.quinnfrost.dragontongue.iceandfire.pathfinding;
 
 import com.github.alexthe666.iceandfire.entity.EntityCyclops;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.pathfinding.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;

@@ -2,7 +2,6 @@ package com.github.quinnfrost.dragontongue.iceandfire.ai.brain;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.google.common.collect.ImmutableMap;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.behavior.Behavior;

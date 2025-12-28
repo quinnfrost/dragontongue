@@ -1,7 +1,6 @@
 package com.github.quinnfrost.dragontongue.iceandfire.ai.brain;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
-import com.github.quinnfrost.dragontongue.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import com.github.quinnfrost.dragontongue.utils.util;
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.world.entity.LivingEntity;
@@ -10,12 +9,10 @@ import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.WalkTarget;
 import net.minecraft.world.entity.ai.behavior.Behavior;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.server.level.ServerLevel;
 
 import javax.annotation.Nullable;
-import java.util.Optional;
 
 public class DragonBehaviorAttack extends Behavior<EntityDragonBase> {
     @Nullable

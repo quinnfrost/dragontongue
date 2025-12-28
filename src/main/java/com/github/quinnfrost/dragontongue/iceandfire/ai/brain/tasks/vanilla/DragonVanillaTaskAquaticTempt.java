@@ -3,8 +3,6 @@ package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks.vanilla;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.behavior.Behavior;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;

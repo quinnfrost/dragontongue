@@ -5,7 +5,6 @@ import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonFlightUtil;
 import com.google.common.collect.ImmutableMap;
-import net.minecraft.entity.ai.RandomPositionGenerator;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.WalkTarget;
@@ -17,7 +16,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.server.level.ServerLevel;
 
-import javax.annotation.Nullable;
 import java.util.*;
 
 public class DragonTaskGlide extends Behavior<EntityDragonBase> {

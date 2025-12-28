@@ -2,10 +2,7 @@ package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.quinnfrost.dragontongue.iceandfire.IafDragonBehaviorHelper;
-import com.github.quinnfrost.dragontongue.iceandfire.ai.brain.RegistryBrains;
-import com.github.quinnfrost.dragontongue.utils.util;
 import com.google.common.collect.ImmutableMap;
-import net.minecraft.entity.CreatureEntity;
 import net.minecraft.world.entity.ai.util.RandomPos;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
@@ -15,7 +12,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerLevel;
 
 import javax.annotation.Nullable;
-import java.util.Map;
 import java.util.Optional;
 
 public class DragonTaskWander extends Behavior<EntityDragonBase> {

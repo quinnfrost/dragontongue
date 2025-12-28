@@ -3,12 +3,9 @@ package com.github.quinnfrost.dragontongue.iceandfire.ai.brain;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
-import net.minecraft.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.schedule.Activity;
 import net.minecraft.world.entity.ai.behavior.Behavior;
-import net.minecraft.world.GameRules;
 import net.minecraft.server.level.ServerLevel;
 
 public class DragonCoreTaskTarget extends Behavior<EntityDragonBase> {

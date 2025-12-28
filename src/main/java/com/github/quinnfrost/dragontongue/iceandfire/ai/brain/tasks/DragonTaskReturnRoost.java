@@ -1,14 +1,12 @@
 package com.github.quinnfrost.dragontongue.iceandfire.ai.brain.tasks;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
-import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.quinnfrost.dragontongue.utils.util;
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.behavior.Behavior;
 import net.minecraft.core.GlobalPos;
-import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.server.level.ServerLevel;
 
 public class DragonTaskReturnRoost extends Behavior<EntityDragonBase> {
