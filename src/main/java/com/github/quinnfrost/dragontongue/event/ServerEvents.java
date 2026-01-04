@@ -55,13 +55,13 @@ import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
 
 import java.util.*;
 
 public class ServerEvents {
     @SubscribeEvent
-    public static void onServerStarted(FMLServerStartedEvent event) {
+    public static void onServerStarted(ServerStartedEvent event) {
         // Resets the debug option, or the getChunk() might cause infinite wait
         EntityBehaviorDebugger.stopDebug();
     }
@@ -74,14 +74,13 @@ public class ServerEvents {
      * @param event
      */
     @SubscribeEvent
-    public static void onProjectileImpact(ProjectileImpactEvent.Arrow event) {
-        if (event.getEntity().level.isClientSide) {
+    public static void onProjectileImpact(ProjectileImpactEvent event) {
+        if (event.getProjectile().level.isClientSide) {
             return;
         }
 
-        Projectile projectile = event.getArrow();
+        Projectile projectile = event.getProjectile();
         Entity shooter = projectile.getOwner();
-
         // Trident teleports
         if (projectile instanceof ThrownTrident && shooter instanceof ServerPlayer) {
             ServerLevel serverWorld = (ServerLevel) shooter.getCommandSenderWorld();
@@ -90,8 +89,9 @@ public class ServerEvents {
                 Vec3 targetBlock = event.getRayTraceResult().getLocation();
                 shooter.teleportToWithTicket(targetBlock.x(), targetBlock.y(), targetBlock.z());
                 util.spawnParticleForce(serverWorld, ParticleTypes.PORTAL, targetBlock.x(), targetBlock.y(),
-                        targetBlock.z(),
-                        800, 2, 1, 2, 0.1);
+                                        targetBlock.z(),
+                                        800, 2, 1, 2, 0.1
+                );
                 player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 10, 0, true, false));
             } else if (event.getRayTraceResult().getType() == HitResult.Type.ENTITY) {
                 EntityHitResult entityRayTraceResult = (EntityHitResult) event.getRayTraceResult();
@@ -285,7 +285,11 @@ public class ServerEvents {
 //                }
 //                EntityDragonBase dragon = IafHelperClass.getDragon(entityRayTraceResult.getEntity());
 
-                HitResult rayTraceResult = util.getTargetBlockOrEntity(playerEntity, (float) ICapabilityInfoHolder.getCapability(playerEntity).getCommandDistance(), null);
+                HitResult rayTraceResult = util.getTargetBlockOrEntity(playerEntity,
+                                                                       (float) ICapabilityInfoHolder.getCapability(
+                                                                               playerEntity).getCommandDistance(),
+                                                                       null
+                );
 
                 if (EntityBehaviorDebugger.targetEntity != null) {
                     Mob targetEntity = EntityBehaviorDebugger.targetEntity;
@@ -293,7 +297,7 @@ public class ServerEvents {
                     double xTarget = target.x;
                     double yTarget = target.y;
                     double zTarget = target.z;
-                    targetEntity.getNavigation().moveTo(xTarget,yTarget,zTarget,1.0f);
+                    targetEntity.getNavigation().moveTo(xTarget, yTarget, zTarget, 1.0f);
                 }
 
             }
@@ -310,8 +314,8 @@ public class ServerEvents {
         if (source instanceof ServerPlayer) {
             ServerPlayer attacker = (ServerPlayer) source;
             RegistryMessages.sendToClient(new MessageClientDisplay(
-                            MessageClientDisplay.EnumClientDisplay.CRITICAL, 1, Collections.singletonList("")),
-                    attacker
+                                                  MessageClientDisplay.EnumClientDisplay.CRITICAL, 1, Collections.singletonList("")),
+                                          attacker
             );
         }
     }
@@ -333,8 +337,11 @@ public class ServerEvents {
             if (hurtEntity.isAlive()) {
 
                 RegistryMessages.sendToClient(new MessageClientDisplay(
-                                MessageClientDisplay.EnumClientDisplay.DAMAGE, 1, Collections.singletonList(String.format("%.1f", damageAmount))),
-                        playerEntity
+                                                      MessageClientDisplay.EnumClientDisplay.DAMAGE,
+                                                      1,
+                                                      Collections.singletonList(String.format("%.1f", damageAmount))
+                                              ),
+                                              playerEntity
                 );
             }
         }

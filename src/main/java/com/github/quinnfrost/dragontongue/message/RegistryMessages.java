@@ -7,10 +7,8 @@ import com.github.quinnfrost.dragontongue.iceandfire.message.MessageClientSetRef
 import com.github.quinnfrost.dragontongue.iceandfire.message.MessageSyncPathReached;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.fml.network.NetworkDirection;
-import net.minecraftforge.fml.network.NetworkRegistry;
-import net.minecraftforge.fml.network.simple.SimpleChannel;
-import net.minecraftforge.fml.server.ServerLifecycleHooks;
+import net.minecraftforge.network.NetworkRegistry;
+import net.minecraftforge.network.simple.SimpleChannel;
 
 public class RegistryMessages {
     public static SimpleChannel CHANNEL;

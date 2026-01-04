@@ -10,14 +10,13 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
+import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.entity.schedule.Schedule;
 import net.minecraft.world.entity.schedule.ScheduleBuilder;
 import net.minecraft.world.entity.ai.sensing.SensorType;
-import net.minecraft.entity.ai.brain.task.*;
-import net.minecraft.util.IntRange;
 import net.minecraftforge.eventbus.api.IEventBus;
 
 import java.util.Optional;
@@ -192,8 +191,8 @@ public class RegistryBrains extends Schedule {
                                 Pair.of(new RunOne<>(ImmutableMap.of(
                                         MemoryModuleType.WALK_TARGET, MemoryStatus.VALUE_ABSENT
                                 ), ImmutableList.of(
-                                        Pair.of(new RunSometimes<>(new DragonTaskGlide(1.0f), IntRange.of(30, 60)), 0),
-                                        Pair.of(new RunSometimes<>(new DragonTaskWander(1.0f), IntRange.of(30, 60)), 1)
+                                        Pair.of(new RunSometimes<>(new DragonTaskGlide(1.0f), UniformInt.of(30, 60)), 0),
+                                        Pair.of(new RunSometimes<>(new DragonTaskWander(1.0f), UniformInt.of(30, 60)), 1)
                                 )), 1)
                         ))),
 

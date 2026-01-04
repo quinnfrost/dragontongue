@@ -44,14 +44,14 @@ public class CapabilityProvider implements ICapabilitySerializable<ListTag> {
         if (CapabilityInfoHolder.TARGET_HOLDER == null){
             return new ListTag();
         }else {
-            return (ListTag) CapabilityInfoHolder.TARGET_HOLDER.writeNBT(data,null);
+            return (ListTag) CapabilityInfoHolder.writeNBT(data);
         }
     }
 
     @Override
     public void deserializeNBT(ListTag nbt) {
         if (CapabilityInfoHolder.TARGET_HOLDER != null){
-            CapabilityInfoHolder.TARGET_HOLDER.readNBT(data,null,nbt);
+            CapabilityInfoHolder.readNBT(data,nbt);
         }
     }
 
