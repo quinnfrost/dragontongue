@@ -2,6 +2,7 @@ package com.github.quinnfrost.dragontongue.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.client.renderer.*;
 import net.minecraft.core.BlockPos;
@@ -10,15 +11,12 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import com.mojang.math.Matrix4f;
+import com.mojang.math.Matrix3f;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.client.event.DrawHighlightEvent;
+import net.minecraftforge.client.event.DrawSelectionEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.awt.*;
-import java.lang.reflect.Field;
 
 import net.minecraft.client.Camera;
 
@@ -27,22 +25,15 @@ import net.minecraft.client.Camera;
  */
 public class DebugBlockVoxelShapeHighlighter {
     @SubscribeEvent
-    public static void onDrawBlockHighlightEvent(DrawHighlightEvent.HighlightBlock event) {
+    public static void onDrawBlockHighlightEvent(DrawSelectionEvent.HighlightBlock event) {
         HitResult rayTraceResult = event.getTarget();
         if (rayTraceResult.getType() != HitResult.Type.BLOCK) return;
-        Level world;
-
-        try {
-            world = getPrivateWorldFromWorldRenderer(event.getContext());
-        } catch (IllegalAccessException | ObfuscationReflectionHelper.UnableToFindFieldException e) {
-            if (!loggedReflectionError) LOGGER.error("Could not find WorldRenderer.world");
-            loggedReflectionError = true;
-            return;
-        }
+        Level world = Minecraft.getInstance().level;
+        if (world == null) return;
 
         BlockPos blockpos = ((BlockHitResult) rayTraceResult).getBlockPos();
         BlockState blockstate = world.getBlockState(blockpos);
-        if (blockstate.isAir(world, blockpos) || !world.getWorldBorder().isWithinBounds(blockpos)) return;
+        if (blockstate.isAir() || !world.getWorldBorder().isWithinBounds(blockpos)) return;
 
         final Color SHAPE_COLOR = Color.RED;
         final Color RENDERSHAPE_COLOR = Color.BLUE;
@@ -61,49 +52,35 @@ public class DebugBlockVoxelShapeHighlighter {
 
         if (!(showshape || showrendershapeshape || showcollisionshape || showraytraceshape)) return;
 
-        Camera activeRenderInfo = event.getInfo();
+        Camera activeRenderInfo = event.getCamera();
         CollisionContext iSelectionContext = CollisionContext.of(activeRenderInfo.getEntity());
-        MultiBufferSource renderTypeBuffers = event.getBuffers();
-        PoseStack matrixStack = event.getMatrix();
+        MultiBufferSource renderTypeBuffers = event.getMultiBufferSource();
+        PoseStack matrixStack = event.getPoseStack();
         if (showshape) {
             VoxelShape shape = blockstate.getShape(world, blockpos, iSelectionContext);
-            drawSelectionBox(event.getContext(), renderTypeBuffers, matrixStack, blockpos, activeRenderInfo, shape, SHAPE_COLOR);
+            drawSelectionBox(renderTypeBuffers, matrixStack, blockpos, activeRenderInfo, shape, SHAPE_COLOR);
         }
         if (showrendershapeshape) {
             VoxelShape shape = blockstate.getOcclusionShape(world, blockpos);
-            drawSelectionBox(event.getContext(), renderTypeBuffers, matrixStack, blockpos, activeRenderInfo, shape, RENDERSHAPE_COLOR);
+            drawSelectionBox(renderTypeBuffers, matrixStack, blockpos, activeRenderInfo, shape, RENDERSHAPE_COLOR);
         }
         if (showcollisionshape) {
             VoxelShape shape = blockstate.getCollisionShape(world, blockpos, iSelectionContext);
-            drawSelectionBox(event.getContext(), renderTypeBuffers, matrixStack, blockpos, activeRenderInfo, shape, COLLISIONSHAPE_COLOR);
+            drawSelectionBox(renderTypeBuffers, matrixStack, blockpos, activeRenderInfo, shape, COLLISIONSHAPE_COLOR);
         }
         if (showraytraceshape) {
             VoxelShape shape = blockstate.getVisualShape(world, blockpos, iSelectionContext);
-            drawSelectionBox(event.getContext(), renderTypeBuffers, matrixStack, blockpos, activeRenderInfo, shape, RAYTRACESHAPE_COLOR);
+            drawSelectionBox(renderTypeBuffers, matrixStack, blockpos, activeRenderInfo, shape, RAYTRACESHAPE_COLOR);
         }
         event.setCanceled(true);
     }
-
-    // The world field is private so we need a trick to get access to it
-    // we need to use the srg name for it to work robustly:
-    // see here:   https://mcp.thiakil.com/#/search
-    //   and here: https://jamieswhiteshirt.github.io/resources/know-your-tools/
-    private static Level getPrivateWorldFromWorldRenderer(LevelRenderer worldRenderer) throws IllegalAccessException, ObfuscationReflectionHelper.UnableToFindFieldException {
-        if (worldField == null) {
-            worldField = ObfuscationReflectionHelper.findField(LevelRenderer.class, "level");
-        }
-        return (Level)worldField.get(worldRenderer);
-    }
-
-    private static Field worldField;
-    private static boolean loggedReflectionError = false;
 
     /**
      * copied from WorldRenderer; starting from the code marked with iprofiler.endStartSection("outline");
      *
      * @param activeRenderInfo
      */
-    private static void drawSelectionBox(LevelRenderer worldRenderer, MultiBufferSource renderTypeBuffers, PoseStack matrixStack,
+    private static void drawSelectionBox(MultiBufferSource renderTypeBuffers, PoseStack matrixStack,
                                          BlockPos blockPos, Camera activeRenderInfo, VoxelShape shape, Color color) {
         RenderType renderType = RenderType.lines();
         VertexConsumer vertexBuilder = renderTypeBuffers.getBuffer(renderType);
@@ -125,11 +102,11 @@ public class DebugBlockVoxelShapeHighlighter {
                                          float red, float green, float blue, float alpha) {
 
         Matrix4f matrix4f = matrixStack.last().pose();
+        Matrix3f normalMatrix = matrixStack.last().normal();
         voxelShape.forAllEdges((x0, y0, z0, x1, y1, z1) -> {
-            vertexBuilder.vertex(matrix4f, (float)(x0 + originX), (float)(y0 + originY), (float)(z0 + originZ)).color(red, green, blue, alpha).endVertex();
-            vertexBuilder.vertex(matrix4f, (float)(x1 + originX), (float)(y1 + originY), (float)(z1 + originZ)).color(red, green, blue, alpha).endVertex();
+            vertexBuilder.vertex(matrix4f, (float)(x0 + originX), (float)(y0 + originY), (float)(z0 + originZ)).color(red, green, blue, alpha).normal(normalMatrix, 1.0F, 0.0F, 0.0F).endVertex();
+            vertexBuilder.vertex(matrix4f, (float)(x1 + originX), (float)(y1 + originY), (float)(z1 + originZ)).color(red, green, blue, alpha).normal(normalMatrix, 1.0F, 0.0F, 0.0F).endVertex();
         });
     }
-    private static final Logger LOGGER = LogManager.getLogger();
 
 }

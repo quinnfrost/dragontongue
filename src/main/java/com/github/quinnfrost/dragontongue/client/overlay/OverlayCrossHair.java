@@ -10,11 +10,11 @@ import net.minecraft.client.gui.Font;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.client.gui.GuiUtils;
 import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nullable;
@@ -163,8 +163,8 @@ public class OverlayCrossHair extends GuiComponent {
         int scaledWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
         int scaledHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
 
-        Minecraft.getInstance().getTextureManager().bind(scopeTexture);
-        GuiUtils.drawTexturedModalRect(ms, scaledWidth / 2 - scopeTextureLength / 2, scaledHeight / 2, 0, 0, scopeTextureLength, scopeTextureLength, 1);
+        RenderSystem.setShaderTexture(0, scopeTexture);
+        blit(ms, scaledWidth / 2 - scopeTextureLength / 2, scaledHeight / 2, 0, 0, scopeTextureLength, scopeTextureLength, scopeTextureLength, scopeTextureLength);
     }
 
     public static void renderScopeSuggestion(PoseStack ms) {
@@ -178,18 +178,18 @@ public class OverlayCrossHair extends GuiComponent {
 
         float suggestPos = (float) (0.4058604333 * Math.pow(scopeSuggestion, 1.395441973));
 
-        RenderSystem.pushTextureAttributes();
+        // RenderSystem.pushTextureAttributes(); // Removed in 1.18
         ms.pushPose();
         RenderSystem.enableDepthTest();
         RenderSystem.disableTexture();
         RenderSystem.disableBlend();
-        RenderSystem.disableLighting();
+        // RenderSystem.disableLighting(); // Removed in 1.18, lighting is handled differently
 
         final Tesselator tessellator = Tesselator.getInstance();
         final BufferBuilder vertexBuffer = tessellator.getBuilder();
 
         GL11.glLineWidth(2.0F);
-        vertexBuffer.begin(GL11.GL_LINES, DefaultVertexFormat.POSITION_COLOR);
+        vertexBuffer.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
         vertexBuffer.vertex(0.5 + scaledWidth / 2f - suggestionWidth / 2, 0.5 + scaledHeight / 2f + suggestPos, 0).color(0, 0, 0, 255).endVertex();
         vertexBuffer.vertex(0.5 + scaledWidth / 2f + suggestionWidth / 2, 0.5 + scaledHeight / 2f + suggestPos, 0).color(0, 0, 0, 255).endVertex();
 
@@ -199,8 +199,9 @@ public class OverlayCrossHair extends GuiComponent {
 
         GL11.glLineWidth(1.0F);
         RenderSystem.disableDepthTest();
-        RenderSystem.popAttributes();
+        // RenderSystem.popAttributes(); // Removed in 1.18
         ms.popPose();
+        RenderSystem.enableTexture(); // Re-enable texture
     }
 
     public static void renderIconCrossHair(PoseStack ms) {
@@ -216,20 +217,20 @@ public class OverlayCrossHair extends GuiComponent {
 
                     int xPosition = (int) (scaledWidth / 2 - markTextureLength / 2 + vector2f.x);
                     int yPosition = (int) (scaledHeight / 2 - markTextureLength / 2 + vector2f.y);
-                    minecraft.getTextureManager().bind(markTexture);
+                    RenderSystem.setShaderTexture(0, markTexture);
                     switch (integerIconTypePair.getSecond()) {
 
                         case HIT:
-                            GuiUtils.drawTexturedModalRect(ms, xPosition, yPosition, 0, 0, markTextureLength, markTextureLength, 1);
+                            blit(ms, xPosition, yPosition, 0, 0, markTextureLength, markTextureLength, 64, 16);
                             break;
                         case CRITICAL:
-                            GuiUtils.drawTexturedModalRect(ms, xPosition, yPosition, markTextureLength, 0, markTextureLength, markTextureLength, 1);
+                            blit(ms, xPosition, yPosition, markTextureLength, 0, markTextureLength, markTextureLength, 64, 16);
                             break;
                         case WARN:
-                            GuiUtils.drawTexturedModalRect(ms, xPosition, yPosition, markTextureLength * 2, 0, markTextureLength, markTextureLength, 1);
+                            blit(ms, xPosition, yPosition, markTextureLength * 2, 0, markTextureLength, markTextureLength, 64, 16);
                             break;
                         case TARGET:
-                            GuiUtils.drawTexturedModalRect(ms, xPosition, yPosition, markTextureLength * 3, 0, markTextureLength, markTextureLength, 1);
+                            blit(ms, xPosition, yPosition, markTextureLength * 3, 0, markTextureLength, markTextureLength, 64, 16);
                             break;
                     }
                 });
